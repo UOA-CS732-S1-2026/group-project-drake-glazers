@@ -9,6 +9,15 @@ const { requireApiAuth } = require("./middleware/requireApiAuth") as {
 const { usersRouter } = require("./routes/users") as {
   usersRouter: import("express").Router;
 };
+const { errorResponse } = require("./lib/api-response") as {
+  errorResponse: (
+    res: import("express").Response,
+    status: 400 | 401 | 404,
+    code: string,
+    message: string,
+    details?: unknown,
+  ) => import("express").Response;
+};
 
 type Request = import("express").Request;
 type Response = import("express").Response;
@@ -31,7 +40,7 @@ app.get("/health", (_req: Request, res: Response) => {
 
 app.get("/api/auth/me", (req: Request, res: Response) => {
   if (!req.authUserId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return errorResponse(res, 401, "UNAUTHORIZED", "Unauthorized");
   }
 
   return res.status(200).json({ userId: req.authUserId });

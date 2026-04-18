@@ -1,4 +1,13 @@
 const { z } = require("zod") as typeof import("zod");
+const { errorResponse } = require("../lib/api-response") as {
+  errorResponse: (
+    res: import("express").Response,
+    status: 400 | 401 | 404,
+    code: string,
+    message: string,
+    details?: unknown,
+  ) => import("express").Response;
+};
 
 type Request = import("express").Request;
 type Response = import("express").Response;
@@ -10,10 +19,13 @@ const validateBody = (schema: ZodType) => {
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
-      return res.status(400).json({
-        error: "Invalid request body",
-        details: z.flattenError(result.error),
-      });
+      return errorResponse(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        "Invalid request body",
+        z.flattenError(result.error),
+      );
     }
 
     req.validatedBody = result.data;

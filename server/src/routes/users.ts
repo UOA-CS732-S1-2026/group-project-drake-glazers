@@ -5,6 +5,15 @@ const { Prisma } = require("@prisma/client") as {
 const { prisma } = require("../lib/prisma") as {
   prisma: import("@prisma/client").PrismaClient;
 };
+const { errorResponse } = require("../lib/api-response") as {
+  errorResponse: (
+    res: import("express").Response,
+    status: 400 | 401 | 404,
+    code: string,
+    message: string,
+    details?: unknown,
+  ) => import("express").Response;
+};
 const { validateBody } = require("../middleware/validateBody") as {
   validateBody: (
     schema: import("zod").ZodType,
@@ -47,19 +56,28 @@ const userProfileSelect = {
 
 const usersRouter = express.Router();
 
+const getAuthUserId = (req: Request): string => {
+  return req.authUserId as string;
+};
+
+const getPrismaErrorCode = (error: unknown): string | null => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code;
+  }
+
+  return null;
+};
+
 usersRouter.post(
   "/users",
   validateBody(createUserBodySchema),
   async (req: Request, res: Response) => {
-    if (!req.authUserId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
+    const authUserId = getAuthUserId(req);
     const body = req.validatedBody as CreateUserBody;
 
     try {
       const existingUser = await prisma.user.findUnique({
-        where: { id: req.authUserId },
+        where: { id: authUserId },
         select: userSelect,
       });
 
@@ -69,7 +87,7 @@ usersRouter.post(
         }
 
         const updatedUser = await prisma.user.update({
-          where: { id: req.authUserId },
+          where: { id: authUserId },
           data: { email: body.email },
           select: userSelect,
         });
@@ -79,7 +97,7 @@ usersRouter.post(
 
       const createdUser = await prisma.user.create({
         data: {
-          id: req.authUserId,
+          id: authUserId,
           email: body.email,
         },
         select: userSelect,
@@ -87,34 +105,35 @@ usersRouter.post(
 
       return res.status(201).json(createdUser);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        return res.status(400).json({
-          error: "User with this email already exists",
-        });
+      if (getPrismaErrorCode(error) === "P2002") {
+        return errorResponse(
+          res,
+          400,
+          "EMAIL_CONFLICT",
+          "User with this email already exists",
+        );
       }
 
-      return res.status(400).json({
-        error: "Unable to create or sync user",
-      });
+      return errorResponse(
+        res,
+        400,
+        "USER_CREATE_OR_SYNC_FAILED",
+        "Unable to create or sync user",
+      );
     }
   },
 );
 
 usersRouter.get("/users/me", async (req: Request, res: Response) => {
-  if (!req.authUserId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const authUserId = getAuthUserId(req);
 
   const user = await prisma.user.findUnique({
-    where: { id: req.authUserId },
+    where: { id: authUserId },
     select: userSelect,
   });
 
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return errorResponse(res, 404, "USER_NOT_FOUND", "User not found");
   }
 
   return res.status(200).json(user);
@@ -124,98 +143,98 @@ usersRouter.put(
   "/users/me",
   validateBody(updateUserBodySchema),
   async (req: Request, res: Response) => {
-    if (!req.authUserId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
+    const authUserId = getAuthUserId(req);
     const body = req.validatedBody as UpdateUserBody;
     const email = body.email;
 
     if (email === undefined) {
-      return res.status(400).json({
-        error: "Email is required",
-      });
+      return errorResponse(res, 400, "EMAIL_REQUIRED", "Email is required");
     }
 
     try {
       const updatedUser = await prisma.user.update({
-        where: { id: req.authUserId },
+        where: { id: authUserId },
         data: { email },
         select: userSelect,
       });
 
       return res.status(200).json(updatedUser);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025"
-      ) {
-        return res.status(404).json({ error: "User not found" });
+      const code = getPrismaErrorCode(error);
+
+      if (code === "P2025") {
+        return errorResponse(res, 404, "USER_NOT_FOUND", "User not found");
       }
 
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        return res.status(400).json({
-          error: "User with this email already exists",
-        });
+      if (code === "P2002") {
+        return errorResponse(
+          res,
+          400,
+          "EMAIL_CONFLICT",
+          "User with this email already exists",
+        );
       }
 
-      return res.status(400).json({
-        error: "Unable to update user",
-      });
+      return errorResponse(
+        res,
+        400,
+        "USER_UPDATE_FAILED",
+        "Unable to update user",
+      );
     }
   },
 );
 
 usersRouter.delete("/users/me", async (req: Request, res: Response) => {
-  if (!req.authUserId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const authUserId = getAuthUserId(req);
 
   try {
     const deletedUser = await prisma.user.delete({
-      where: { id: req.authUserId },
+      where: { id: authUserId },
       select: userSelect,
     });
 
     return res.status(200).json(deletedUser);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      return res.status(404).json({ error: "User not found" });
+    const code = getPrismaErrorCode(error);
+
+    if (code === "P2025") {
+      return errorResponse(res, 404, "USER_NOT_FOUND", "User not found");
     }
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2003" || error.code === "P2014")
-    ) {
-      return res.status(400).json({
-        error: "Cannot delete user with related records",
-      });
+    if (code === "P2003" || code === "P2014") {
+      return errorResponse(
+        res,
+        400,
+        "USER_DELETE_CONSTRAINT",
+        "Cannot delete user with related records",
+      );
     }
 
-    return res.status(400).json({
-      error: "Unable to delete user",
-    });
+    return errorResponse(
+      res,
+      400,
+      "USER_DELETE_FAILED",
+      "Unable to delete user",
+    );
   }
 });
 
 usersRouter.get("/users/me/profile", async (req: Request, res: Response) => {
-  if (!req.authUserId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const authUserId = getAuthUserId(req);
 
   const profile = await prisma.userProfile.findUnique({
-    where: { userId: req.authUserId },
+    where: { userId: authUserId },
     select: userProfileSelect,
   });
 
   if (!profile) {
-    return res.status(404).json({ error: "User profile not found" });
+    return errorResponse(
+      res,
+      404,
+      "USER_PROFILE_NOT_FOUND",
+      "User profile not found",
+    );
   }
 
   return res.status(200).json(profile);
@@ -225,44 +244,33 @@ usersRouter.put(
   "/users/me/profile",
   validateBody(upsertUserProfileBodySchema),
   async (req: Request, res: Response) => {
-    if (!req.authUserId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const body = req.validatedBody as UpdateUserProfileBody;
-    const data: import("@prisma/client").Prisma.UserProfileUpdateInput = {};
-
-    if (body.displayName !== undefined) {
-      data.displayName = body.displayName;
-    }
-
-    if (body.bio !== undefined) {
-      data.bio = body.bio;
-    }
-
-    if (body.avatarUrl !== undefined) {
-      data.avatarUrl = body.avatarUrl;
-    }
+    const authUserId = getAuthUserId(req);
+    const data = req.validatedBody as UpdateUserProfileBody;
 
     try {
       const updatedProfile = await prisma.userProfile.update({
-        where: { userId: req.authUserId },
+        where: { userId: authUserId },
         data,
         select: userProfileSelect,
       });
 
       return res.status(200).json(updatedProfile);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025"
-      ) {
-        return res.status(404).json({ error: "User profile not found" });
+      if (getPrismaErrorCode(error) === "P2025") {
+        return errorResponse(
+          res,
+          404,
+          "USER_PROFILE_NOT_FOUND",
+          "User profile not found",
+        );
       }
 
-      return res.status(400).json({
-        error: "Unable to update user profile",
-      });
+      return errorResponse(
+        res,
+        400,
+        "USER_PROFILE_UPDATE_FAILED",
+        "Unable to update user profile",
+      );
     }
   },
 );
