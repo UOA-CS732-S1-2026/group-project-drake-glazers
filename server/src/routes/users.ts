@@ -24,6 +24,11 @@ type Request = import("express").Request;
 type Response = import("express").Response;
 type CreateUserBody = { email: string };
 type UpdateUserBody = { email?: string };
+type UpdateUserProfileBody = {
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+};
 
 const userSelect = {
   id: true,
@@ -31,6 +36,14 @@ const userSelect = {
   createdAt: true,
   updatedAt: true,
 } satisfies import("@prisma/client").Prisma.UserSelect;
+
+const userProfileSelect = {
+  id: true,
+  userId: true,
+  displayName: true,
+  bio: true,
+  avatarUrl: true,
+} satisfies import("@prisma/client").Prisma.UserProfileSelect;
 
 const usersRouter = express.Router();
 
@@ -191,24 +204,66 @@ usersRouter.delete("/users/me", async (req: Request, res: Response) => {
   }
 });
 
-usersRouter.get("/users/me/profile", (req: Request, res: Response) => {
-  return res.status(200).json({
-    message:
-      "Scaffolded endpoint. Profile retrieval logic will be implemented in the next step.",
-    userId: req.authUserId,
+usersRouter.get("/users/me/profile", async (req: Request, res: Response) => {
+  if (!req.authUserId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId: req.authUserId },
+    select: userProfileSelect,
   });
+
+  if (!profile) {
+    return res.status(404).json({ error: "User profile not found" });
+  }
+
+  return res.status(200).json(profile);
 });
 
 usersRouter.put(
   "/users/me/profile",
   validateBody(upsertUserProfileBodySchema),
-  (req: Request, res: Response) => {
-    return res.status(200).json({
-      message:
-        "Scaffolded endpoint. Profile update logic will be implemented in the next step.",
-      userId: req.authUserId,
-      body: req.validatedBody,
-    });
+  async (req: Request, res: Response) => {
+    if (!req.authUserId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const body = req.validatedBody as UpdateUserProfileBody;
+    const data: import("@prisma/client").Prisma.UserProfileUpdateInput = {};
+
+    if (body.displayName !== undefined) {
+      data.displayName = body.displayName;
+    }
+
+    if (body.bio !== undefined) {
+      data.bio = body.bio;
+    }
+
+    if (body.avatarUrl !== undefined) {
+      data.avatarUrl = body.avatarUrl;
+    }
+
+    try {
+      const updatedProfile = await prisma.userProfile.update({
+        where: { userId: req.authUserId },
+        data,
+        select: userProfileSelect,
+      });
+
+      return res.status(200).json(updatedProfile);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return res.status(404).json({ error: "User profile not found" });
+      }
+
+      return res.status(400).json({
+        error: "Unable to update user profile",
+      });
+    }
   },
 );
 
