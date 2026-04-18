@@ -23,6 +23,7 @@ const {
 type Request = import("express").Request;
 type Response = import("express").Response;
 type CreateUserBody = { email: string };
+type UpdateUserBody = { email?: string };
 
 const userSelect = {
   id: true,
@@ -89,33 +90,105 @@ usersRouter.post(
   },
 );
 
-usersRouter.get("/users/me", (req: Request, res: Response) => {
-  return res.status(200).json({
-    message:
-      "Scaffolded endpoint. User retrieval logic will be implemented in the next step.",
-    userId: req.authUserId,
+usersRouter.get("/users/me", async (req: Request, res: Response) => {
+  if (!req.authUserId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.authUserId },
+    select: userSelect,
   });
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.status(200).json(user);
 });
 
 usersRouter.put(
   "/users/me",
   validateBody(updateUserBodySchema),
-  (req: Request, res: Response) => {
-    return res.status(200).json({
-      message:
-        "Scaffolded endpoint. User update logic will be implemented in the next step.",
-      userId: req.authUserId,
-      body: req.validatedBody,
-    });
+  async (req: Request, res: Response) => {
+    if (!req.authUserId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const body = req.validatedBody as UpdateUserBody;
+    const email = body.email;
+
+    if (email === undefined) {
+      return res.status(400).json({
+        error: "Email is required",
+      });
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: req.authUserId },
+        data: { email },
+        select: userSelect,
+      });
+
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return res.status(400).json({
+          error: "User with this email already exists",
+        });
+      }
+
+      return res.status(400).json({
+        error: "Unable to update user",
+      });
+    }
   },
 );
 
-usersRouter.delete("/users/me", (req: Request, res: Response) => {
-  return res.status(200).json({
-    message:
-      "Scaffolded endpoint. User deletion logic will be implemented in the next step.",
-    userId: req.authUserId,
-  });
+usersRouter.delete("/users/me", async (req: Request, res: Response) => {
+  if (!req.authUserId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const deletedUser = await prisma.user.delete({
+      where: { id: req.authUserId },
+      select: userSelect,
+    });
+
+    return res.status(200).json(deletedUser);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2003" || error.code === "P2014")
+    ) {
+      return res.status(400).json({
+        error: "Cannot delete user with related records",
+      });
+    }
+
+    return res.status(400).json({
+      error: "Unable to delete user",
+    });
+  }
 });
 
 usersRouter.get("/users/me/profile", (req: Request, res: Response) => {
