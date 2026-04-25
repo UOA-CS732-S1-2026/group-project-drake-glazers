@@ -2,7 +2,8 @@
   "name": "drake-glazers",
   "private": true,
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server"
   },
   "devDependencies": {
     "husky": "^9.0.0",
