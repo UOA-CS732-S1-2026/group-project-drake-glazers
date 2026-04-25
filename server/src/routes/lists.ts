@@ -130,6 +130,28 @@ listsRouter.delete('/lists/:id', async (req: Request, res: Response) => {
   }
 });
 
+listsRouter.get('/lists/:id/items', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id } = req.params;
+
+  const list = await prisma.list.findUnique({
+    where: { id, userId: authUserId },
+    select: { id: true },
+  });
+
+  if (!list) {
+    return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+  }
+
+  const items = await prisma.listItem.findMany({
+    where: { listId: id },
+    select: listItemSelect,
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return res.status(200).json(items);
+});
+
 listsRouter.post(
   '/lists/:id/items',
   validateBody(createListItemBodySchema),
