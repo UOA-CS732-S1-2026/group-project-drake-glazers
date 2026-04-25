@@ -7,6 +7,14 @@ export const createMemoryBodySchema = z.object({
   visibility: z.enum(['public', 'private']),
 });
 
+export const createMemoryItemBodySchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(1000).optional(),
+  mediaType: z.enum(['image', 'video', 'voice_note']),
+  mediaUrl: z.url().max(2048).optional(),
+  sortOrder: z.int().min(0),
+});
+
 export const updateMemoryBodySchema = z
   .object({
     title: z.string().trim().min(1).max(255).optional(),

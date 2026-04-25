@@ -4,7 +4,19 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { createMemoryBodySchema, updateMemoryBodySchema } from '../schemas/memories.js';
+import {
+  createMemoryBodySchema,
+  createMemoryItemBodySchema,
+  updateMemoryBodySchema,
+} from '../schemas/memories.js';
+
+type CreateMemoryItemBody = {
+  title: string;
+  description?: string;
+  mediaType: 'image' | 'video' | 'voice_note';
+  mediaUrl?: string;
+  sortOrder: number;
+};
 
 type UpdateMemoryBody = {
   title?: string;
@@ -30,6 +42,17 @@ const memorySelect = {
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.MemorySelect;
+
+const memoryItemSelect = {
+  id: true,
+  memoryId: true,
+  title: true,
+  description: true,
+  mediaType: true,
+  mediaUrl: true,
+  sortOrder: true,
+  createdAt: true,
+} satisfies Prisma.MemoryItemSelect;
 
 export const memoriesRouter = express.Router();
 
@@ -117,6 +140,43 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
     return errorResponse(res, 400, 'MEMORY_DELETE_FAILED', 'Unable to delete memory');
   }
 });
+
+memoriesRouter.post(
+  '/memories/:id/items',
+  validateBody(createMemoryItemBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id } = req.params;
+    const body = req.validatedBody as CreateMemoryItemBody;
+
+    const memory = await prisma.memory.findUnique({
+      where: { id, userId: authUserId },
+      select: { id: true },
+    });
+
+    if (!memory) {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+
+    try {
+      const item = await prisma.memoryItem.create({
+        data: {
+          memoryId: id,
+          title: body.title,
+          description: body.description,
+          mediaType: body.mediaType,
+          mediaUrl: body.mediaUrl,
+          sortOrder: body.sortOrder,
+        },
+        select: memoryItemSelect,
+      });
+
+      return res.status(201).json(item);
+    } catch {
+      return errorResponse(res, 400, 'MEMORY_ITEM_CREATE_FAILED', 'Unable to create memory item');
+    }
+  }
+);
 
 memoriesRouter.post(
   '/memories',
