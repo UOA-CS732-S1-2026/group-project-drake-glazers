@@ -4,7 +4,14 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { createMemoryBodySchema } from '../schemas/memories.js';
+import { createMemoryBodySchema, updateMemoryBodySchema } from '../schemas/memories.js';
+
+type UpdateMemoryBody = {
+  title?: string;
+  latitude?: number;
+  longitude?: number;
+  visibility?: 'public' | 'private';
+};
 
 type CreateMemoryBody = {
   title: string;
@@ -64,6 +71,32 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
 
   return res.status(200).json(memory);
 });
+
+memoriesRouter.put(
+  '/memories/:id',
+  validateBody(updateMemoryBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id } = req.params;
+    const data = req.validatedBody as UpdateMemoryBody;
+
+    try {
+      const memory = await prisma.memory.update({
+        where: { id, userId: authUserId },
+        data,
+        select: memorySelect,
+      });
+
+      return res.status(200).json(memory);
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+      }
+
+      return errorResponse(res, 400, 'MEMORY_UPDATE_FAILED', 'Unable to update memory');
+    }
+  }
+);
 
 memoriesRouter.post(
   '/memories',
