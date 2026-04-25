@@ -37,6 +37,18 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+memoriesRouter.get('/memories', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+
+  const memories = await prisma.memory.findMany({
+    where: { userId: authUserId },
+    select: memorySelect,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return res.status(200).json(memories);
+});
+
 memoriesRouter.post(
   '/memories',
   validateBody(createMemoryBodySchema),
