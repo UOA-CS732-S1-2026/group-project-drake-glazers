@@ -32,8 +32,10 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json());
+// Clerk middleware parses auth context from incoming requests.
 app.use(clerkMiddleware());
 
+// Keep auth enforcement at the /api boundary so routes stay focused on business logic.
 app.use("/api", requireApiAuth);
 app.use("/api", usersRouter);
 app.use("/api", friendRequestsRouter);
@@ -43,6 +45,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.get("/api/auth/me", (req: Request, res: Response) => {
+  // Simple auth probe endpoint used to verify token wiring quickly.
   if (!req.authUserId) {
     return errorResponse(res, 401, "UNAUTHORIZED", "Unauthorized");
   }

@@ -15,6 +15,7 @@ const errorResponse = (
   message: string,
   details?: unknown,
 ) => {
+  // One shared error shape keeps API responses predictable for clients.
   const payload: ApiErrorPayload = {
     error: {
       code,

@@ -61,6 +61,7 @@ const getAuthUserId = (req: Request): string => {
 };
 
 const getPrismaErrorCode = (error: unknown): string | null => {
+  // Normalize Prisma error access so handlers can map codes consistently.
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     return error.code;
   }
@@ -81,6 +82,7 @@ usersRouter.post(
         select: userSelect,
       });
 
+      // First sign-in creates a record; repeat sign-ins sync the latest email.
       if (existingUser) {
         if (existingUser.email === body.email) {
           return res.status(200).json(existingUser);
@@ -203,6 +205,7 @@ usersRouter.delete("/users/me", async (req: Request, res: Response) => {
     }
 
     if (code === "P2003" || code === "P2014") {
+      // Keep a safe 400 when related data prevents deletion.
       return errorResponse(
         res,
         400,
@@ -245,6 +248,7 @@ usersRouter.put(
   validateBody(upsertUserProfileBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
+    // Validation already limits this payload to allowed profile fields.
     const data = req.validatedBody as UpdateUserProfileBody;
 
     try {

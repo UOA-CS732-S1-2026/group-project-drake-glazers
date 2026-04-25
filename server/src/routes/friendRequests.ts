@@ -144,7 +144,7 @@ friendRequestsRouter.put(
   "/friend-requests/:id/accept",
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params["id"] as string;
 
     const friendRequest = await prisma.friendRequest.findUnique({
       where: { id },
@@ -202,7 +202,7 @@ friendRequestsRouter.put(
   "/friend-requests/:id/decline",
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params["id"] as string;
 
     const friendRequest = await prisma.friendRequest.findUnique({
       where: { id },
@@ -260,7 +260,7 @@ friendRequestsRouter.delete(
   "/friend-requests/:id",
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params["id"] as string;
 
     const friendRequest = await prisma.friendRequest.findUnique({
       where: { id },
