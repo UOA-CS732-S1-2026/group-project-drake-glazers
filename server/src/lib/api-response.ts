@@ -1,4 +1,4 @@
-type Response = import("express").Response;
+import type { Response } from 'express';
 
 type ApiErrorPayload = {
   error: {
@@ -8,12 +8,12 @@ type ApiErrorPayload = {
   };
 };
 
-const errorResponse = (
+export const errorResponse = (
   res: Response,
   status: 400 | 401 | 404,
   code: string,
   message: string,
-  details?: unknown,
+  details?: unknown
 ) => {
   // One shared error shape keeps API responses predictable for clients.
   const payload: ApiErrorPayload = {
@@ -29,5 +29,3 @@ const errorResponse = (
 
   return res.status(status).json(payload);
 };
-
-module.exports = { errorResponse };

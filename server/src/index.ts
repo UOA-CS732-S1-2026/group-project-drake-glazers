@@ -1,26 +1,11 @@
-const express = require("express") as typeof import("express");
-const cors = require("cors") as typeof import("cors");
-const dotenv = require("dotenv") as typeof import("dotenv");
-const { clerkMiddleware } =
-  require("@clerk/express") as typeof import("@clerk/express");
-const { requireApiAuth } = require("./middleware/requireApiAuth") as {
-  requireApiAuth: import("express").RequestHandler;
-};
-const { usersRouter } = require("./routes/users") as {
-  usersRouter: import("express").Router;
-};
-const { errorResponse } = require("./lib/api-response") as {
-  errorResponse: (
-    res: import("express").Response,
-    status: 400 | 401 | 404,
-    code: string,
-    message: string,
-    details?: unknown,
-  ) => import("express").Response;
-};
-
-type Request = import("express").Request;
-type Response = import("express").Response;
+import express from 'express';
+import type { Request, Response } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { clerkMiddleware } from '@clerk/express';
+import { requireApiAuth } from './middleware/requireApiAuth.js';
+import { usersRouter } from './routes/users.js';
+import { errorResponse } from './lib/api-response.js';
 
 dotenv.config();
 
@@ -33,17 +18,17 @@ app.use(express.json());
 app.use(clerkMiddleware());
 
 // Keep auth enforcement at the /api boundary so routes stay focused on business logic.
-app.use("/api", requireApiAuth);
-app.use("/api", usersRouter);
+app.use('/api', requireApiAuth);
+app.use('/api', usersRouter);
 
-app.get("/health", (_req: Request, res: Response) => {
-  return res.status(200).json({ status: "ok" });
+app.get('/health', (_req: Request, res: Response) => {
+  return res.status(200).json({ status: 'ok' });
 });
 
-app.get("/api/auth/me", (req: Request, res: Response) => {
+app.get('/api/auth/me', (req: Request, res: Response) => {
   // Simple auth probe endpoint used to verify token wiring quickly.
   if (!req.authUserId) {
-    return errorResponse(res, 401, "UNAUTHORIZED", "Unauthorized");
+    return errorResponse(res, 401, 'UNAUTHORIZED', 'Unauthorized');
   }
 
   return res.status(200).json({ userId: req.authUserId });
