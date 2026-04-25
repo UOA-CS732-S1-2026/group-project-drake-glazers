@@ -194,6 +194,35 @@ listsRouter.put(
   }
 );
 
+listsRouter.delete('/lists/:id/items/:itemId', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id, itemId } = req.params;
+
+  const list = await prisma.list.findUnique({
+    where: { id, userId: authUserId },
+    select: { id: true },
+  });
+
+  if (!list) {
+    return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+  }
+
+  try {
+    const item = await prisma.listItem.delete({
+      where: { id: itemId, listId: id },
+      select: listItemSelect,
+    });
+
+    return res.status(200).json(item);
+  } catch (error) {
+    if (getPrismaErrorCode(error) === 'P2025') {
+      return errorResponse(res, 404, 'LIST_ITEM_NOT_FOUND', 'List item not found');
+    }
+
+    return errorResponse(res, 400, 'LIST_ITEM_DELETE_FAILED', 'Unable to delete list item');
+  }
+});
+
 listsRouter.post(
   '/lists/:id/items',
   validateBody(createListItemBodySchema),
