@@ -79,7 +79,7 @@ model MemoryItem {
   sortOrder   Int       @map("sort_order")
   createdAt   DateTime  @default(now()) @map("created_at")
 
-  memory Memory @relation(fields: [memoryId], references: [id])
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 
   @@map("memory_items")
 }
