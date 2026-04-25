@@ -9,6 +9,9 @@ const { requireApiAuth } = require("./middleware/requireApiAuth") as {
 const { usersRouter } = require("./routes/users") as {
   usersRouter: import("express").Router;
 };
+const { friendRequestsRouter } = require("./routes/friendRequests") as {
+  friendRequestsRouter: import("express").Router;
+};
 const { errorResponse } = require("./lib/api-response") as {
   errorResponse: (
     res: import("express").Response,
@@ -33,6 +36,7 @@ app.use(clerkMiddleware());
 
 app.use("/api", requireApiAuth);
 app.use("/api", usersRouter);
+app.use("/api", friendRequestsRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   return res.status(200).json({ status: "ok" });
