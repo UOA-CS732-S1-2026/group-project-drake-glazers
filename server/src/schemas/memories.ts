@@ -15,6 +15,24 @@ export const createMemoryItemBodySchema = z.object({
   sortOrder: z.int().min(0),
 });
 
+export const updateMemoryItemBodySchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().max(1000).optional(),
+    mediaType: z.enum(['image', 'video', 'voice_note']).optional(),
+    mediaUrl: z.url().max(2048).optional(),
+    sortOrder: z.int().min(0).optional(),
+  })
+  .refine(
+    (data) =>
+      data.title !== undefined ||
+      data.description !== undefined ||
+      data.mediaType !== undefined ||
+      data.mediaUrl !== undefined ||
+      data.sortOrder !== undefined,
+    { error: 'At least one field must be provided' }
+  );
+
 export const updateMemoryBodySchema = z
   .object({
     title: z.string().trim().min(1).max(255).optional(),

@@ -8,6 +8,7 @@ import {
   createMemoryBodySchema,
   createMemoryItemBodySchema,
   updateMemoryBodySchema,
+  updateMemoryItemBodySchema,
 } from '../schemas/memories.js';
 
 type CreateMemoryItemBody = {
@@ -16,6 +17,14 @@ type CreateMemoryItemBody = {
   mediaType: 'image' | 'video' | 'voice_note';
   mediaUrl?: string;
   sortOrder: number;
+};
+
+type UpdateMemoryItemBody = {
+  title?: string;
+  description?: string;
+  mediaType?: 'image' | 'video' | 'voice_note';
+  mediaUrl?: string;
+  sortOrder?: number;
 };
 
 type UpdateMemoryBody = {
@@ -162,6 +171,41 @@ memoriesRouter.get('/memories/:id/items', async (req: Request, res: Response) =>
 
   return res.status(200).json(items);
 });
+
+memoriesRouter.put(
+  '/memories/:id/items/:itemId',
+  validateBody(updateMemoryItemBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id, itemId } = req.params;
+    const data = req.validatedBody as UpdateMemoryItemBody;
+
+    const memory = await prisma.memory.findUnique({
+      where: { id, userId: authUserId },
+      select: { id: true },
+    });
+
+    if (!memory) {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+
+    try {
+      const item = await prisma.memoryItem.update({
+        where: { id: itemId, memoryId: id },
+        data,
+        select: memoryItemSelect,
+      });
+
+      return res.status(200).json(item);
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        return errorResponse(res, 404, 'MEMORY_ITEM_NOT_FOUND', 'Memory item not found');
+      }
+
+      return errorResponse(res, 400, 'MEMORY_ITEM_UPDATE_FAILED', 'Unable to update memory item');
+    }
+  }
+);
 
 memoriesRouter.post(
   '/memories/:id/items',
