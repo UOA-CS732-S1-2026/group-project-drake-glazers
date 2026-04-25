@@ -44,6 +44,22 @@ listsRouter.get('/lists', async (req: Request, res: Response) => {
   return res.status(200).json(lists);
 });
 
+listsRouter.get('/lists/:id', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id } = req.params;
+
+  const list = await prisma.list.findUnique({
+    where: { id },
+    select: listSelect,
+  });
+
+  if (!list || list.userId !== authUserId) {
+    return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+  }
+
+  return res.status(200).json(list);
+});
+
 listsRouter.post(
   '/lists',
   validateBody(createListBodySchema),
