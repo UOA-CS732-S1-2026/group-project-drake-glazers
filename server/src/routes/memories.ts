@@ -49,6 +49,22 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
   return res.status(200).json(memories);
 });
 
+memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id } = req.params;
+
+  const memory = await prisma.memory.findUnique({
+    where: { id },
+    select: memorySelect,
+  });
+
+  if (!memory || memory.userId !== authUserId) {
+    return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  return res.status(200).json(memory);
+});
+
 memoriesRouter.post(
   '/memories',
   validateBody(createMemoryBodySchema),
