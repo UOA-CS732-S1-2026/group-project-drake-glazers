@@ -32,6 +32,18 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+listsRouter.get('/lists', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+
+  const lists = await prisma.list.findMany({
+    where: { userId: authUserId },
+    select: listSelect,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return res.status(200).json(lists);
+});
+
 listsRouter.post(
   '/lists',
   validateBody(createListBodySchema),
