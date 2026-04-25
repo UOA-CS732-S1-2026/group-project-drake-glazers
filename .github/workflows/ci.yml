@@ -19,6 +19,7 @@ jobs:
       - run: npm install --prefix server
       - run: cd client && npm run lint
       - run: cd server && npm run lint
+      - run: cd server && npm run check-env
 
   prisma:
     runs-on: ubuntu-latest
