@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { clerkMiddleware } from '@clerk/express';
 import { requireApiAuth } from './middleware/requireApiAuth.js';
 import { usersRouter } from './routes/users.js';
+import { memoriesRouter } from './routes/memories.js';
 import { errorResponse } from './lib/api-response.js';
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use(clerkMiddleware());
 // Keep auth enforcement at the /api boundary so routes stay focused on business logic.
 app.use('/api', requireApiAuth);
 app.use('/api', usersRouter);
+app.use('/api', memoriesRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });
