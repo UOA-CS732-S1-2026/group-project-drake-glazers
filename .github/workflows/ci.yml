@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm install --prefix client
+      - run: npm install --prefix server
+      - run: cd client && npm run lint
+      - run: cd server && npm run lint
+
+  prisma:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --prefix server
+      - run: cd server && npx prisma validate
