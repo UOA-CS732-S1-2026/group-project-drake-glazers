@@ -1,32 +1,15 @@
-const { getAuth } =
-  require("@clerk/express") as typeof import("@clerk/express");
-const { errorResponse } = require("../lib/api-response") as {
-  errorResponse: (
-    res: import("express").Response,
-    status: 400 | 401 | 404,
-    code: string,
-    message: string,
-    details?: unknown,
-  ) => import("express").Response;
-};
+import { getAuth } from '@clerk/express';
+import type { Request, Response, NextFunction } from 'express';
+import { errorResponse } from '../lib/api-response.js';
 
-type Request = import("express").Request;
-type Response = import("express").Response;
-type NextFunction = import("express").NextFunction;
-
-const requireApiAuth = (req: Request, res: Response, next: NextFunction) => {
-  const allowDevBypass = process.env.DEV_BYPASS_AUTH === "true";
+export const requireApiAuth = (req: Request, res: Response, next: NextFunction) => {
+  const allowDevBypass = process.env.DEV_BYPASS_AUTH === 'true';
 
   if (allowDevBypass) {
-    const headerValue = req.header("x-dev-user-id");
+    const headerValue = req.header('x-dev-user-id');
 
     if (!headerValue) {
-      return errorResponse(
-        res,
-        401,
-        "UNAUTHORIZED",
-        "Missing x-dev-user-id header",
-      );
+      return errorResponse(res, 401, 'UNAUTHORIZED', 'Missing x-dev-user-id header');
     }
 
     req.authUserId = headerValue;
@@ -36,12 +19,10 @@ const requireApiAuth = (req: Request, res: Response, next: NextFunction) => {
   const { userId } = getAuth(req);
 
   if (!userId) {
-    return errorResponse(res, 401, "UNAUTHORIZED", "Unauthorized");
+    return errorResponse(res, 401, 'UNAUTHORIZED', 'Unauthorized');
   }
 
   // Store the authenticated Clerk user id for downstream handlers.
   req.authUserId = userId;
   return next();
 };
-
-module.exports = { requireApiAuth };

@@ -1,0 +1,23 @@
+{
+  "name": "drake-glazers",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0"
+  },
+  "lint-staged": {
+    "client/**/*.{js,jsx,ts,tsx}": [
+      "bash -c 'cd client && eslint --fix'",
+      "prettier --write"
+    ],
+    "server/**/*.{js,ts}": [
+      "bash -c 'cd server && eslint --fix'",
+      "prettier --write"
+    ]
+  }
+}

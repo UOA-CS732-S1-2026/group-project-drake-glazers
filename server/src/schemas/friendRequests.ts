@@ -1,9 +1,7 @@
-const { z } = require("zod") as typeof import("zod");
+import { z } from 'zod';
 
 const sendFriendRequestBodySchema = z.object({
   toUserId: z.string().min(1),
 });
 
-module.exports = {
-  sendFriendRequestBodySchema,
-};
+export { sendFriendRequestBodySchema };
