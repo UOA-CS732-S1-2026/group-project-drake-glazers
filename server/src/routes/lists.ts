@@ -8,7 +8,14 @@ import {
   createListBodySchema,
   createListItemBodySchema,
   updateListBodySchema,
+  updateListItemBodySchema,
 } from '../schemas/lists.js';
+
+type UpdateListItemBody = {
+  latitude?: number;
+  longitude?: number;
+  notes?: string;
+};
 
 type CreateListItemBody = {
   latitude: number;
@@ -151,6 +158,41 @@ listsRouter.get('/lists/:id/items', async (req: Request, res: Response) => {
 
   return res.status(200).json(items);
 });
+
+listsRouter.put(
+  '/lists/:id/items/:itemId',
+  validateBody(updateListItemBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id, itemId } = req.params;
+    const data = req.validatedBody as UpdateListItemBody;
+
+    const list = await prisma.list.findUnique({
+      where: { id, userId: authUserId },
+      select: { id: true },
+    });
+
+    if (!list) {
+      return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+    }
+
+    try {
+      const item = await prisma.listItem.update({
+        where: { id: itemId, listId: id },
+        data,
+        select: listItemSelect,
+      });
+
+      return res.status(200).json(item);
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        return errorResponse(res, 404, 'LIST_ITEM_NOT_FOUND', 'List item not found');
+      }
+
+      return errorResponse(res, 400, 'LIST_ITEM_UPDATE_FAILED', 'Unable to update list item');
+    }
+  }
+);
 
 listsRouter.post(
   '/lists/:id/items',
