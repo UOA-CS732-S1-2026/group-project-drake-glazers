@@ -207,6 +207,35 @@ memoriesRouter.put(
   }
 );
 
+memoriesRouter.delete('/memories/:id/items/:itemId', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id, itemId } = req.params;
+
+  const memory = await prisma.memory.findUnique({
+    where: { id, userId: authUserId },
+    select: { id: true },
+  });
+
+  if (!memory) {
+    return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  try {
+    const item = await prisma.memoryItem.delete({
+      where: { id: itemId, memoryId: id },
+      select: memoryItemSelect,
+    });
+
+    return res.status(200).json(item);
+  } catch (error) {
+    if (getPrismaErrorCode(error) === 'P2025') {
+      return errorResponse(res, 404, 'MEMORY_ITEM_NOT_FOUND', 'Memory item not found');
+    }
+
+    return errorResponse(res, 400, 'MEMORY_ITEM_DELETE_FAILED', 'Unable to delete memory item');
+  }
+});
+
 memoriesRouter.post(
   '/memories/:id/items',
   validateBody(createMemoryItemBodySchema),
