@@ -4,7 +4,17 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { createListBodySchema, updateListBodySchema } from '../schemas/lists.js';
+import {
+  createListBodySchema,
+  createListItemBodySchema,
+  updateListBodySchema,
+} from '../schemas/lists.js';
+
+type CreateListItemBody = {
+  latitude: number;
+  longitude: number;
+  notes?: string;
+};
 
 type UpdateListBody = {
   name?: string;
@@ -15,6 +25,15 @@ type CreateListBody = {
   name: string;
   description?: string;
 };
+
+const listItemSelect = {
+  id: true,
+  listId: true,
+  latitude: true,
+  longitude: true,
+  notes: true,
+  createdAt: true,
+} satisfies Prisma.ListItemSelect;
 
 const listSelect = {
   id: true,
@@ -110,6 +129,41 @@ listsRouter.delete('/lists/:id', async (req: Request, res: Response) => {
     return errorResponse(res, 400, 'LIST_DELETE_FAILED', 'Unable to delete list');
   }
 });
+
+listsRouter.post(
+  '/lists/:id/items',
+  validateBody(createListItemBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id } = req.params;
+    const body = req.validatedBody as CreateListItemBody;
+
+    const list = await prisma.list.findUnique({
+      where: { id, userId: authUserId },
+      select: { id: true },
+    });
+
+    if (!list) {
+      return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+    }
+
+    try {
+      const item = await prisma.listItem.create({
+        data: {
+          listId: id,
+          latitude: body.latitude,
+          longitude: body.longitude,
+          notes: body.notes,
+        },
+        select: listItemSelect,
+      });
+
+      return res.status(201).json(item);
+    } catch {
+      return errorResponse(res, 400, 'LIST_ITEM_CREATE_FAILED', 'Unable to create list item');
+    }
+  }
+);
 
 listsRouter.post(
   '/lists',
