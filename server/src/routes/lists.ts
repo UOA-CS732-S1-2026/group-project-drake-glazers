@@ -91,6 +91,26 @@ listsRouter.put(
   }
 );
 
+listsRouter.delete('/lists/:id', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id } = req.params;
+
+  try {
+    const list = await prisma.list.delete({
+      where: { id, userId: authUserId },
+      select: listSelect,
+    });
+
+    return res.status(200).json(list);
+  } catch (error) {
+    if (getPrismaErrorCode(error) === 'P2025') {
+      return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+    }
+
+    return errorResponse(res, 400, 'LIST_DELETE_FAILED', 'Unable to delete list');
+  }
+});
+
 listsRouter.post(
   '/lists',
   validateBody(createListBodySchema),
