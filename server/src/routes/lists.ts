@@ -4,7 +4,12 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { createListBodySchema } from '../schemas/lists.js';
+import { createListBodySchema, updateListBodySchema } from '../schemas/lists.js';
+
+type UpdateListBody = {
+  name?: string;
+  description?: string;
+};
 
 type CreateListBody = {
   name: string;
@@ -59,6 +64,32 @@ listsRouter.get('/lists/:id', async (req: Request, res: Response) => {
 
   return res.status(200).json(list);
 });
+
+listsRouter.put(
+  '/lists/:id',
+  validateBody(updateListBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { id } = req.params;
+    const data = req.validatedBody as UpdateListBody;
+
+    try {
+      const list = await prisma.list.update({
+        where: { id, userId: authUserId },
+        data,
+        select: listSelect,
+      });
+
+      return res.status(200).json(list);
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+      }
+
+      return errorResponse(res, 400, 'LIST_UPDATE_FAILED', 'Unable to update list');
+    }
+  }
+);
 
 listsRouter.post(
   '/lists',
