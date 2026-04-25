@@ -141,6 +141,28 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
   }
 });
 
+memoriesRouter.get('/memories/:id/items', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const { id } = req.params;
+
+  const memory = await prisma.memory.findUnique({
+    where: { id, userId: authUserId },
+    select: { id: true },
+  });
+
+  if (!memory) {
+    return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  const items = await prisma.memoryItem.findMany({
+    where: { memoryId: id },
+    select: memoryItemSelect,
+    orderBy: { sortOrder: 'asc' },
+  });
+
+  return res.status(200).json(items);
+});
+
 memoriesRouter.post(
   '/memories/:id/items',
   validateBody(createMemoryItemBodySchema),
