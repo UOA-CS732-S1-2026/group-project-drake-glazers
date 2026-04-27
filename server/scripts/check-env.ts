@@ -17,6 +17,16 @@ const documentedVars = new Set(
     .filter(Boolean)
 );
 
+const REQUIRED_ENV_VARS = new Set(['CLERK_WEBHOOK_SIGNING_SECRET']);
+
+const missingRequiredVars = [...REQUIRED_ENV_VARS].filter((key) => !documentedVars.has(key));
+
+if (missingRequiredVars.length > 0) {
+  console.error('Required environment variables are missing from .env.example:');
+  missingRequiredVars.forEach((key) => console.error(`  - ${key}`));
+  process.exit(1);
+}
+
 const getAllTsFiles = (dir: string): string[] => {
   const files: string[] = [];
   for (const entry of readdirSync(dir)) {
