@@ -1,18 +1,25 @@
 import { Platform, StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { MapPin } from '@/components/map-pin';
+import { useMemories } from '@/hooks/use-memories';
 
 const GLOBE_TO_MAP_ZOOM = 2.5;
 
-const HARDCODED_PINS = [
-  { id: 'auckland', coordinate: [174.7633, -36.8485] as [number, number] },
-  { id: 'wellington', coordinate: [174.7762, -41.2865] as [number, number] },
-];
-
 export default function HomeScreen() {
+  const { data: memories = [] } = useMemories();
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
   const [zoomLevel, setZoomLevel] = useState(1.5);
+  const cameraRef = useRef<MapboxGL.Camera>(null);
+
+  const flyToPin = useCallback((coordinate: [number, number]) => {
+    cameraRef.current?.setCamera({
+      centerCoordinate: coordinate,
+      zoomLevel: 14,
+      animationDuration: 4000,
+      animationMode: 'flyTo',
+    });
+  }, []);
 
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
@@ -43,9 +50,19 @@ export default function HomeScreen() {
         scaleBarEnabled={false}
         onRegionIsChanging={onRegionIsChanging}
       >
-        <MapboxGL.Camera zoomLevel={1.5} centerCoordinate={[0, 20]} animationMode="none" />
-        {HARDCODED_PINS.map((pin) => (
-          <MapPin key={pin.id} id={pin.id} coordinate={pin.coordinate} />
+        <MapboxGL.Camera
+          ref={cameraRef}
+          zoomLevel={1.5}
+          centerCoordinate={[0, 20]}
+          animationMode="none"
+        />
+        {memories.map((memory) => (
+          <MapPin
+            key={memory.id}
+            id={memory.id}
+            coordinate={[memory.longitude, memory.latitude]}
+            onPress={flyToPin}
+          />
         ))}
         {projection === 'globe' && (
           <MapboxGL.Atmosphere

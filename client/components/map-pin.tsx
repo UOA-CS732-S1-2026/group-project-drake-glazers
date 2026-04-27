@@ -4,11 +4,16 @@ import MapboxGL from '@rnmapbox/maps';
 type MapPinProps = {
   id: string;
   coordinate: [number, number];
+  onPress?: (coordinate: [number, number]) => void;
 };
 
-export function MapPin({ id, coordinate }: MapPinProps) {
+export function MapPin({ id, coordinate, onPress }: MapPinProps) {
   return (
-    <MapboxGL.PointAnnotation id={id} coordinate={coordinate}>
+    <MapboxGL.PointAnnotation
+      id={id}
+      coordinate={coordinate}
+      onSelected={() => onPress?.(coordinate)}
+    >
       <View style={styles.pin} />
     </MapboxGL.PointAnnotation>
   );
