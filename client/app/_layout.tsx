@@ -3,7 +3,10 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, ClerkProvider} from '@clerk/clerk-expo';
+import { tokenCache } from '@clerk/clerk-expo/tokenCache';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect } from 'react';
@@ -15,6 +18,15 @@ SplashScreen.preventAutoHideAsync();
 export const unstable_settings = {
   anchor: '(nav)',
 };
+
+
+const queryClient = new QueryClient()
+
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+if (!publishableKey) {
+  throw new Error('Missing publishable key. Please add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your environment variables.');
+}
 
 export default function RootLayout() {
 
@@ -37,15 +49,19 @@ export default function RootLayout() {
   if (!isLoaded) return null;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(nav)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="memory/[id]/index" options={{ title: 'Memory' }} />
-        <Stack.Screen name="friend/[id]" options={{ title: 'Friend' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(nav)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="memory/[id]/index" options={{ title: 'Memory' }} />
+            <Stack.Screen name="friend/[id]" options={{ title: 'Friend' }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </ClerkProvider>
+    </QueryClientProvider>
   );
 }
