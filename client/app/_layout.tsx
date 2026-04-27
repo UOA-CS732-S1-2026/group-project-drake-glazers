@@ -17,6 +17,9 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(nav)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="memory/[id]/index" options={{ title: 'Memory' }} />
+        <Stack.Screen name="friend/[id]" options={{ title: 'Friend' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
