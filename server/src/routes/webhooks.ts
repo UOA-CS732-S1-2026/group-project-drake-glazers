@@ -36,7 +36,12 @@ clerkWebhookRouter.post(
 
     try {
       const webhook = new Webhook(signingSecret);
-      webhook.verify(payload, req.headers);
+      // Normalize IncomingHttpHeaders (string | string[] | undefined) to Record<string, string>
+      const normalizedHeaders = Object.fromEntries(
+        Object.entries(req.headers).map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : (v ?? '')])
+      ) as Record<string, string>;
+
+      webhook.verify(payload, normalizedHeaders);
     } catch {
       return errorResponse(
         res,
