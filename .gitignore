@@ -9,3 +9,8 @@ node_modules
 .env.*
 !.env.example
 !.env.test
+
+# Claude files
+CLAUDE.md
+.CLAUDE.md
+/CLAUDE.md
