@@ -1,7 +1,19 @@
 import { Platform, StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
+import { useState, useCallback } from 'react';
+
+const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
+  const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
+  const [zoomLevel, setZoomLevel] = useState(1.5);
+
+  const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
+    const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
+    setZoomLevel(zoom);
+    setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
+  }, []);
+
   if (Platform.OS === 'web') {
     return (
       <View style={styles.webFallback}>
@@ -14,23 +26,33 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <MapboxGL.MapView
         style={styles.map}
-        styleURL="mapbox://styles/mapbox/satellite-v9"
-        projection="globe"
+        styleURL={
+          projection === 'globe'
+            ? 'mapbox://styles/mapbox/satellite-v9'
+            : 'mapbox://styles/mapbox/satellite-streets-v12'
+        }
+        projection={projection}
         logoEnabled={false}
         attributionEnabled={false}
         scaleBarEnabled={false}
+        onRegionIsChanging={onRegionIsChanging}
       >
         <MapboxGL.Camera zoomLevel={1.5} centerCoordinate={[0, 20]} animationMode="none" />
-        <MapboxGL.Atmosphere
-          style={{
-            color: 'rgba(135, 206, 235, 0.3)',
-            highColor: 'rgba(30, 60, 100, 0.3)',
-            spaceColor: '#000000',
-            horizonBlend: 0.02,
-            starIntensity: 0.1,
-          }}
-        />
+        {projection === 'globe' && (
+          <MapboxGL.Atmosphere
+            style={{
+              color: 'rgba(135, 206, 235, 0.3)',
+              highColor: 'rgba(30, 60, 100, 0.3)',
+              spaceColor: '#000000',
+              horizonBlend: 0.02,
+              starIntensity: 0.1,
+            }}
+          />
+        )}
       </MapboxGL.MapView>
+      <View style={styles.debugBox} pointerEvents="none">
+        <Text style={styles.debugText}>zoom: {zoomLevel.toFixed(2)}</Text>
+      </View>
       <SafeAreaView style={styles.header} pointerEvents="none">
         <Text style={styles.headerTitle}>Memoriez</Text>
       </SafeAreaView>
@@ -59,6 +81,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 24,
     fontFamily: 'PlaywriteNO',
+  },
+  debugBox: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  debugText: {
+    color: '#00ff88',
+    fontSize: 12,
+    fontFamily: 'monospace',
   },
   webFallback: {
     flex: 1,
