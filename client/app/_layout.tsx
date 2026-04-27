@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useAuth, ClerkProvider} from '@clerk/clerk-expo';
-import { tokenCache } from '@clerk/clerk-expo/tokenCache';
+import { tokenCache } from '@clerk/clerk-expo/token-cache';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
