@@ -43,6 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     '@rnmapbox/maps',
+    'expo-font',
   ],
   experiments: {
     typedRoutes: true,
