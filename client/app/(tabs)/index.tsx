@@ -1,8 +1,14 @@
 import { Platform, StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import { useState, useCallback } from 'react';
+import { MapPin } from '@/components/map-pin';
 
 const GLOBE_TO_MAP_ZOOM = 2.5;
+
+const HARDCODED_PINS = [
+  { id: 'auckland', coordinate: [174.7633, -36.8485] as [number, number] },
+  { id: 'wellington', coordinate: [174.7762, -41.2865] as [number, number] },
+];
 
 export default function HomeScreen() {
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
@@ -38,6 +44,9 @@ export default function HomeScreen() {
         onRegionIsChanging={onRegionIsChanging}
       >
         <MapboxGL.Camera zoomLevel={1.5} centerCoordinate={[0, 20]} animationMode="none" />
+        {HARDCODED_PINS.map((pin) => (
+          <MapPin key={pin.id} id={pin.id} coordinate={pin.coordinate} />
+        ))}
         {projection === 'globe' && (
           <MapboxGL.Atmosphere
             style={{
