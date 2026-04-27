@@ -6,6 +6,7 @@ import { clerkMiddleware } from '@clerk/express';
 import { requireApiAuth } from './middleware/requireApiAuth.js';
 import { usersRouter } from './routes/users.js';
 import { memoriesRouter } from './routes/memories.js';
+import { friendRequestsRouter } from './routes/friendRequests.js';
 import { errorResponse } from './lib/api-response.js';
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(clerkMiddleware());
 app.use('/api', requireApiAuth);
 app.use('/api', usersRouter);
 app.use('/api', memoriesRouter);
+app.use('/api', friendRequestsRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });
