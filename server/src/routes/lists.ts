@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
@@ -11,27 +12,10 @@ import {
   updateListItemBodySchema,
 } from '../schemas/lists.js';
 
-type UpdateListItemBody = {
-  latitude?: number;
-  longitude?: number;
-  notes?: string;
-};
-
-type CreateListItemBody = {
-  latitude: number;
-  longitude: number;
-  notes?: string;
-};
-
-type UpdateListBody = {
-  name?: string;
-  description?: string;
-};
-
-type CreateListBody = {
-  name: string;
-  description?: string;
-};
+type CreateListBody = z.infer<typeof createListBodySchema>;
+type UpdateListBody = z.infer<typeof updateListBodySchema>;
+type CreateListItemBody = z.infer<typeof createListItemBodySchema>;
+type UpdateListItemBody = z.infer<typeof updateListItemBodySchema>;
 
 const listItemSelect = {
   id: true,
@@ -77,7 +61,7 @@ listsRouter.get('/lists', async (req: Request, res: Response) => {
 
 listsRouter.get('/lists/:id', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const list = await prisma.list.findUnique({
     where: { id },
@@ -96,7 +80,7 @@ listsRouter.put(
   validateBody(updateListBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = req.validatedBody as UpdateListBody;
 
     try {
@@ -119,7 +103,7 @@ listsRouter.put(
 
 listsRouter.delete('/lists/:id', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   try {
     const list = await prisma.list.delete({
@@ -139,7 +123,7 @@ listsRouter.delete('/lists/:id', async (req: Request, res: Response) => {
 
 listsRouter.get('/lists/:id/items', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const list = await prisma.list.findUnique({
     where: { id, userId: authUserId },
@@ -164,7 +148,8 @@ listsRouter.put(
   validateBody(updateListItemBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id, itemId } = req.params;
+    const id = req.params.id as string;
+    const itemId = req.params.itemId as string;
     const data = req.validatedBody as UpdateListItemBody;
 
     const list = await prisma.list.findUnique({
@@ -196,7 +181,8 @@ listsRouter.put(
 
 listsRouter.delete('/lists/:id/items/:itemId', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id, itemId } = req.params;
+  const id = req.params.id as string;
+  const itemId = req.params.itemId as string;
 
   const list = await prisma.list.findUnique({
     where: { id, userId: authUserId },
@@ -228,7 +214,7 @@ listsRouter.post(
   validateBody(createListItemBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params.id as string;
     const body = req.validatedBody as CreateListItemBody;
 
     const list = await prisma.list.findUnique({
@@ -246,7 +232,7 @@ listsRouter.post(
           listId: id,
           latitude: body.latitude,
           longitude: body.longitude,
-          notes: body.notes,
+          notes: body.notes ?? null,
         },
         select: listItemSelect,
       });
@@ -270,7 +256,7 @@ listsRouter.post(
         data: {
           userId: authUserId,
           name: body.name,
-          description: body.description,
+          description: body.description ?? null,
         },
         select: listSelect,
       });
