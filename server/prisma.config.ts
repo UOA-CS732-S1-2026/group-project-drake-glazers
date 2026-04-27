@@ -10,6 +10,6 @@ export default defineConfig({
   },
   datasource: {
     url: env('DATABASE_URL'),
-    ...(process.env.DIRECT_URL ? { shadowDatabaseUrl: process.env.DIRECT_URL } : {}),
+    shadowDatabaseUrl: process.env.DIRECT_URL ?? env('DATABASE_URL'),
   },
 });
