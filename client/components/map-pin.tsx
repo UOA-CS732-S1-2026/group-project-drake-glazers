@@ -1,25 +1,39 @@
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 
 type MapPinProps = {
   id: string;
   coordinate: [number, number];
-  onPress?: (coordinate: [number, number]) => void;
+  title?: string;
+  showTitle?: boolean;
+  onPress?: (id: string, coordinate: [number, number]) => void;
 };
 
-export function MapPin({ id, coordinate, onPress }: MapPinProps) {
+export function MapPin({ id, coordinate, title, showTitle, onPress }: MapPinProps) {
   return (
     <MapboxGL.PointAnnotation
       id={id}
       coordinate={coordinate}
-      onSelected={() => onPress?.(coordinate)}
+      onSelected={() => onPress?.(id, coordinate)}
     >
-      <View style={styles.pin} />
+      <View style={styles.container}>
+        <View style={styles.pin} />
+        {title && (
+          <View style={[styles.labelContainer, !showTitle && styles.labelHidden]}>
+            <Text style={styles.label} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+        )}
+      </View>
     </MapboxGL.PointAnnotation>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+  },
   pin: {
     width: 16,
     height: 16,
@@ -27,5 +41,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff385c',
     borderWidth: 2,
     borderColor: '#ffffff',
+  },
+  labelContainer: {
+    marginTop: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  label: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  labelHidden: {
+    opacity: 0,
   },
 });

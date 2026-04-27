@@ -2,7 +2,9 @@ import { Platform, StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import { useState, useCallback, useRef } from 'react';
 import { MapPin } from '@/components/map-pin';
+import { MemoryPreviewCard } from '@/components/memory-preview-card';
 import { useMemories } from '@/hooks/use-memories';
+import { Memory } from '@/lib/api';
 
 const GLOBE_TO_MAP_ZOOM = 2.5;
 
@@ -10,16 +12,22 @@ export default function HomeScreen() {
   const { data: memories = [] } = useMemories();
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
   const [zoomLevel, setZoomLevel] = useState(1.5);
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
-  const flyToPin = useCallback((coordinate: [number, number]) => {
-    cameraRef.current?.setCamera({
-      centerCoordinate: coordinate,
-      zoomLevel: 14,
-      animationDuration: 4000,
-      animationMode: 'flyTo',
-    });
-  }, []);
+  const handlePinPress = useCallback(
+    (id: string, coordinate: [number, number]) => {
+      const memory = memories.find((m) => m.id === id) ?? null;
+      setSelectedMemory(memory);
+      cameraRef.current?.setCamera({
+        centerCoordinate: coordinate,
+        zoomLevel: 14,
+        animationDuration: 4000,
+        animationMode: 'flyTo',
+      });
+    },
+    [memories]
+  );
 
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
@@ -61,7 +69,9 @@ export default function HomeScreen() {
             key={memory.id}
             id={memory.id}
             coordinate={[memory.longitude, memory.latitude]}
-            onPress={flyToPin}
+            title={memory.title}
+            showTitle={zoomLevel >= 4}
+            onPress={handlePinPress}
           />
         ))}
         {projection === 'globe' && (
@@ -82,6 +92,9 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.header} pointerEvents="none">
         <Text style={styles.headerTitle}>Memoriez</Text>
       </SafeAreaView>
+      {selectedMemory && (
+        <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
+      )}
     </View>
   );
 }
