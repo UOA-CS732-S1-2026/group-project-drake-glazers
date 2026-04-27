@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
@@ -11,35 +12,10 @@ import {
   updateMemoryItemBodySchema,
 } from '../schemas/memories.js';
 
-type CreateMemoryItemBody = {
-  title: string;
-  description?: string;
-  mediaType: 'image' | 'video' | 'voice_note';
-  mediaUrl?: string;
-  sortOrder: number;
-};
-
-type UpdateMemoryItemBody = {
-  title?: string;
-  description?: string;
-  mediaType?: 'image' | 'video' | 'voice_note';
-  mediaUrl?: string;
-  sortOrder?: number;
-};
-
-type UpdateMemoryBody = {
-  title?: string;
-  latitude?: number;
-  longitude?: number;
-  visibility?: 'public' | 'private';
-};
-
-type CreateMemoryBody = {
-  title: string;
-  latitude: number;
-  longitude: number;
-  visibility: 'public' | 'private';
-};
+type CreateMemoryBody = z.infer<typeof createMemoryBodySchema>;
+type UpdateMemoryBody = z.infer<typeof updateMemoryBodySchema>;
+type CreateMemoryItemBody = z.infer<typeof createMemoryItemBodySchema>;
+type UpdateMemoryItemBody = z.infer<typeof updateMemoryItemBodySchema>;
 
 const memorySelect = {
   id: true,
@@ -90,7 +66,7 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
 
 memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const memory = await prisma.memory.findUnique({
     where: { id },
@@ -109,7 +85,7 @@ memoriesRouter.put(
   validateBody(updateMemoryBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = req.validatedBody as UpdateMemoryBody;
 
     try {
@@ -132,7 +108,7 @@ memoriesRouter.put(
 
 memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   try {
     const memory = await prisma.memory.delete({
@@ -152,7 +128,7 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
 
 memoriesRouter.get('/memories/:id/items', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const memory = await prisma.memory.findUnique({
     where: { id, userId: authUserId },
@@ -177,7 +153,8 @@ memoriesRouter.put(
   validateBody(updateMemoryItemBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id, itemId } = req.params;
+    const id = req.params.id as string;
+    const itemId = req.params.itemId as string;
     const data = req.validatedBody as UpdateMemoryItemBody;
 
     const memory = await prisma.memory.findUnique({
@@ -209,7 +186,8 @@ memoriesRouter.put(
 
 memoriesRouter.delete('/memories/:id/items/:itemId', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
-  const { id, itemId } = req.params;
+  const id = req.params.id as string;
+  const itemId = req.params.itemId as string;
 
   const memory = await prisma.memory.findUnique({
     where: { id, userId: authUserId },
@@ -241,7 +219,7 @@ memoriesRouter.post(
   validateBody(createMemoryItemBodySchema),
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
-    const { id } = req.params;
+    const id = req.params.id as string;
     const body = req.validatedBody as CreateMemoryItemBody;
 
     const memory = await prisma.memory.findUnique({
@@ -258,9 +236,9 @@ memoriesRouter.post(
         data: {
           memoryId: id,
           title: body.title,
-          description: body.description,
+          description: body.description ?? null,
           mediaType: body.mediaType,
-          mediaUrl: body.mediaUrl,
+          mediaUrl: body.mediaUrl ?? null,
           sortOrder: body.sortOrder,
         },
         select: memoryItemSelect,
