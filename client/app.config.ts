@@ -3,7 +3,7 @@ import type { ExpoConfig, ConfigContext } from 'expo/config';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'client',
-  slug: 'client',
+  slug: 'drake-glazers-client',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
