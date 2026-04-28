@@ -92,7 +92,7 @@ clerkWebhookRouter.post(
         await prisma.user.upsert({
           where: { id: userId },
           create: { id: userId, email },
-          update: { email },
+          update: email ? { email } : {},
         });
       } else if (eventType === 'user.deleted') {
         const userId = data?.id;
@@ -106,6 +106,7 @@ clerkWebhookRouter.post(
         await prisma.user.updateMany({
           where: {
             id: userId,
+            deletedAt: null,
           },
           data: { deletedAt: new Date() },
         });
