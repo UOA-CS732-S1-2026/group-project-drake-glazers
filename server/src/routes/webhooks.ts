@@ -101,9 +101,12 @@ clerkWebhookRouter.post(
           throw new Error('Missing user id in webhook payload');
         }
 
-        // Soft-delete: set deletedAt timestamp so related records remain intact
-        await prisma.user.update({
-          where: { id: userId },
+        // Soft-delete: set deletedAt timestamp so related records remain intact.
+        // Use updateMany so a delete webhook for a user that does not exist stays idempotent.
+        await prisma.user.updateMany({
+          where: {
+            id: userId,
+          },
           data: { deletedAt: new Date() },
         });
       }
