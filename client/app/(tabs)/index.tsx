@@ -86,9 +86,6 @@ export default function HomeScreen() {
           />
         )}
       </MapboxGL.MapView>
-      <View style={styles.debugBox} pointerEvents="none">
-        <Text style={styles.debugText}>zoom: {zoomLevel.toFixed(2)}</Text>
-      </View>
       <SafeAreaView style={styles.header} pointerEvents="none">
         <Text style={styles.headerTitle}>Memoriez</Text>
       </SafeAreaView>
@@ -120,20 +117,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 24,
     fontFamily: 'PlaywriteNO',
-  },
-  debugBox: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  debugText: {
-    color: '#00ff88',
-    fontSize: 12,
-    fontFamily: 'monospace',
   },
   webFallback: {
     flex: 1,
