@@ -12,8 +12,8 @@ const exampleEnv = readFileSync(resolve(__dirname, '../.env.example'), 'utf-8');
 const documentedVars = new Set(
   exampleEnv
     .split('\n')
-    .filter((line) => line && !line.startsWith('#'))
-    .map((line) => line.split('=')[0].trim())
+    .filter((line: string) => line && !line.startsWith('#'))
+    .map((line: string) => line.split('=')[0]?.trim() ?? '')
     .filter(Boolean)
 );
 
@@ -49,7 +49,9 @@ const envVarRegex = /process\.env\.([A-Z_][A-Z0-9_]*)/g;
 for (const file of tsFiles) {
   const content = readFileSync(file, 'utf-8');
   for (const match of content.matchAll(envVarRegex)) {
-    usedVars.add(match[1]);
+    if (match[1]) {
+      usedVars.add(match[1]);
+    }
   }
 }
 
