@@ -8,6 +8,7 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { useRef, useCallback } from 'react';
+import { router } from 'expo-router';
 import { Memory } from '@/lib/api';
 
 const PEEK_HEIGHT = 100;
@@ -141,7 +142,10 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
 
       {/* Action button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => router.push(`/memory/${memory.id}`)}
+        >
           <Text style={styles.actionText}>View Memory</Text>
         </TouchableOpacity>
       </View>
