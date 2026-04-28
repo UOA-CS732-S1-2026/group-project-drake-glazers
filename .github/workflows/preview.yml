@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install --prefix client
+      - run: npm ci --prefix client
       - name: Check build
         run: npx expo export --platform all
         working-directory: client
