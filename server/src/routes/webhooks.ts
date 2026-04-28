@@ -94,6 +94,18 @@ clerkWebhookRouter.post(
           create: { id: userId, email },
           update: { email },
         });
+      } else if (eventType === 'user.deleted') {
+        const userId = data?.id;
+
+        if (!userId) {
+          throw new Error('Missing user id in webhook payload');
+        }
+
+        // Soft-delete: set deletedAt timestamp so related records remain intact
+        await prisma.user.update({
+          where: { id: userId },
+          data: { deletedAt: new Date() },
+        });
       }
 
       return res.sendStatus(204);
