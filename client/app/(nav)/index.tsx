@@ -1,99 +1,113 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import MapboxGL from '@rnmapbox/maps';
+import { useState, useCallback, useRef } from 'react';
+import { MapPin } from '@/components/map-pin';
+import { MemoryPreviewCard } from '@/components/memory-preview-card';
+import { useMemories } from '@/hooks/use-memories';
+import { Memory } from '@/lib/types';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const { data: memories = [] } = useMemories();
+  const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
+  const [zoomLevel, setZoomLevel] = useState(1.5);
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const cameraRef = useRef<MapboxGL.Camera>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const handlePinPress = useCallback(
+    (id: string, coordinate: [number, number]) => {
+      const memory = memories.find((m) => m.id === id) ?? null;
+      setSelectedMemory(memory);
+      cameraRef.current?.setCamera({
+        centerCoordinate: coordinate,
+        zoomLevel: 14,
+        animationDuration: 4000,
+        animationMode: 'flyTo',
+      });
+    },
+    [memories]
+  );
+
+  const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
+    const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
+    setZoomLevel(zoom);
+    setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <MapboxGL.MapView
+        style={styles.map}
+        styleURL={
+          projection === 'globe'
+            ? 'mapbox://styles/mapbox/satellite-v9'
+            : 'mapbox://styles/mapbox/satellite-streets-v12'
+        }
+        projection={projection}
+        logoEnabled={false}
+        attributionEnabled={false}
+        scaleBarEnabled={false}
+        onRegionIsChanging={onRegionIsChanging}
+      >
+        <MapboxGL.Camera
+          ref={cameraRef}
+          zoomLevel={1.5}
+          centerCoordinate={[0, 20]}
+          animationMode="none"
+        />
+        {memories.map((memory) => (
+          <MapPin
+            key={memory.id}
+            id={memory.id}
+            coordinate={[memory.longitude, memory.latitude]}
+            title={memory.title}
+            showTitle={zoomLevel >= 4}
+            onPress={handlePinPress}
+          />
+        ))}
+        {projection === 'globe' && (
+          <MapboxGL.Atmosphere
+            style={{
+              color: 'rgba(135, 206, 235, 0.3)',
+              highColor: 'rgba(30, 60, 100, 0.3)',
+              spaceColor: '#000000',
+              horizonBlend: 0.02,
+              starIntensity: 0.1,
+            }}
+          />
+        )}
+      </MapboxGL.MapView>
+      <SafeAreaView style={styles.header} pointerEvents="none">
+        <Text style={styles.headerTitle}>Memoriez</Text>
+      </SafeAreaView>
+      {selectedMemory && (
+        <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  map: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  header: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  headerTitle: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontFamily: 'PlaywriteNO',
   },
 });

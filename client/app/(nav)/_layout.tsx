@@ -15,7 +15,13 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          backgroundColor: '#000000',
+          borderTopColor: '#1a1a1a',
+        },
+        tabBarInactiveTintColor: '#555',
+      }}
+    >
       <Tabs.Screen
         name="explore"
         options={{
@@ -48,7 +54,9 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.crop.circle.fill" color={color} />
+          ),
         }}
       />
     </Tabs>
