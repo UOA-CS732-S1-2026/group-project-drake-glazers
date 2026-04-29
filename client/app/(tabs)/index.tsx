@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import { useState, useCallback, useRef } from 'react';
 import { MapPin } from '@/components/map-pin';
@@ -34,14 +34,6 @@ export default function HomeScreen() {
     setZoomLevel(zoom);
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
-
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.webFallback}>
-        <Text style={styles.webFallbackText}>Map view is available on iOS and Android.</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -117,15 +109,5 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 24,
     fontFamily: 'PlaywriteNO',
-  },
-  webFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0a0a0a',
-  },
-  webFallbackText: {
-    color: '#888',
-    fontSize: 16,
   },
 });
