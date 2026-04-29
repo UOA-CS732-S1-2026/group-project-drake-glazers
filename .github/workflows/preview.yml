@@ -1,6 +1,4 @@
-# PR comment posting removed: GitHub repo settings don't allow pull-requests: write.
-# Runs a build-only check on PRs instead.
-name: EAS Preview Build
+name: Build Check
 
 on:
   pull_request:
@@ -16,11 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install --prefix client
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - name: Build preview
-        run: eas build --profile preview --platform all --non-interactive
+      - run: npm ci --prefix client
+      - name: Check build
+        run: npx expo export --platform all
         working-directory: client
