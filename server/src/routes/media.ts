@@ -83,6 +83,15 @@ mediaRouter.post(
     const memoryId = req.params.memoryId as string;
     const { mediaPath, mediaType } = req.validatedBody as ConfirmUploadBody;
 
+    if (!mediaPath.startsWith(`memories/${authUserId}/`)) {
+      return errorResponse(
+        res,
+        400,
+        'INVALID_MEDIA_PATH',
+        'Media path does not belong to the authenticated user'
+      );
+    }
+
     const memory = await prisma.memory.findUnique({
       where: { id: memoryId },
       select: { userId: true },

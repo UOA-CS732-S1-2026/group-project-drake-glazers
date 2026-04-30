@@ -97,9 +97,13 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
   }
 
   const paths = memory.media.map((m) => m.mediaPath);
-  const { data: signedUrls } = await supabase.storage
+  const { data: signedUrls, error: signedUrlsError } = await supabase.storage
     .from(MEDIA_BUCKET)
     .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+
+  if (signedUrlsError) {
+    return errorResponse(res, 500, 'MEDIA_SIGNING_FAILED', 'Unable to generate signed media URLs');
+  }
 
   const signedUrlMap = new Map((signedUrls ?? []).map((s) => [s.path, s.signedUrl]));
 
@@ -153,7 +157,21 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
     });
 
     if (mediaItems.length > 0) {
-      await supabase.storage.from(MEDIA_BUCKET).remove(mediaItems.map((m) => m.mediaPath));
+      const { error: storageRemoveError } = await supabase.storage
+        .from(MEDIA_BUCKET)
+        .remove(mediaItems.map((m) => m.mediaPath));
+
+      if (storageRemoveError) {
+        console.error(
+          'Failed to remove media objects from Supabase Storage during memory deletion',
+          {
+            memoryId: id,
+            userId: authUserId,
+            mediaPaths: mediaItems.map((m) => m.mediaPath),
+            error: storageRemoveError,
+          }
+        );
+      }
     }
 
     return res.status(200).json(memory);
