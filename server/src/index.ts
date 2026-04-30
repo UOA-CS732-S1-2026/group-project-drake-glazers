@@ -9,6 +9,7 @@ import { memoriesRouter } from './routes/memories.js';
 import { listsRouter } from './routes/lists.js';
 import { friendRequestsRouter } from './routes/friendRequests.js';
 import { friendsRouter } from './routes/friends.js';
+import { blocksRouter } from './routes/blocks.js';
 import { mediaRouter } from './routes/media.js';
 import { errorResponse } from './lib/api-response.js';
 
@@ -29,6 +30,7 @@ app.use('/api', memoriesRouter);
 app.use('/api', listsRouter);
 app.use('/api', friendRequestsRouter);
 app.use('/api', friendsRouter);
+app.use('/api', blocksRouter);
 app.use('/api', mediaRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
