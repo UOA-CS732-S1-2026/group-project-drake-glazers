@@ -8,7 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
 
 const tokenCache = {
