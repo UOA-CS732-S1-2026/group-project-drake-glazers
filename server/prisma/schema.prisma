@@ -65,6 +65,7 @@ model Memory {
 
   user  User         @relation(fields: [userId], references: [id])
   items MemoryItem[]
+  media Media[]
 
   @@map("memories")
 }
@@ -82,6 +83,19 @@ model MemoryItem {
   memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 
   @@map("memory_items")
+}
+
+model Media {
+  id        String    @id @default(uuid())
+  memoryId  String    @map("memory_id")
+  mediaPath String    @map("media_path")
+  mediaType MediaType @map("media_type")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("media")
 }
 
 model FriendRequest {
