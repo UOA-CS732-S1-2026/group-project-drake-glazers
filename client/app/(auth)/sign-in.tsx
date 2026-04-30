@@ -25,7 +25,7 @@ export default function SignInScreen() {
   const onSignInPress = async () => {
     setError('');
 
-    const { error: createError } = await signIn.create({ identifier: email, password });
+    const { error: createError } = await signIn.password({ emailAddress: email, password });
 
     if (createError) {
       setError(createError.longMessage ?? createError.message ?? 'Sign in failed.');

@@ -15,6 +15,8 @@ export function useApiClient() {
   const request = async (path: string, options: RequestInit = {}) => {
     const token = await getToken();
 
+    if (!token) throw new Error('No auth token available');
+
     const res = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers: {

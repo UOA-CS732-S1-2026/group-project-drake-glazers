@@ -35,6 +35,11 @@ export default function SignUpScreen() {
     }
 
     if (signUp.status === 'missing_requirements') {
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) {
+        setError(sendError.longMessage ?? sendError.message ?? 'Failed to send verification code.');
+        return;
+      }
       setStep('verify');
     } else if (signUp.status === 'complete') {
       await signUp.finalize({ navigate: () => router.replace('/') });
