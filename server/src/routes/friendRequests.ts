@@ -149,11 +149,17 @@ friendRequestsRouter.put('/friend-requests/:id/accept', async (req: Request, res
   }
 
   try {
-    const updated = await prisma.friendRequest.update({
-      where: { id },
-      data: { status: 'accepted' },
-      select: friendRequestSelect,
-    });
+    const [userA, userB] = [authUserId, friendRequest.fromUserId].sort();
+    const [updated] = await prisma.$transaction([
+      prisma.friendRequest.update({
+        where: { id },
+        data: { status: 'accepted' },
+        select: friendRequestSelect,
+      }),
+      prisma.friendship.create({
+        data: { userAId: userA, userBId: userB },
+      }),
+    ]);
 
     return res.status(200).json(updated);
   } catch {
