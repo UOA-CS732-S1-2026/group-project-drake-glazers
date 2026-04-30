@@ -355,12 +355,12 @@ memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  if (!friendship) {
-    return res.status(200).json([]);
-  }
+  const visibilityFilter = friendship
+    ? { in: ['public', 'friends_only'] as const }
+    : { equals: 'public' as const };
 
   const memories = await prisma.memory.findMany({
-    where: { userId, visibility: 'public' },
+    where: { userId, visibility: visibilityFilter },
     select: memorySelect,
     orderBy: { createdAt: 'desc' },
   });

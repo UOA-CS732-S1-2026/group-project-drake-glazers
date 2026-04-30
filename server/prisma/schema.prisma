@@ -11,6 +11,7 @@ datasource db {
 
 enum Visibility {
   public
+  friends_only
   private
 }
 
