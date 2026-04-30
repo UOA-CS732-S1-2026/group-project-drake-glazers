@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { MapPin } from '@/components/map-pin';
 import { MemoryPreviewCard } from '@/components/memory-preview-card';
 import { useMemories } from '@/hooks/use-memories';
-import { Memory } from '@/lib/api';
+import { Memory } from '@/lib/types';
 
 const GLOBE_TO_MAP_ZOOM = 2.5;
 

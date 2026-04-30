@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
-import { Memory } from '@/lib/api';
+import { Memory } from '@/lib/types';
 
 export default function HomeScreen() {
   const { data: memories = [] } = useMemories();
@@ -15,7 +15,7 @@ export default function HomeScreen() {
   return (
     <div style={styles.container}>
       <Map
-        mapboxAccessToken={process.env.EXPO_PUBLIC_MAPBOX_TOKEN}
+        mapboxAccessToken={process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? ''}
         initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/satellite-streets-v12"

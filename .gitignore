@@ -1,11 +1,30 @@
-# Please edit this gitignore file to suit your needs. You may
-# look at other .gitignore files in the provided examples for inspiration.
-
 .DS_Store
 node_modules
 
-# Environment variables - Edit if necessary
+# Environment variables
 .env
 .env.*
 !.env.example
 !.env.test
+
+# Claude files
+CLAUDE.md
+.CLAUDE.md
+/CLAUDE.md
+
+# Expo / React Native generated native folders (also covered by client/.gitignore)
+ios
+android
+.expo/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/

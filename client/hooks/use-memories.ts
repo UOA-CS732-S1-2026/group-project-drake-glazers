@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useApiClient } from '@/lib/api';
+import { Memory } from '@/lib/types';
 
 export function useMemories() {
-  return useQuery({
+  const api = useApiClient();
+
+  return useQuery<Memory[]>({
     queryKey: ['memories'],
-    queryFn: api.memories.list,
+    queryFn: () => api.get('/api/memories'),
   });
 }

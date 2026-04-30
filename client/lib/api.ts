@@ -1,38 +1,39 @@
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
-const DEV_USER_ID = process.env.EXPO_PUBLIC_DEV_USER_ID;
+import { useAuth } from '@clerk/expo';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string>),
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+/*
+Usuage Example:
+    const api = useApiClient();
+    const memories = await api.get('/memories');
+    await api.post('/memories', { title: 'My memory' });
+*/
+
+export function useApiClient() {
+  const { getToken } = useAuth();
+
+  const request = async (path: string, options: RequestInit = {}) => {
+    const token = await getToken();
+
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+
+    if (!res.ok) throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+
+    return res.json();
   };
 
-  if (DEV_USER_ID) {
-    headers['x-dev-user-id'] = DEV_USER_ID;
-  }
-
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`);
-  }
-
-  return res.json() as Promise<T>;
+  return {
+    get: (path: string) => request(path, { method: 'GET' }),
+    post: (path: string, body: any) =>
+      request(path, { method: 'POST', body: JSON.stringify(body) }),
+    put: (path: string, body: any) => request(path, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (path: string) => request(path, { method: 'DELETE' }),
+  };
 }
-
-export type Memory = {
-  id: string;
-  userId: string;
-  title: string;
-  latitude: number;
-  longitude: number;
-  visibility: 'public' | 'private';
-  createdAt: string;
-  updatedAt: string;
-};
-
-export const api = {
-  memories: {
-    list: () => request<Memory[]>('/api/memories'),
-  },
-};
