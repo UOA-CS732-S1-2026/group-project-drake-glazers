@@ -8,6 +8,7 @@ import { usersRouter } from './routes/users.js';
 import { memoriesRouter } from './routes/memories.js';
 import { listsRouter } from './routes/lists.js';
 import { friendRequestsRouter } from './routes/friendRequests.js';
+import { mediaRouter } from './routes/media.js';
 import { errorResponse } from './lib/api-response.js';
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use('/api', usersRouter);
 app.use('/api', memoriesRouter);
 app.use('/api', listsRouter);
 app.use('/api', friendRequestsRouter);
+app.use('/api', mediaRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });
