@@ -196,7 +196,7 @@ usersRouter.get('/users/search', async (req: Request, res: Response) => {
         {
           OR: [
             { email: { contains: q, mode: 'insensitive' } },
-            { profile: { displayName: { contains: q, mode: 'insensitive' } } },
+            { profile: { is: { displayName: { contains: q, mode: 'insensitive' } } } },
           ],
         },
       ],

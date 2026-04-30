@@ -310,7 +310,7 @@ memoriesRouter.post(
 );
 
 // GET /users/:userId/memories - List a user's memories filtered by relationship
-// owner → all; friends → public only; stranger → []; blocked (either direction) → 404
+// owner → all; friends → public + friends_only; stranger → public only; blocked (either direction) → 404
 memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
   const userId = req.params.userId as string;
