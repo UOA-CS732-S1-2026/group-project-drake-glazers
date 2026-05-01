@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from '../lib/supabase.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
 import {
@@ -39,6 +40,20 @@ const memoryItemSelect = {
   createdAt: true,
 } satisfies Prisma.MemoryItemSelect;
 
+const mediaSelect = {
+  id: true,
+  memoryId: true,
+  mediaPath: true,
+  mediaType: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.MediaSelect;
+
+const memoryDetailSelect = {
+  ...memorySelect,
+  media: { select: mediaSelect, orderBy: { createdAt: 'asc' as const } },
+} satisfies Prisma.MemorySelect;
+
 export const memoriesRouter = express.Router();
 
 const getAuthUserId = (req: Request): string => {
@@ -70,14 +85,32 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
 
   const memory = await prisma.memory.findUnique({
     where: { id },
-    select: memorySelect,
+    select: memoryDetailSelect,
   });
 
   if (!memory || memory.userId !== authUserId) {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
   }
 
-  return res.status(200).json(memory);
+  if (memory.media.length === 0) {
+    return res.status(200).json({ ...memory, media: [] });
+  }
+
+  const paths = memory.media.map((m) => m.mediaPath);
+  const { data: signedUrls, error: signedUrlsError } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+
+  if (signedUrlsError) {
+    return errorResponse(res, 500, 'MEDIA_SIGNING_FAILED', 'Unable to generate signed media URLs');
+  }
+
+  const signedUrlMap = new Map((signedUrls ?? []).map((s) => [s.path, s.signedUrl]));
+
+  return res.status(200).json({
+    ...memory,
+    media: memory.media.map((m) => ({ ...m, signedUrl: signedUrlMap.get(m.mediaPath) ?? null })),
+  });
 });
 
 memoriesRouter.put(
@@ -110,11 +143,36 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
   const id = req.params.id as string;
 
+  // Fetch storage paths before deleting so we can clean up Supabase Storage.
+  // Prisma cascade handles the Media rows; we handle the objects.
+  const mediaItems = await prisma.media.findMany({
+    where: { memoryId: id, memory: { userId: authUserId } },
+    select: { mediaPath: true },
+  });
+
   try {
     const memory = await prisma.memory.delete({
       where: { id, userId: authUserId },
       select: memorySelect,
     });
+
+    if (mediaItems.length > 0) {
+      const { error: storageRemoveError } = await supabase.storage
+        .from(MEDIA_BUCKET)
+        .remove(mediaItems.map((m) => m.mediaPath));
+
+      if (storageRemoveError) {
+        console.error(
+          'Failed to remove media objects from Supabase Storage during memory deletion',
+          {
+            memoryId: id,
+            userId: authUserId,
+            mediaPaths: mediaItems.map((m) => m.mediaPath),
+            error: storageRemoveError,
+          }
+        );
+      }
+    }
 
     return res.status(200).json(memory);
   } catch (error) {
