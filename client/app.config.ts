@@ -1,5 +1,12 @@
 import type { ExpoConfig, ConfigContext } from 'expo/config';
 
+const mapboxDownloadToken = process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN;
+if (!mapboxDownloadToken) {
+  throw new Error(
+    'Missing RNMAPBOX_MAPS_DOWNLOAD_TOKEN. Add it to your .env file before running expo prebuild.'
+  );
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'client',
@@ -46,7 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       '@rnmapbox/maps',
       {
-        RNMapboxMapsDownloadToken: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
+        RNMapboxMapsDownloadToken: mapboxDownloadToken,
       },
     ],
     'expo-font',
