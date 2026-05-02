@@ -11,6 +11,7 @@ datasource db {
 
 enum Visibility {
   public
+  friends_only
   private
 }
 
@@ -33,11 +34,15 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  profile        UserProfile?
-  memories       Memory[]
-  lists          List[]
-  sentRequests   FriendRequest[] @relation("SentRequests")
+  profile          UserProfile?
+  memories         Memory[]
+  lists            List[]
+  sentRequests     FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  friendshipsAsA   Friendship[]    @relation("FriendshipUserA")
+  friendshipsAsB   Friendship[]    @relation("FriendshipUserB")
+  blocksGiven      Block[]         @relation("BlocksGiven")
+  blocksReceived   Block[]         @relation("BlocksReceived")
 
   @@map("users")
 }
@@ -137,4 +142,31 @@ model ListItem {
   list List @relation(fields: [listId], references: [id])
 
   @@map("list_items")
+}
+
+// userAId is always < userBId (enforced at application layer) to avoid duplicate rows
+model Friendship {
+  id        String   @id @default(uuid())
+  userAId   String   @map("user_a_id")
+  userBId   String   @map("user_b_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userA User @relation("FriendshipUserA", fields: [userAId], references: [id])
+  userB User @relation("FriendshipUserB", fields: [userBId], references: [id])
+
+  @@unique([userAId, userBId])
+  @@map("friendships")
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("BlocksGiven", fields: [blockerId], references: [id])
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
 }

@@ -309,6 +309,65 @@ memoriesRouter.post(
   }
 );
 
+// GET /users/:userId/memories - List a user's memories filtered by relationship
+// owner → all; friends → public + friends_only; stranger → public only; blocked (either direction) → 404
+memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const userId = req.params.userId as string;
+
+  if (userId === authUserId) {
+    const memories = await prisma.memory.findMany({
+      where: { userId: authUserId },
+      select: memorySelect,
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.status(200).json(memories);
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!target) {
+    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const [userAId, userBId] = [authUserId, userId].sort();
+
+  const [block, friendship] = await Promise.all([
+    prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: authUserId, blockedId: userId },
+          { blockerId: userId, blockedId: authUserId },
+        ],
+      },
+      select: { id: true },
+    }),
+    prisma.friendship.findUnique({
+      where: { userAId_userBId: { userAId, userBId } },
+      select: { id: true },
+    }),
+  ]);
+
+  if (block) {
+    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const visibilityFilter = friendship
+    ? { in: ['public', 'friends_only'] as const }
+    : { equals: 'public' as const };
+
+  const memories = await prisma.memory.findMany({
+    where: { userId, visibility: visibilityFilter },
+    select: memorySelect,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return res.status(200).json(memories);
+});
+
 memoriesRouter.post(
   '/memories',
   validateBody(createMemoryBodySchema),

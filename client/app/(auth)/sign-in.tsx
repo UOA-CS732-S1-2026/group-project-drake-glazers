@@ -11,6 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { Href } from 'expo-router';
+
+type Step = 'credentials' | 'mfa';
 
 export default function SignInScreen() {
   const { signIn, fetchStatus } = useSignIn();
@@ -18,26 +21,129 @@ export default function SignInScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<Step>('credentials');
   const [error, setError] = useState('');
 
   const loading = fetchStatus === 'fetching';
 
+  const finalize = async () => {
+    await signIn.finalize({
+      navigate: () => {
+        router.replace('/(nav)/' as Href);
+      },
+    });
+  };
+
   const onSignInPress = async () => {
     setError('');
-
-    const { error: createError } = await signIn.password({ emailAddress: email, password });
-
-    if (createError) {
-      setError(createError.longMessage ?? createError.message ?? 'Sign in failed.');
+    try {
+      const { error: credError } = await signIn.password({ emailAddress: email, password });
+      if (credError) {
+        setError(credError.longMessage ?? credError.message ?? 'Sign in failed.');
+        return;
+      }
+    } catch (e: any) {
+      setError(e?.longMessage ?? e?.message ?? 'Sign in failed.');
       return;
     }
 
     if (signIn.status === 'complete') {
-      await signIn.finalize({ navigate: () => router.replace('/') });
+      await finalize();
+    } else if (signIn.status === 'needs_second_factor') {
+      const { error: sendError } = await signIn.mfa.sendEmailCode();
+      if (sendError) {
+        setError(sendError.longMessage ?? sendError.message ?? 'Failed to send code.');
+        return;
+      }
+      setStep('mfa');
     } else {
       setError('Sign in could not be completed. Please try again.');
     }
   };
+
+  const onVerifyPress = async () => {
+    setError('');
+    const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code });
+    if (verifyError) {
+      setError(
+        verifyError.longMessage ?? verifyError.message ?? 'Incorrect code. Please try again.'
+      );
+      return;
+    }
+    if (signIn.status === 'complete') {
+      await finalize();
+    } else {
+      setError('Verification failed. Please try again.');
+    }
+  };
+
+  const onResendPress = async () => {
+    setError('');
+    const { error: sendError } = await signIn.mfa.sendEmailCode();
+    if (sendError) {
+      setError(sendError.longMessage ?? sendError.message ?? 'Failed to resend code.');
+    }
+  };
+
+  if (step === 'mfa') {
+    return (
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.inner}>
+          <Text style={styles.title}>Memoriez</Text>
+          <Text style={styles.subtitle}>We sent a verification code to {email}</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Enter code"
+            placeholderTextColor="#888"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+            autoComplete="one-time-code"
+            autoFocus
+          />
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.button, (loading || !code) && styles.buttonDisabled]}
+            onPress={onVerifyPress}
+            disabled={loading || !code}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.buttonOutline, loading && styles.buttonDisabled]}
+            onPress={onResendPress}
+            disabled={loading}
+          >
+            <Text style={[styles.buttonText, styles.buttonOutlineText]}>Resend code</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setStep('credentials');
+              setCode('');
+              setError('');
+            }}
+            style={styles.footer}
+          >
+            <Text style={styles.link}>← Back to sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -149,6 +255,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    marginTop: 10,
+  },
+  buttonOutlineText: {
+    color: '#4a90d9',
   },
   footer: {
     flexDirection: 'row',

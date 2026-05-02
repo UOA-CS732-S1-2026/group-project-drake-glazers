@@ -177,6 +177,106 @@ usersRouter.delete('/users/me', async (req: Request, res: Response) => {
   }
 });
 
+// GET /users/search?q=... - Search users by display name or email (excludes self and blocked users)
+usersRouter.get('/users/search', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const q = typeof req.query['q'] === 'string' ? req.query['q'].trim() : '';
+
+  if (!q) {
+    return errorResponse(res, 400, 'QUERY_REQUIRED', 'Search query is required');
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      AND: [
+        { id: { not: authUserId } },
+        // Exclude any user who has blocked the auth user or been blocked by them
+        { blocksGiven: { none: { blockedId: authUserId } } },
+        { blocksReceived: { none: { blockerId: authUserId } } },
+        {
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { profile: { is: { displayName: { contains: q, mode: 'insensitive' } } } },
+          ],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      profile: {
+        select: {
+          displayName: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    take: 20,
+  });
+
+  return res.status(200).json(users);
+});
+
+// GET /users/:userId/relationship - Relationship state between auth user and target
+usersRouter.get('/users/:userId/relationship', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const userId = req.params['userId'] as string;
+
+  if (userId === authUserId) {
+    return errorResponse(res, 400, 'CANNOT_CHECK_SELF', 'Cannot check relationship with yourself');
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!target) {
+    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const [userAId, userBId] = [authUserId, userId].sort();
+
+  const [blockedByMe, blockedByThem, friendship, pendingRequest] = await Promise.all([
+    prisma.block.findUnique({
+      where: { blockerId_blockedId: { blockerId: authUserId, blockedId: userId } },
+      select: { id: true },
+    }),
+    prisma.block.findUnique({
+      where: { blockerId_blockedId: { blockerId: userId, blockedId: authUserId } },
+      select: { id: true },
+    }),
+    prisma.friendship.findUnique({
+      where: { userAId_userBId: { userAId, userBId } },
+      select: { id: true },
+    }),
+    prisma.friendRequest.findFirst({
+      where: {
+        status: 'pending',
+        OR: [
+          { fromUserId: authUserId, toUserId: userId },
+          { fromUserId: userId, toUserId: authUserId },
+        ],
+      },
+      select: { fromUserId: true },
+    }),
+  ]);
+
+  let status: string;
+  if (blockedByMe) {
+    status = 'blocked_by_me';
+  } else if (blockedByThem) {
+    status = 'blocked_by_them';
+  } else if (friendship) {
+    status = 'friends';
+  } else if (pendingRequest) {
+    status = pendingRequest.fromUserId === authUserId ? 'pending_outgoing' : 'pending_incoming';
+  } else {
+    status = 'none';
+  }
+
+  return res.status(200).json({ status });
+});
+
 usersRouter.get('/users/me/profile', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
 
