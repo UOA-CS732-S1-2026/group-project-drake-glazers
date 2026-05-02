@@ -1,0 +1,13 @@
+import { useQuery } from '@tanstack/react-query';
+import { useApiClient } from '@/lib/api';
+import type { Media } from '@/lib/types';
+
+export function useMemoryMedia(memoryId: string) {
+  const api = useApiClient();
+
+  return useQuery<Media[]>({
+    queryKey: ['memory-media', memoryId],
+    queryFn: () => api.get(`/api/memories/${memoryId}/media`),
+    enabled: !!memoryId,
+  });
+}

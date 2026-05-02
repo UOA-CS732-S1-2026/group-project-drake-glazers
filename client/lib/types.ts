@@ -19,12 +19,14 @@ export type Memory = {
   updatedAt: string;
 };
 
-export type MediaType = 'IMAGE' | 'VIDEO' | 'VOICE_NOTE';
+export type MediaType = 'image' | 'video' | 'voice_note';
 
 export type Media = {
   id: string;
   memoryId: string;
   mediaPath: string;
   mediaType: MediaType;
-  signedUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  signedUrl?: string | null;
 };

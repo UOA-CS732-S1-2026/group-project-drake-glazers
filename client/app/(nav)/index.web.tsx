@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
+import { useMemoryMedia } from '@/hooks/use-memory-media';
 import { Memory } from '@/lib/types';
 
 export default function HomeScreen() {
@@ -54,6 +55,16 @@ export default function HomeScreen() {
 }
 
 function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => void }) {
+  console.log('Selected memory:', memory);
+
+  const { data: mediaItems = [] } = useMemoryMedia(memory.id);
+
+  console.log(mediaItems);
+
+  const firstImage = mediaItems.find(
+    (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
+  );
+
   const date = new Date(memory.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -62,10 +73,9 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
 
   return (
     <div style={styles.card}>
-      {/* Placeholder image */}
-      <div style={styles.cardImage}>
-        <span style={styles.cardImageText}>No photos yet</span>
-      </div>
+      {firstImage?.signedUrl ? (
+        <img src={firstImage.signedUrl} alt={`${memory.title} preview`} style={styles.cardImage} />
+      ) : null}
 
       <div style={styles.cardContent}>
         <div style={styles.cardHeader}>
@@ -162,14 +172,10 @@ const styles = {
   },
   cardImage: {
     height: 200,
-    backgroundColor: '#c8cdd6',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardImageText: {
-    color: '#888',
-    fontSize: 14,
+    width: '100%',
+    display: 'block',
+    objectFit: 'cover' as const,
+    backgroundColor: '#f0f0f0',
   },
   cardContent: {
     padding: '20px 20px 32px',
