@@ -26,10 +26,11 @@ type Props = TextProps & {
   color?: string;
 };
 
-export function Text({ variant = 'body-md', className = '', ...props }: Props) {
+export function Text({ variant = 'body-md', color, className = '', style, ...props }: Props) {
   return (
     <RNText
       className={`text-on-surface ${variantClass[variant]} ${className}`}
+      style={[color ? { color } : null, style]}
       {...props}
     />
   );
