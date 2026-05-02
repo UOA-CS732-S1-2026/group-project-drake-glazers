@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
+import { useRouter } from 'expo-router';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
 import { Memory } from '@/lib/types';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { data: memories = [] } = useMemories();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
 
@@ -42,6 +44,11 @@ export default function HomeScreen() {
       {selectedMemory && (
         <WebPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
+
+      {/* Create memory FAB */}
+      <button style={styles.fab} onClick={() => router.push('/memory')} aria-label="Create memory">
+        +
+      </button>
     </div>
   );
 }
@@ -243,5 +250,25 @@ const styles = {
     border: 'none',
     borderRadius: 30,
     cursor: 'pointer',
+  },
+
+  fab: {
+    position: 'absolute' as const,
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: '50%',
+    backgroundColor: '#b71422',
+    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: 400,
+    lineHeight: '56px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 24px 0 rgba(183, 20, 34, 0.14), 0 2px 6px 0 rgba(0,0,0,0.10)',
   },
 } satisfies Record<string, React.CSSProperties | object>;

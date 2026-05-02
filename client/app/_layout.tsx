@@ -72,6 +72,7 @@ function InitialLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="memory/[id]/index" options={{ title: 'Memory' }} />
         <Stack.Screen name="friends/[id]" options={{ title: 'Friend' }} />
+        <Stack.Screen name="memory/index" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

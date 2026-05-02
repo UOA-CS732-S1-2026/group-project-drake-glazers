@@ -2,6 +2,21 @@ import { useAuth } from '@clerk/expo';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+export async function uploadFile(
+  signedUrl: string,
+  fileUri: string,
+  mimeType: string
+): Promise<void> {
+  const fileRes = await fetch(fileUri);
+  const blob = await fileRes.blob();
+  const uploadRes = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': mimeType },
+    body: blob,
+  });
+  if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+}
+
 /*
 Usuage Example:
     const api = useApiClient();
