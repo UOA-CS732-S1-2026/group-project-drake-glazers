@@ -58,6 +58,7 @@ export default function SignInScreen() {
       }
       setStep('mfa');
     } else {
+      console.error('Unexpected sign-in status:', signIn.status);
       setError('Sign in could not be completed. Please try again.');
     }
   };

@@ -66,7 +66,6 @@ export function LocationPicker({ onConfirm }: Props) {
 
   return (
     <View className="flex-1 bg-background">
-      {/* Header */}
       <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
         <TouchableOpacity onPress={() => router.dismiss()} hitSlop={8}>
           <MaterialIcons name="close" size={24} color="#1c1b1b" />
@@ -79,7 +78,6 @@ export function LocationPicker({ onConfirm }: Props) {
         </View>
       </View>
 
-      {/* Mode toggle */}
       <View className="flex-row mx-gutter mb-md gap-sm">
         {(['search', 'pin'] as const).map((m) => (
           <TouchableOpacity
@@ -137,7 +135,6 @@ export function LocationPicker({ onConfirm }: Props) {
         </View>
       ) : (
         <View className="flex-1">
-          {/* Map with centered crosshair */}
           <View className="flex-1">
             <MapboxGL.MapView
               style={{ flex: 1 }}
@@ -154,14 +151,12 @@ export function LocationPicker({ onConfirm }: Props) {
               />
             </MapboxGL.MapView>
 
-            {/* Fixed crosshair pin — pointer-events-none so map panning works through it */}
             <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
               <View className="w-5 h-5 rounded-full bg-primary border-2 border-white shadow-fab" />
               <View style={{ width: 2, height: 10, backgroundColor: '#b71422', marginTop: -1 }} />
             </View>
           </View>
 
-          {/* Coordinates display + confirm */}
           <View className="px-gutter py-md bg-background gap-sm">
             <Text variant="body-sm" className="text-on-surface-variant text-center">
               {pinCoords[1].toFixed(5)}°, {pinCoords[0].toFixed(5)}°

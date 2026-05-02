@@ -52,18 +52,25 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
         latitude,
         longitude,
         visibility,
-        ...(description.trim() ? { description: description.trim() } : {}),
       });
 
+      if (description.trim()) {
+        await api.post(`/api/memories/${memory.id}/items`, {
+          title: title.trim(),
+          description: description.trim(),
+        });
+      }
+
       for (const item of mediaItems) {
+        const mediaType = item.type.toLowerCase();
         const { signedUrl, path } = await api.post('/api/media/upload-url', {
-          mediaType: item.type,
-          fileExt: item.ext,
+          mediaType,
+          fileExtension: item.ext,
         });
         await uploadFile(signedUrl, item.uri, item.mimeType);
         await api.post(`/api/memories/${memory.id}/media`, {
           mediaPath: path,
-          mediaType: item.type,
+          mediaType,
         });
       }
 
@@ -82,7 +89,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
       className="flex-1 bg-background"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
       <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
         <TouchableOpacity onPress={onBack} hitSlop={8}>
           <MaterialIcons name="arrow-back" size={24} color="#1c1b1b" />
@@ -97,7 +103,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
         contentContainerClassName="px-gutter pb-xl gap-md"
         keyboardShouldPersistTaps="handled"
       >
-        {/* Location pill */}
         <View className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg">
           <MaterialIcons name="place" size={18} color="#b71422" />
           <Text variant="body-sm" className="text-on-surface-variant flex-1" numberOfLines={1}>
@@ -105,7 +110,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
           </Text>
         </View>
 
-        {/* Title */}
         <Input
           label="Title"
           placeholder="Name this memory..."
@@ -119,7 +123,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
           returnKeyType="next"
         />
 
-        {/* Visibility */}
         <View className="gap-xs">
           <Text variant="label-md" className="text-on-surface-variant">
             Visibility
@@ -152,7 +155,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
           </View>
         </View>
 
-        {/* Description */}
         <Input
           label="Description (optional)"
           placeholder="Write something about this memory..."
@@ -164,7 +166,6 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
           className="min-h-[96px]"
         />
 
-        {/* Media */}
         <View className="gap-xs">
           <Text variant="label-md" className="text-on-surface-variant">
             Media

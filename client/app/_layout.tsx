@@ -16,8 +16,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ClerkProvider, useAuth } from '@clerk/expo';
+import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
+import { useApiClient } from '@/lib/api';
 
 const tokenCache = {
   getToken: (key: string) => SecureStore.getItemAsync(key),
@@ -44,6 +45,8 @@ if (!publishableKey) {
 
 function InitialLayout() {
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const api = useApiClient();
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
@@ -61,6 +64,14 @@ function InitialLayout() {
       router.replace('/(auth)/sign-in');
     }
   }, [isLoaded, isSignedIn, fontsLoaded]);
+
+  useEffect(() => {
+    if (!isSignedIn || !user) return;
+    const email = user.primaryEmailAddress?.emailAddress;
+    if (!email) return;
+    api.post('/api/users', { email }).catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, user?.id]);
 
   if (!isLoaded || !fontsLoaded) return null;
 

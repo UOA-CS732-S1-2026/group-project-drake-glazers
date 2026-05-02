@@ -108,7 +108,6 @@ export function MediaPicker({ value, onChange }: Props) {
 
   return (
     <View className="gap-sm">
-      {/* Action buttons */}
       <View className="flex-row gap-sm flex-wrap">
         <TouchableOpacity
           className="flex-row items-center gap-xs bg-surface-container-low px-md py-sm rounded-lg"
@@ -143,7 +142,6 @@ export function MediaPicker({ value, onChange }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Selected items */}
       {value.map((item, index) => (
         <View
           key={index}
