@@ -119,7 +119,13 @@ memoriesRouter.put(
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
     const id = req.params.id as string;
-    const data = req.validatedBody as UpdateMemoryBody;
+    const body = req.validatedBody as UpdateMemoryBody;
+    const data: Prisma.MemoryUpdateInput = {};
+
+    if (body.title !== undefined) data.title = body.title;
+    if (body.latitude !== undefined) data.latitude = body.latitude;
+    if (body.longitude !== undefined) data.longitude = body.longitude;
+    if (body.visibility !== undefined) data.visibility = body.visibility;
 
     try {
       const memory = await prisma.memory.update({
@@ -213,7 +219,14 @@ memoriesRouter.put(
     const authUserId = getAuthUserId(req);
     const id = req.params.id as string;
     const itemId = req.params.itemId as string;
-    const data = req.validatedBody as UpdateMemoryItemBody;
+    const body = req.validatedBody as UpdateMemoryItemBody;
+    const data: Prisma.MemoryItemUpdateInput = {};
+
+    if (body.title !== undefined) data.title = body.title;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.mediaType !== undefined) data.mediaType = body.mediaType;
+    if (body.mediaUrl !== undefined) data.mediaUrl = body.mediaUrl;
+    if (body.sortOrder !== undefined) data.sortOrder = body.sortOrder;
 
     const memory = await prisma.memory.findUnique({
       where: { id, userId: authUserId },
@@ -292,7 +305,7 @@ memoriesRouter.post(
     try {
       const item = await prisma.memoryItem.create({
         data: {
-          memoryId: id,
+          memory: { connect: { id } },
           title: body.title,
           description: body.description ?? null,
           mediaType: body.mediaType ?? null,
@@ -303,7 +316,8 @@ memoriesRouter.post(
       });
 
       return res.status(201).json(item);
-    } catch {
+    } catch (error) {
+      console.error('[POST /memories/:id/items] Prisma error:', error);
       return errorResponse(res, 400, 'MEMORY_ITEM_CREATE_FAILED', 'Unable to create memory item');
     }
   }
@@ -333,7 +347,7 @@ memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const [userAId, userBId] = [authUserId, userId].sort();
+  const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [block, friendship] = await Promise.all([
     prisma.block.findFirst({
@@ -355,9 +369,9 @@ memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const visibilityFilter = friendship
-    ? { in: ['public', 'friends_only'] as const }
-    : { equals: 'public' as const };
+  const visibilityFilter: Prisma.MemoryWhereInput['visibility'] = friendship
+    ? { in: ['public', 'friends_only'] }
+    : { equals: 'public' };
 
   const memories = await prisma.memory.findMany({
     where: { userId, visibility: visibilityFilter },
@@ -378,7 +392,7 @@ memoriesRouter.post(
     try {
       const memory = await prisma.memory.create({
         data: {
-          userId: authUserId,
+          user: { connect: { id: authUserId } },
           title: body.title,
           latitude: body.latitude,
           longitude: body.longitude,
@@ -389,7 +403,9 @@ memoriesRouter.post(
 
       return res.status(201).json(memory);
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2003') {
+      const code = getPrismaErrorCode(error);
+
+      if (code === 'P2003' || code === 'P2025') {
         return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
       }
 

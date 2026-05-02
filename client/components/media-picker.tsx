@@ -17,6 +17,27 @@ type Props = {
   onChange: (items: PendingMedia[]) => void;
 };
 
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/heic': 'heic',
+  'image/heif': 'heic',
+  'image/webp': 'webp',
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+  'audio/m4a': 'm4a',
+  'audio/mpeg': 'mp3',
+  'audio/wav': 'wav',
+};
+
+function getExtension(uri: string, mimeType?: string | null, fallback: string = 'jpg'): string {
+  if (mimeType && MIME_TO_EXT[mimeType]) return MIME_TO_EXT[mimeType];
+  const uriExt = uri.split('.').pop();
+  if (uriExt && uriExt.length <= 5 && /^[a-zA-Z0-9]+$/.test(uriExt)) return uriExt.toLowerCase();
+  return fallback;
+}
+
 export function MediaPicker({ value, onChange }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -35,7 +56,7 @@ export function MediaPicker({ value, onChange }: Props) {
     if (!result.canceled) {
       const newItems: PendingMedia[] = result.assets.map((asset) => {
         const isVideo = asset.mimeType?.startsWith('video') ?? false;
-        const ext = asset.uri.split('.').pop() ?? (isVideo ? 'mp4' : 'jpg');
+        const ext = getExtension(asset.uri, asset.mimeType, isVideo ? 'mp4' : 'jpg');
         return {
           uri: asset.uri,
           type: isVideo ? 'VIDEO' : 'IMAGE',
@@ -59,7 +80,7 @@ export function MediaPicker({ value, onChange }: Props) {
     });
     if (!result.canceled) {
       const asset = result.assets[0];
-      const ext = asset.uri.split('.').pop() ?? 'jpg';
+      const ext = getExtension(asset.uri, asset.mimeType, 'jpg');
       onChange([
         ...value,
         {

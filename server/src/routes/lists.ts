@@ -81,7 +81,11 @@ listsRouter.put(
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
     const id = req.params.id as string;
-    const data = req.validatedBody as UpdateListBody;
+    const body = req.validatedBody as UpdateListBody;
+    const data: Prisma.ListUpdateInput = {};
+
+    if (body.name !== undefined) data.name = body.name;
+    if (body.description !== undefined) data.description = body.description;
 
     try {
       const list = await prisma.list.update({
@@ -150,7 +154,12 @@ listsRouter.put(
     const authUserId = getAuthUserId(req);
     const id = req.params.id as string;
     const itemId = req.params.itemId as string;
-    const data = req.validatedBody as UpdateListItemBody;
+    const body = req.validatedBody as UpdateListItemBody;
+    const data: Prisma.ListItemUpdateInput = {};
+
+    if (body.latitude !== undefined) data.latitude = body.latitude;
+    if (body.longitude !== undefined) data.longitude = body.longitude;
+    if (body.notes !== undefined) data.notes = body.notes;
 
     const list = await prisma.list.findUnique({
       where: { id, userId: authUserId },
@@ -229,7 +238,7 @@ listsRouter.post(
     try {
       const item = await prisma.listItem.create({
         data: {
-          listId: id,
+          list: { connect: { id } },
           latitude: body.latitude,
           longitude: body.longitude,
           notes: body.notes ?? null,
@@ -254,7 +263,7 @@ listsRouter.post(
     try {
       const list = await prisma.list.create({
         data: {
-          userId: authUserId,
+          user: { connect: { id: authUserId } },
           name: body.name,
           description: body.description ?? null,
         },
@@ -263,7 +272,9 @@ listsRouter.post(
 
       return res.status(201).json(list);
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2003') {
+      const code = getPrismaErrorCode(error);
+
+      if (code === 'P2003' || code === 'P2025') {
         return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
       }
 

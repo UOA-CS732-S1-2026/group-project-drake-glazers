@@ -41,7 +41,11 @@ export function useApiClient() {
       },
     });
 
-    if (!res.ok) throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      const detail = body?.error?.message ?? body?.message ?? res.statusText;
+      throw new Error(`API request failed: ${res.status} ${detail}`);
+    }
 
     return res.json();
   };

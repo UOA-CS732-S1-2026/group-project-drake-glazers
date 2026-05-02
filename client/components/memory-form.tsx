@@ -55,10 +55,15 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
       });
 
       if (description.trim()) {
-        await api.post(`/api/memories/${memory.id}/items`, {
-          title: title.trim(),
-          description: description.trim(),
-        });
+        console.log(description);
+        try {
+          await api.post(`/api/memories/${memory.id}/items`, {
+            title: title.trim(),
+            description: description.trim(),
+          });
+        } catch (err) {
+          console.error('Error adding description:', err);
+        }
       }
 
       for (const item of mediaItems) {
