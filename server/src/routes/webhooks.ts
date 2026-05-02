@@ -27,7 +27,7 @@ clerkWebhookRouter.post(
     if (!signingSecret) {
       return errorResponse(
         res,
-        401,
+        500,
         'WEBHOOK_SIGNING_SECRET_MISSING',
         'Clerk webhook signing secret is not configured'
       );
@@ -171,7 +171,12 @@ clerkWebhookRouter.post(
       return res.sendStatus(204);
     } catch (err) {
       console.error('Webhook processing error:', err);
-      return res.status(500).json({ error: 'WEBHOOK_PROCESSING_FAILED' });
+      return errorResponse(
+        res,
+        500,
+        'WEBHOOK_PROCESSING_FAILED',
+        'Unable to process Clerk webhook'
+      );
     }
   }
 );
