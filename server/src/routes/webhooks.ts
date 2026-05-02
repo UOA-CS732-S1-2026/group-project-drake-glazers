@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { Webhook } from 'svix';
+import { z } from 'zod';
 import { errorResponse } from '../lib/api-response.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -17,6 +18,24 @@ const getRawBodyText = (body: Request['body']): string => {
 
   return '';
 };
+
+const clerkWebhookEventSchema = z.looseObject({
+  type: z.enum(['user.created', 'user.updated', 'user.deleted']),
+  data: z.looseObject({
+    id: z.string(),
+    email_addresses: z
+      .array(
+        z.looseObject({
+          id: z.string().optional(),
+          email_address: z.email().optional(),
+        })
+      )
+      .optional(),
+    primary_email_address_id: z.string().optional(),
+  }),
+});
+
+type ClerkWebhookEvent = z.infer<typeof clerkWebhookEventSchema>;
 
 clerkWebhookRouter.post(
   '/',
@@ -35,17 +54,7 @@ clerkWebhookRouter.post(
 
     const payload = getRawBodyText(req.body);
 
-    type EmailAddress = { id?: string; email_address?: string };
-    type WebhookEvent = {
-      type?: string;
-      data?: {
-        id?: string;
-        email_addresses?: EmailAddress[];
-        primary_email_address_id?: string;
-      };
-    };
-
-    let evt: WebhookEvent | undefined;
+    let evt: ClerkWebhookEvent;
 
     try {
       const webhook = new Webhook(signingSecret);
@@ -57,7 +66,19 @@ clerkWebhookRouter.post(
         ])
       ) as Record<string, string>;
 
-      evt = webhook.verify(payload, normalizedHeaders) as WebhookEvent;
+      const verifiedPayload = webhook.verify(payload, normalizedHeaders);
+      const parsedPayload = clerkWebhookEventSchema.safeParse(verifiedPayload);
+
+      if (!parsedPayload.success) {
+        return errorResponse(
+          res,
+          400,
+          'INVALID_WEBHOOK_PAYLOAD',
+          'Clerk webhook payload has an unexpected shape'
+        );
+      }
+
+      evt = parsedPayload.data;
     } catch (err) {
       console.error('Invalid webhook signature:', err);
       return errorResponse(
@@ -70,11 +91,11 @@ clerkWebhookRouter.post(
 
     // Process events we care about
     try {
-      const eventType = evt?.type ?? '';
-      const data = evt?.data;
+      const eventType = evt.type;
+      const data = evt.data;
 
       if (eventType === 'user.created' || eventType === 'user.updated') {
-        const userId = data?.id;
+        const userId = data.id;
 
         if (!userId) {
           throw new Error('Missing user id in webhook payload');
@@ -108,7 +129,7 @@ clerkWebhookRouter.post(
           update: email ? { email } : {},
         });
       } else if (eventType === 'user.deleted') {
-        const userId = data?.id;
+        const userId = data.id;
 
         if (!userId) {
           throw new Error('Missing user id in webhook payload');
