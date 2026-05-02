@@ -81,12 +81,25 @@ clerkWebhookRouter.post(
         }
 
         // Pick an email address if provided (prefer primary)
-        let email = '';
+        let email: string | null = null;
         if (Array.isArray(data.email_addresses) && data.email_addresses.length > 0) {
           const primaryId = data.primary_email_address_id;
           const primary = data.email_addresses.find((e) => e.id === primaryId);
           const pick = primary ?? data.email_addresses[0];
-          email = pick?.email_address ?? '';
+          email = pick?.email_address ?? null;
+        }
+
+        if (!email) {
+          if (eventType === 'user.created') {
+            return errorResponse(
+              res,
+              400,
+              'EMAIL_REQUIRED',
+              'Clerk webhook user.created event is missing an email address'
+            );
+          }
+
+          return res.sendStatus(204);
         }
 
         await prisma.user.upsert({
@@ -101,14 +114,57 @@ clerkWebhookRouter.post(
           throw new Error('Missing user id in webhook payload');
         }
 
-        // Soft-delete: set deletedAt timestamp so related records remain intact.
-        // Use updateMany so a delete webhook for a user that does not exist stays idempotent.
-        await prisma.user.updateMany({
-          where: {
-            id: userId,
-            deletedAt: null,
-          },
-          data: { deletedAt: new Date() },
+        // Hard-delete: remove user-owned records first, then delete the user row.
+        // Using deleteMany keeps the handler idempotent when Clerk retries or the user is already gone.
+        await prisma.$transaction(async (tx) => {
+          const lists = await tx.list.findMany({
+            where: { userId },
+            select: { id: true },
+          });
+
+          const listIds = lists.map((list) => list.id);
+
+          await tx.userProfile.deleteMany({
+            where: { userId },
+          });
+
+          await tx.friendRequest.deleteMany({
+            where: {
+              OR: [{ fromUserId: userId }, { toUserId: userId }],
+            },
+          });
+
+          await tx.friendship.deleteMany({
+            where: {
+              OR: [{ userAId: userId }, { userBId: userId }],
+            },
+          });
+
+          await tx.block.deleteMany({
+            where: {
+              OR: [{ blockerId: userId }, { blockedId: userId }],
+            },
+          });
+
+          if (listIds.length > 0) {
+            await tx.listItem.deleteMany({
+              where: {
+                listId: { in: listIds },
+              },
+            });
+          }
+
+          await tx.list.deleteMany({
+            where: { userId },
+          });
+
+          await tx.memory.deleteMany({
+            where: { userId },
+          });
+
+          await tx.user.deleteMany({
+            where: { id: userId },
+          });
         });
       }
 
