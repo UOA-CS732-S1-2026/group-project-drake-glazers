@@ -35,6 +35,7 @@ export default function SignInScreen() {
     if (signIn.status === 'complete') {
       await signIn.finalize({ navigate: () => router.replace('/') });
     } else {
+      console.error('Unexpected sign-in status:', signIn.status);
       setError('Sign in could not be completed. Please try again.');
     }
   };

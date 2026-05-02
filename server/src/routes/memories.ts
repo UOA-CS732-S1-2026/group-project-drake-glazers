@@ -295,7 +295,7 @@ memoriesRouter.post(
           memoryId: id,
           title: body.title,
           description: body.description ?? null,
-          mediaType: body.mediaType,
+          mediaType: body.mediaType ?? null,
           mediaUrl: body.mediaUrl ?? null,
           sortOrder: body.sortOrder,
         },

@@ -76,14 +76,14 @@ model Memory {
 }
 
 model MemoryItem {
-  id          String    @id @default(uuid())
-  memoryId    String    @map("memory_id")
+  id          String     @id @default(uuid())
+  memoryId    String     @map("memory_id")
   title       String
   description String?
-  mediaType   MediaType @map("media_type")
-  mediaUrl    String?   @map("media_url")
-  sortOrder   Int       @map("sort_order")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  mediaType   MediaType? @map("media_type")
+  mediaUrl    String?    @map("media_url")
+  sortOrder   Int        @default(0) @map("sort_order")
+  createdAt   DateTime   @default(now()) @map("created_at")
 
   memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 
