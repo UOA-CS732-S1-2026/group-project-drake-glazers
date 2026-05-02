@@ -1,5 +1,7 @@
 import type { ExpoConfig, ConfigContext } from 'expo/config';
 
+const mapboxDownloadToken = process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN;
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'client',
@@ -43,7 +45,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
-    '@rnmapbox/maps',
+    [
+      '@rnmapbox/maps',
+      {
+        RNMapboxMapsDownloadToken: mapboxDownloadToken ?? '',
+      },
+    ],
     'expo-font',
   ],
   experiments: {

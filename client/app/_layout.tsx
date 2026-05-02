@@ -1,14 +1,22 @@
+import '../global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import MapboxGL from '@rnmapbox/maps';
 import { useFonts } from 'expo-font';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ClerkProvider } from '@clerk/expo';
+import { ClerkProvider, useAuth } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
 
 const tokenCache = {
@@ -26,7 +34,7 @@ MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
 
 const queryClient = new QueryClient();
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 if (!publishableKey) {
   throw new Error(
@@ -35,31 +43,26 @@ if (!publishableKey) {
 }
 
 function InitialLayout() {
-  // const { isSignedIn, isLoaded } = useAuth();
-
-  // useEffect(() => {
-  //   if (!isLoaded) return;
-
-  //   SplashScreen.hideAsync();
-
-  //   if (!isSignedIn) {
-  //     router.replace('/(auth)/sign-in');
-  //   }
-  // }, [isLoaded, isSignedIn]);
-
-  // if (!isLoaded) return null;
-
+  const { isSignedIn, isLoaded } = useAuth();
   const colorScheme = useColorScheme();
-
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
   });
 
   useEffect(() => {
+    if (!isLoaded) return;
     if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (!isSignedIn) {
+      router.replace('/(auth)/sign-in');
+    }
+  }, [isLoaded, isSignedIn, fontsLoaded]);
 
-  if (!fontsLoaded) return null;
+  if (!isLoaded || !fontsLoaded) return null;
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
