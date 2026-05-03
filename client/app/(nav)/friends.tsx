@@ -112,7 +112,51 @@ const SEARCH_RESULTS: User[] = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Avatar({ uri, size = 48 }: { uri: string; size?: number }) {
-  return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
+  const [hasError, setHasError] = useState(false);
+
+  if (!uri || hasError) {
+    return (
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: '#D0D0D0',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Head */}
+        <View
+          style={{
+            width: size * 0.38,
+            height: size * 0.38,
+            borderRadius: size * 0.19,
+            backgroundColor: '#9E9E9E',
+            marginBottom: size * 0.04,
+          }}
+        />
+        {/* Shoulders */}
+        <View
+          style={{
+            width: size * 0.7,
+            height: size * 0.5,
+            borderRadius: (size * 0.7) / 2,
+            backgroundColor: '#9E9E9E',
+          }}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+      onError={() => setHasError(true)}
+    />
+  );
 }
 
 function FriendRow({ user, onRemove }: { user: User; onRemove: (id: string) => void }) {
