@@ -13,11 +13,14 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
+import { useApiClient } from '@/lib/api';
+import { registerForPushNotificationsAsync } from '@/lib/notifications';
 
 const tokenCache = {
   getToken: (key: string) => SecureStore.getItemAsync(key),
@@ -45,6 +48,8 @@ if (!publishableKey) {
 function InitialLayout() {
   const { isSignedIn, isLoaded } = useAuth();
   const colorScheme = useColorScheme();
+  const api = useApiClient();
+  const pushRegisteredRef = useRef(false);
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
     PlusJakartaSans_400Regular,
@@ -61,6 +66,29 @@ function InitialLayout() {
       router.replace('/(auth)/sign-in');
     }
   }, [isLoaded, isSignedIn, fontsLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || pushRegisteredRef.current) return;
+    pushRegisteredRef.current = true;
+
+    registerForPushNotificationsAsync(api).catch((error) => {
+      console.error('Failed to register push notifications', error);
+      pushRegisteredRef.current = false;
+    });
+  }, [api, isLoaded, isSignedIn]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { memoryId?: unknown };
+      const memoryId = typeof data?.memoryId === 'string' ? data.memoryId : null;
+
+      if (memoryId) {
+        router.push(`/memory/${memoryId}`);
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   if (!isLoaded || !fontsLoaded) return null;
 
