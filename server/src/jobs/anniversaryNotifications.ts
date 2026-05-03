@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import { Prisma } from '@prisma/client';
 
 type DeviceToken = {
   userId: string;
@@ -71,18 +72,20 @@ const fetchDeviceTokens = async (): Promise<DeviceToken[]> => {
   });
 };
 
-const fetchMemoriesForUsers = async (userIds: string[]): Promise<MemorySummary[]> => {
+const fetchMemoriesForUsers = async (
+  userIds: string[],
+  month: number,
+  day: number
+): Promise<MemorySummary[]> => {
   if (userIds.length === 0) return [];
 
-  return prisma.memory.findMany({
-    where: { userId: { in: userIds } },
-    select: {
-      id: true,
-      userId: true,
-      title: true,
-      createdAt: true,
-    },
-  });
+  return prisma.$queryRaw<MemorySummary[]>`
+    SELECT id, "userId", title, "createdAt"
+    FROM "Memory"
+    WHERE "userId" IN (${Prisma.join(userIds)})
+      AND EXTRACT(MONTH FROM "createdAt") = ${month}
+      AND EXTRACT(DAY FROM "createdAt") = ${day}
+  `;
 };
 
 const sendExpoNotifications = async (messages: ExpoMessage[]) => {
@@ -107,7 +110,10 @@ const sendExpoNotifications = async (messages: ExpoMessage[]) => {
 
     payload.data?.forEach((ticket, index) => {
       if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
-        invalidTokens.push(chunk[index]?.to);
+        const token = chunk[index]?.to;
+        if (token) {
+          invalidTokens.push(token);
+        }
       }
     });
   }
@@ -154,14 +160,10 @@ const run = async () => {
     }
 
     const userIds = Array.from(tokensByUser.keys());
-    const memories = await fetchMemoriesForUsers(userIds);
+    const memories = await fetchMemoriesForUsers(userIds, nowParts.month, nowParts.day);
 
     for (const memory of memories) {
       const memoryParts = getZonedDateParts(memory.createdAt, timeZone);
-
-      if (memoryParts.month !== nowParts.month || memoryParts.day !== nowParts.day) {
-        continue;
-      }
 
       if (memoryParts.year >= nowParts.year) {
         continue;

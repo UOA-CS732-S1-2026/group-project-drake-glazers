@@ -1,5 +1,6 @@
 import express from 'express';
 import type { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
@@ -19,7 +20,7 @@ const deviceTokenSelect = {
   lastSeenAt: true,
   createdAt: true,
   updatedAt: true,
-};
+} satisfies Prisma.DeviceTokenSelect;
 
 export const deviceTokensRouter = express.Router();
 
