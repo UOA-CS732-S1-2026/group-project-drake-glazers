@@ -12,6 +12,7 @@ import { friendRequestsRouter } from './routes/friendRequests.js';
 import { friendsRouter } from './routes/friends.js';
 import { blocksRouter } from './routes/blocks.js';
 import { mediaRouter } from './routes/media.js';
+import { deviceTokensRouter } from './routes/deviceTokens.js';
 import { errorResponse } from './lib/api-response.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api', friendRequestsRouter);
 app.use('/api', friendsRouter);
 app.use('/api', blocksRouter);
 app.use('/api', mediaRouter);
+app.use('/api', deviceTokensRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });
