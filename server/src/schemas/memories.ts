@@ -12,7 +12,7 @@ export const createMemoryBodySchema = z.object({
 export const updateMemoryBodySchema = z
   .object({
     title: z.string().trim().min(1).max(255).optional(),
-    description: z.string().trim().max(1000).optional(),
+    description: z.string().trim().max(1000).nullish(),
     relativeArea: z.string().trim().max(255).optional(),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),

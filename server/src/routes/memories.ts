@@ -138,9 +138,8 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
   });
 
   try {
-    const memory = await prisma.memory.delete({
+    await prisma.memory.delete({
       where: { id, userId: authUserId },
-      select: memorySelect,
     });
 
     if (mediaItems.length > 0) {
@@ -156,7 +155,7 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
       }
     }
 
-    return res.status(200).json(memory);
+    return res.status(200).json({ id });
   } catch (error) {
     if (getPrismaErrorCode(error) === 'P2025') {
       return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
