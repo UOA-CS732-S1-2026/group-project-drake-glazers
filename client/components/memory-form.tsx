@@ -10,6 +10,27 @@ import { useApiClient, uploadFile } from '@/lib/api';
 import { useMapStore } from '@/stores/map-store';
 import type { Visibility } from '@/lib/types';
 
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
+
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&types=place&limit=1`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const feature = data.features?.[0];
+    if (!feature) return null;
+    const city: string = feature.text;
+    const country: string | undefined = (feature.context ?? []).find((c: any) =>
+      (c.id as string).startsWith('country.')
+    )?.text;
+    return country ? `${city}, ${country}` : (city ?? null);
+  } catch {
+    return null;
+  }
+}
+
 type Props = {
   latitude: number;
   longitude: number;
@@ -47,9 +68,12 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
     setSaving(true);
 
     try {
+      const relativeArea = await reverseGeocode(latitude, longitude);
+
       const memory = await api.post('/api/memories', {
         title: title.trim(),
         description: description.trim() || undefined,
+        relativeArea: relativeArea ?? undefined,
         latitude,
         longitude,
         visibility,

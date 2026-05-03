@@ -61,10 +61,11 @@ model UserProfile {
 model Memory {
   id          String     @id @default(uuid())
   userId      String     @map("user_id")
-  title       String
-  description String?
-  latitude    Float
-  longitude   Float
+  title        String
+  description  String?
+  relativeArea String?  @map("relative_area")
+  latitude     Float
+  longitude    Float
   visibility  Visibility
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")

@@ -1,4 +1,12 @@
-import { ActivityIndicator, Image, Linking, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import type { ReactNode } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -20,12 +28,6 @@ const visibilityVariant: Record<Visibility, 'primary' | 'secondary' | 'tertiary'
   public: 'tertiary',
   friends_only: 'secondary',
   private: 'primary',
-};
-
-const mediaLabel: Record<MediaType, string> = {
-  image: 'Photo',
-  video: 'Video',
-  voice_note: 'Voice memo',
 };
 
 const mediaIcon: Record<MediaType, keyof typeof MaterialIcons.glyphMap> = {
@@ -105,9 +107,11 @@ export default function MemoryDetailScreen() {
         <View className="h-px bg-outline-variant" />
 
         <View className="gap-sm">
-          <InfoRow icon="place" label="Location">
-            {memory.latitude.toFixed(5)}, {memory.longitude.toFixed(5)}
-          </InfoRow>
+          {memory.relativeArea ? (
+            <InfoRow icon="place" label="Location">
+              {memory.relativeArea}
+            </InfoRow>
+          ) : null}
           <InfoRow icon="schedule" label="Created">
             {new Date(memory.createdAt).toLocaleString()}
           </InfoRow>
@@ -123,14 +127,11 @@ export default function MemoryDetailScreen() {
         </Card>
       ) : null}
 
-      <View className="gap-sm">
-        <Text variant="headline-md">Media</Text>
-        {mediaItems.length > 0 ? (
-          mediaItems.map((item) => <MediaItemCard key={item.id} item={item} />)
-        ) : (
-          <EmptyState label="No media has been attached to this memory." />
-        )}
-      </View>
+      {mediaItems.length > 0 ? (
+        <MediaCollage items={mediaItems} />
+      ) : (
+        <EmptyState label="No media has been attached to this memory." />
+      )}
     </ScrollView>
   );
 }
@@ -159,49 +160,134 @@ function InfoRow({
   );
 }
 
-function MediaItemCard({ item }: { item: Media }) {
-  const hasUrl = typeof item.signedUrl === 'string';
+function MediaCollage({ items }: { items: Media[] }) {
+  const images = items.filter((m) => m.mediaType === 'image' && typeof m.signedUrl === 'string');
+  const others = items.filter((m) => !(m.mediaType === 'image' && typeof m.signedUrl === 'string'));
 
-  if (item.mediaType === 'image' && hasUrl) {
+  return (
+    <View className="gap-sm">
+      {images.length > 0 && <ImageGrid images={images} />}
+      {others.length > 0 && (
+        <View className="flex-row flex-wrap gap-sm">
+          {others.map((item) => (
+            <MediaIconTile key={item.id} item={item} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function ImageGrid({ images }: { images: Media[] }) {
+  const count = images.length;
+
+  if (count === 1) {
     return (
-      <Card className="overflow-hidden p-0">
+      <View style={grid.clip}>
         <Image
-          source={{ uri: item.signedUrl ?? undefined }}
-          className="h-56 w-full"
+          source={{ uri: images[0].signedUrl ?? undefined }}
+          style={{ width: '100%', aspectRatio: 16 / 9 }}
           resizeMode="cover"
         />
-        <View className="gap-xs p-md">
-          <Text variant="body-lg">{mediaLabel[item.mediaType]}</Text>
-          <Text variant="body-sm" className="text-on-surface-variant">
-            {new Date(item.createdAt).toLocaleString()}
-          </Text>
-        </View>
-      </Card>
+      </View>
     );
   }
 
-  return (
-    <Card elevated={false} className="gap-md">
-      <View className="flex-row items-center gap-sm">
-        <View className="h-12 w-12 items-center justify-center rounded-lg bg-surface-container-low">
-          <MaterialIcons name={mediaIcon[item.mediaType]} size={24} color="#5b403e" />
-        </View>
-        <View className="flex-1">
-          <Text variant="body-lg">{mediaLabel[item.mediaType]}</Text>
-          <Text variant="body-sm" className="text-on-surface-variant">
-            {new Date(item.createdAt).toLocaleString()}
-          </Text>
+  if (count === 2) {
+    return (
+      <View style={[grid.clip, grid.row]}>
+        {images.map((img) => (
+          <Image
+            key={img.id}
+            source={{ uri: img.signedUrl ?? undefined }}
+            style={{ flex: 1, aspectRatio: 1 }}
+            resizeMode="cover"
+          />
+        ))}
+      </View>
+    );
+  }
+
+  if (count === 3) {
+    return (
+      <View style={[grid.clip, grid.col]}>
+        <Image
+          source={{ uri: images[0].signedUrl ?? undefined }}
+          style={{ width: '100%', aspectRatio: 16 / 9 }}
+          resizeMode="cover"
+        />
+        <View style={grid.row}>
+          {images.slice(1).map((img) => (
+            <Image
+              key={img.id}
+              source={{ uri: img.signedUrl ?? undefined }}
+              style={{ flex: 1, aspectRatio: 1 }}
+              resizeMode="cover"
+            />
+          ))}
         </View>
       </View>
-      {hasUrl ? (
-        <Button
-          label="Open Media"
-          variant="secondary"
-          onPress={() => Linking.openURL(item.signedUrl as string)}
-        />
-      ) : null}
-    </Card>
+    );
+  }
+
+  // 4+ images: 2×2 grid, +N overlay on last tile if more exist
+  const shown = images.slice(0, 4);
+  const overflow = count - 4;
+  const rows = [shown.slice(0, 2), shown.slice(2, 4)];
+
+  return (
+    <View style={[grid.clip, grid.col]}>
+      {rows.map((row, rowIndex) => (
+        <View key={rowIndex} style={grid.row}>
+          {row.map((img, colIndex) => {
+            const showOverlay = overflow > 0 && rowIndex === 1 && colIndex === row.length - 1;
+            return (
+              <View key={img.id} style={{ flex: 1, aspectRatio: 1, overflow: 'hidden' }}>
+                <Image
+                  source={{ uri: img.signedUrl ?? undefined }}
+                  style={{ flex: 1 }}
+                  resizeMode="cover"
+                />
+                {showOverlay && (
+                  <View style={[StyleSheet.absoluteFill, grid.overlay]}>
+                    <Text variant="headline-md" className="text-white">
+                      +{overflow}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
   );
+}
+
+const GAP = 2;
+
+const grid = StyleSheet.create({
+  clip: { borderRadius: 12, overflow: 'hidden' },
+  row: { flexDirection: 'row', gap: GAP },
+  col: { gap: GAP },
+  overlay: { backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+});
+
+function MediaIconTile({ item }: { item: Media }) {
+  const icon = mediaIcon[item.mediaType];
+  const tile = (
+    <View className="h-14 w-14 items-center justify-center rounded-lg bg-surface-container-low">
+      <MaterialIcons name={icon} size={24} color="#5b403e" />
+    </View>
+  );
+  if (item.signedUrl) {
+    return (
+      <TouchableOpacity onPress={() => Linking.openURL(item.signedUrl as string)}>
+        {tile}
+      </TouchableOpacity>
+    );
+  }
+  return tile;
 }
 
 function EmptyState({ label }: { label: string }) {

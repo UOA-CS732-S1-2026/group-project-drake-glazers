@@ -11,10 +11,11 @@ export type Memory = {
   id: string;
   userId: string;
   title: string;
+  description?: string | null;
+  relativeArea?: string | null;
   latitude: number;
   longitude: number;
   visibility: Visibility;
-  description?: string;
   createdAt: string;
   updatedAt: string;
 };

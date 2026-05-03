@@ -16,6 +16,7 @@ const memorySelect = {
   userId: true,
   title: true,
   description: true,
+  relativeArea: true,
   latitude: true,
   longitude: true,
   visibility: true,
@@ -103,6 +104,7 @@ memoriesRouter.put(
     const data: Prisma.MemoryUpdateInput = {};
     if (body.title !== undefined) data.title = body.title;
     if (body.description !== undefined) data.description = body.description;
+    if (body.relativeArea !== undefined) data.relativeArea = body.relativeArea;
     if (body.latitude !== undefined) data.latitude = body.latitude;
     if (body.longitude !== undefined) data.longitude = body.longitude;
     if (body.visibility !== undefined) data.visibility = body.visibility;
@@ -227,6 +229,7 @@ memoriesRouter.post(
           user: { connect: { id: authUserId } },
           title: body.title,
           description: body.description ?? null,
+          relativeArea: body.relativeArea ?? null,
           latitude: body.latitude,
           longitude: body.longitude,
           visibility: body.visibility,

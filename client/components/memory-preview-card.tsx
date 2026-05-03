@@ -124,7 +124,8 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
           </View>
           <View>
             <Text style={styles.rowPrimary}>
-              {memory.latitude.toFixed(4)}°, {memory.longitude.toFixed(4)}°
+              {memory.relativeArea ??
+                `${memory.latitude.toFixed(4)}°, ${memory.longitude.toFixed(4)}°`}
             </Text>
             <Text style={styles.rowSecondary}>{date}</Text>
           </View>
