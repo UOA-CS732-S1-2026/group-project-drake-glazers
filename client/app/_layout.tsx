@@ -69,12 +69,14 @@ function InitialLayout() {
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || pushRegisteredRef.current) return;
-    pushRegisteredRef.current = true;
 
-    registerForPushNotificationsAsync(api).catch((error) => {
-      console.error('Failed to register push notifications', error);
-      pushRegisteredRef.current = false;
-    });
+    registerForPushNotificationsAsync(api)
+      .then(() => {
+        pushRegisteredRef.current = true;
+      })
+      .catch((error) => {
+        console.error('Failed to register push notifications', error);
+      });
   }, [api, isLoaded, isSignedIn]);
 
   useEffect(() => {
