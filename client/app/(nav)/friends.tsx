@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { useAuth } from '@clerk/expo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,101 +18,46 @@ type Tab = 'friends' | 'incoming' | 'outgoing' | 'blocked';
 interface User {
   id: string;
   name: string;
-  username: string;
   avatar: string;
-  mutualFriends?: number;
-  since?: string;
+  requestId?: string;
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+// ─── API response → UI model mappers ─────────────────────────────────────────
 
-const FRIENDS: User[] = [
-  {
-    id: '1',
-    name: 'Aroha Ngata',
-    username: '@aroha',
-    avatar: 'https://i.pravatar.cc/150?img=47',
-    mutualFriends: 6,
-    since: 'Jan 2024',
-  },
-  {
-    id: '2',
-    name: 'Tama Waititi',
-    username: '@tamaw',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    mutualFriends: 2,
-    since: 'Mar 2024',
-  },
-  {
-    id: '3',
-    name: 'Hine Walker',
-    username: '@hinewalks',
-    avatar: 'https://i.pravatar.cc/150?img=32',
-    mutualFriends: 9,
-    since: 'Nov 2023',
-  },
-  {
-    id: '4',
-    name: 'Mere Tūhoe',
-    username: '@mere_t',
-    avatar: 'https://i.pravatar.cc/150?img=56',
-    mutualFriends: 1,
-    since: 'Jun 2024',
-  },
-];
+function mapFriend(item: any): User {
+  return {
+    id: item.friend.id,
+    name: item.friend.profile?.displayName ?? item.friend.id,
+    avatar: item.friend.profile?.avatarUrl ?? '',
+  };
+}
 
-const INCOMING: User[] = [
-  {
-    id: '5',
-    name: 'James Pōhatu',
-    username: '@jamespohatu',
-    avatar: 'https://i.pravatar.cc/150?img=15',
-    mutualFriends: 3,
-  },
-  {
-    id: '6',
-    name: 'Sofia Renata',
-    username: '@sofiar',
-    avatar: 'https://i.pravatar.cc/150?img=44',
-    mutualFriends: 0,
-  },
-];
+function mapRequest(item: any, direction: 'incoming' | 'outgoing'): User {
+  const profile = direction === 'incoming' ? item.fromUser?.profile : item.toUser?.profile;
+  const userId = direction === 'incoming' ? item.fromUserId : item.toUserId;
+  return {
+    id: userId,
+    name: profile?.displayName ?? userId,
+    avatar: profile?.avatarUrl ?? '',
+    requestId: item.id,
+  };
+}
 
-const OUTGOING: User[] = [
-  {
-    id: '7',
-    name: 'Liam Tūhoe',
-    username: '@liamt',
-    avatar: 'https://i.pravatar.cc/150?img=68',
-    mutualFriends: 5,
-  },
-];
+function mapBlock(item: any): User {
+  return {
+    id: item.blocked.id,
+    name: item.blocked.profile?.displayName ?? item.blocked.id,
+    avatar: item.blocked.profile?.avatarUrl ?? '',
+  };
+}
 
-const BLOCKED: User[] = [
-  {
-    id: '8',
-    name: 'Blocked User',
-    username: '@hidden',
-    avatar: 'https://i.pravatar.cc/150?img=70',
-  },
-];
-
-const SEARCH_RESULTS: User[] = [
-  {
-    id: '9',
-    name: 'Ngāti Raukawa',
-    username: '@ngatir',
-    avatar: 'https://i.pravatar.cc/150?img=25',
-    mutualFriends: 2,
-  },
-  {
-    id: '10',
-    name: 'Kiri Parata',
-    username: '@kiriparata',
-    avatar: 'https://i.pravatar.cc/150?img=37',
-    mutualFriends: 7,
-  },
-];
+function mapSearchResult(item: any): User {
+  return {
+    id: item.id,
+    name: item.profile?.displayName ?? item.id,
+    avatar: item.profile?.avatarUrl ?? '',
+  };
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -127,7 +77,6 @@ function Avatar({ uri, size = 48 }: { uri: string; size?: number }) {
           overflow: 'hidden',
         }}
       >
-        {/* Head */}
         <View
           style={{
             width: size * 0.38,
@@ -137,7 +86,6 @@ function Avatar({ uri, size = 48 }: { uri: string; size?: number }) {
             marginBottom: size * 0.04,
           }}
         />
-        {/* Shoulders */}
         <View
           style={{
             width: size * 0.7,
@@ -159,22 +107,37 @@ function Avatar({ uri, size = 48 }: { uri: string; size?: number }) {
   );
 }
 
-function FriendRow({ user, onRemove }: { user: User; onRemove: (id: string) => void }) {
+function FriendRow({
+  user,
+  onRemove,
+  onViewMemories,
+}: {
+  user: User;
+  onRemove: (id: string) => void;
+  onViewMemories: (id: string) => void;
+}) {
   return (
-    <Card elevated={false} className="flex-row items-center gap-md mb-sm">
-      <Avatar uri={user.avatar} />
-      <View className="flex-1 gap-xs">
-        <Text variant="body-md" className="font-sans-semibold">
-          {user.name}
-        </Text>
-        <Text variant="body-sm" className="text-on-surface-variant">
-          {user.username}
-        </Text>
-        {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
-          <Badge label={`${user.mutualFriends} mutual`} variant="secondary" />
-        )}
+    <Card elevated={false} className="mb-sm">
+      <View className="flex-row items-center gap-md">
+        <Avatar uri={user.avatar} />
+        <View className="flex-1 gap-xs">
+          <Text variant="body-md" className="font-sans-semibold">
+            {user.name}
+          </Text>
+        </View>
+        <Button
+          label="Remove"
+          variant="ghost"
+          onPress={() => onRemove(user.id)}
+          className="px-sm"
+        />
       </View>
-      <Button label="Remove" variant="ghost" onPress={() => onRemove(user.id)} className="px-sm" />
+      <Button
+        label="View memories"
+        variant="secondary"
+        onPress={() => onViewMemories(user.id)}
+        className="mt-sm"
+      />
     </Card>
   );
 }
@@ -185,8 +148,8 @@ function IncomingRow({
   onDecline,
 }: {
   user: User;
-  onAccept: (id: string) => void;
-  onDecline: (id: string) => void;
+  onAccept: (requestId: string) => void;
+  onDecline: (requestId: string) => void;
 }) {
   return (
     <Card elevated={false} className="mb-sm">
@@ -196,25 +159,19 @@ function IncomingRow({
           <Text variant="body-md" className="font-sans-semibold">
             {user.name}
           </Text>
-          <Text variant="body-sm" className="text-on-surface-variant">
-            {user.username}
-          </Text>
-          {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
-            <Badge label={`${user.mutualFriends} mutual`} variant="primary" />
-          )}
         </View>
       </View>
       <View className="flex-row gap-sm">
         <Button
           label="Accept"
           variant="primary"
-          onPress={() => onAccept(user.id)}
+          onPress={() => onAccept(user.requestId!)}
           className="flex-1"
         />
         <Button
           label="Decline"
           variant="secondary"
-          onPress={() => onDecline(user.id)}
+          onPress={() => onDecline(user.requestId!)}
           className="flex-1"
         />
       </View>
@@ -222,7 +179,7 @@ function IncomingRow({
   );
 }
 
-function OutgoingRow({ user, onCancel }: { user: User; onCancel: (id: string) => void }) {
+function OutgoingRow({ user, onCancel }: { user: User; onCancel: (requestId: string) => void }) {
   return (
     <Card elevated={false} className="flex-row items-center gap-md mb-sm">
       <Avatar uri={user.avatar} />
@@ -230,12 +187,14 @@ function OutgoingRow({ user, onCancel }: { user: User; onCancel: (id: string) =>
         <Text variant="body-md" className="font-sans-semibold">
           {user.name}
         </Text>
-        <Text variant="body-sm" className="text-on-surface-variant">
-          {user.username}
-        </Text>
         <Badge label="Pending" variant="tertiary" />
       </View>
-      <Button label="Cancel" variant="ghost" onPress={() => onCancel(user.id)} className="px-sm" />
+      <Button
+        label="Cancel"
+        variant="ghost"
+        onPress={() => onCancel(user.requestId!)}
+        className="px-sm"
+      />
     </Card>
   );
 }
@@ -249,9 +208,6 @@ function BlockedRow({ user, onUnblock }: { user: User; onUnblock: (id: string) =
       <View className="flex-1 gap-xs">
         <Text variant="body-md" className="font-sans-semibold">
           {user.name}
-        </Text>
-        <Text variant="body-sm" className="text-on-surface-variant">
-          {user.username}
         </Text>
       </View>
       <Button
@@ -272,12 +228,6 @@ function SearchResultRow({ user, onAdd }: { user: User; onAdd: (id: string) => v
         <Text variant="body-md" className="font-sans-semibold">
           {user.name}
         </Text>
-        <Text variant="body-sm" className="text-on-surface-variant">
-          {user.username}
-        </Text>
-        {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
-          <Badge label={`${user.mutualFriends} mutual`} variant="secondary" />
-        )}
       </View>
       <Button label="Add" variant="primary" onPress={() => onAdd(user.id)} className="px-md" />
     </Card>
@@ -296,9 +246,11 @@ function EmptyState({ message }: { message: string }) {
 
 // ─── Tab Bar ──────────────────────────────────────────────────────────────────
 
-const TABS: { key: Tab; label: string; count?: number }[] = [
-  { key: 'friends', label: 'Friends', count: FRIENDS.length },
-  { key: 'incoming', label: 'Requests', count: INCOMING.length },
+type TabDef = { key: Tab; label: string };
+
+const TABS: TabDef[] = [
+  { key: 'friends', label: 'Friends' },
+  { key: 'incoming', label: 'Requests' },
   { key: 'outgoing', label: 'Sent' },
   { key: 'blocked', label: 'Blocked' },
 ];
@@ -356,36 +308,179 @@ function TabBar({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function FriendsPage() {
+  const { getToken } = useAuth();
+
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
 
-  const [friends, setFriends] = useState(FRIENDS);
-  const [incoming, setIncoming] = useState(INCOMING);
-  const [outgoing, setOutgoing] = useState(OUTGOING);
-  const [blocked, setBlocked] = useState(BLOCKED);
+  const [friends, setFriends] = useState<User[]>([]);
+  const [incoming, setIncoming] = useState<User[]>([]);
+  const [outgoing, setOutgoing] = useState<User[]>([]);
+  const [blocked, setBlocked] = useState<User[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const showSearch = search.trim().length > 0;
 
-  const handleAccept = (id: string) => {
-    const user = incoming.find((u) => u.id === id);
-    if (user) {
-      setFriends((prev) => [...prev, { ...user, since: 'Now' }]);
-      setIncoming((prev) => prev.filter((u) => u.id !== id));
+  // ── API helper ─────────────────────────────────────────────────────────────
+
+  const apiFetch = useCallback(
+    async (path: string, options: RequestInit = {}) => {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          ...options.headers,
+        },
+      });
+      if (!res.ok) throw await res.json();
+      return res.json();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  // ── Initial data load ──────────────────────────────────────────────────────
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [friendsData, requestsData, blocksData] = await Promise.all([
+        apiFetch('/friends'),
+        apiFetch('/friend-requests'),
+        apiFetch('/blocks'),
+      ]);
+
+      setFriends(friendsData.map(mapFriend));
+      setIncoming(requestsData.incoming.map((r: any) => mapRequest(r, 'incoming')));
+      setOutgoing(requestsData.outgoing.map((r: any) => mapRequest(r, 'outgoing')));
+      setBlocked(blocksData.map(mapBlock));
+    } catch {
+      setError('Failed to load friends data.');
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadAll();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!showSearch) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const data = await apiFetch(`/users/search?q=${encodeURIComponent(search.trim())}`);
+        setSearchResults(data.map(mapSearchResult));
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search, showSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  const handleAccept = async (requestId: string) => {
+    try {
+      await apiFetch(`/friend-requests/${requestId}/accept`, { method: 'PUT' });
+      await loadAll();
+    } catch {
+      setError('Failed to accept request.');
     }
   };
 
-  const handleDecline = (id: string) => setIncoming((prev) => prev.filter((u) => u.id !== id));
-  const handleCancelOutgoing = (id: string) =>
-    setOutgoing((prev) => prev.filter((u) => u.id !== id));
-  const handleRemoveFriend = (id: string) => setFriends((prev) => prev.filter((u) => u.id !== id));
-  const handleUnblock = (id: string) => setBlocked((prev) => prev.filter((u) => u.id !== id));
-  const handleAddFromSearch = (id: string) => {
-    // In a real app: send friend request
-    setSearch('');
+  const handleDecline = async (requestId: string) => {
+    try {
+      await apiFetch(`/friend-requests/${requestId}/decline`, { method: 'PUT' });
+      setIncoming((prev) => prev.filter((u) => u.requestId !== requestId));
+    } catch {
+      setError('Failed to decline request.');
+    }
   };
 
+  const handleCancelOutgoing = async (requestId: string) => {
+    try {
+      await apiFetch(`/friend-requests/${requestId}`, { method: 'DELETE' });
+      setOutgoing((prev) => prev.filter((u) => u.requestId !== requestId));
+    } catch {
+      setError('Failed to cancel request.');
+    }
+  };
+
+  const handleRemoveFriend = async (userId: string) => {
+    try {
+      await apiFetch(`/friends/${userId}`, { method: 'DELETE' });
+      setFriends((prev) => prev.filter((u) => u.id !== userId));
+    } catch {
+      setError('Failed to remove friend.');
+    }
+  };
+
+  const handleUnblock = async (userId: string) => {
+    try {
+      await apiFetch(`/blocks/${userId}`, { method: 'DELETE' });
+      setBlocked((prev) => prev.filter((u) => u.id !== userId));
+    } catch {
+      setError('Failed to unblock user.');
+    }
+  };
+
+  const handleAddFromSearch = async (userId: string) => {
+    try {
+      await apiFetch('/friend-requests', {
+        method: 'POST',
+        body: JSON.stringify({ toUserId: userId }),
+      });
+      setSearch('');
+    } catch {
+      setError('Failed to send friend request.');
+    }
+  };
+
+  const handleViewMemories = (userId: string) => {
+    // TODO: navigate to memories screen, e.g. router.push(`/memories/${userId}`)
+    // Endpoint: GET /users/:userId/memories
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   const renderContent = () => {
+    if (loading) {
+      return (
+        <View className="items-center justify-center py-xl">
+          <ActivityIndicator />
+        </View>
+      );
+    }
+
+    if (error) {
+      return <EmptyState message={error} />;
+    }
+
     if (showSearch) {
+      if (searchLoading) {
+        return (
+          <View className="items-center justify-center py-xl">
+            <ActivityIndicator />
+          </View>
+        );
+      }
       return (
         <>
           <Text
@@ -394,10 +489,10 @@ export default function FriendsPage() {
           >
             Results for &ldquo;{search}&rdquo;
           </Text>
-          {SEARCH_RESULTS.length === 0 ? (
+          {searchResults.length === 0 ? (
             <EmptyState message="No users found." />
           ) : (
-            SEARCH_RESULTS.map((u) => (
+            searchResults.map((u) => (
               <SearchResultRow key={u.id} user={u} onAdd={handleAddFromSearch} />
             ))
           )}
@@ -410,7 +505,14 @@ export default function FriendsPage() {
         return friends.length === 0 ? (
           <EmptyState message="No friends yet. Search above to find people." />
         ) : (
-          friends.map((u) => <FriendRow key={u.id} user={u} onRemove={handleRemoveFriend} />)
+          friends.map((u) => (
+            <FriendRow
+              key={u.id}
+              user={u}
+              onRemove={handleRemoveFriend}
+              onViewMemories={handleViewMemories}
+            />
+          ))
         );
       case 'incoming':
         return incoming.length === 0 ? (
@@ -442,12 +544,10 @@ export default function FriendsPage() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
         <Text variant="headline-lg" className="mb-md">
           Friends
         </Text>
 
-        {/* Search */}
         <Input
           label={undefined}
           placeholder="Search for people…"
@@ -459,12 +559,10 @@ export default function FriendsPage() {
           className="mb-md"
         />
 
-        {/* Tabs (hidden while searching) */}
         {!showSearch && (
           <TabBar active={activeTab} onChange={setActiveTab} incomingCount={incoming.length} />
         )}
 
-        {/* Content */}
         {renderContent()}
       </ScrollView>
     </View>
