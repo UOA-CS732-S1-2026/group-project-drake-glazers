@@ -15,6 +15,7 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         process: 'readonly',
+        TextDecoder: 'readonly',
         console: 'readonly',
       },
     },

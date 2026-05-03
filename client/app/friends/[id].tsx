@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function FriendProfileScreen() {
   const { id } = useLocalSearchParams();

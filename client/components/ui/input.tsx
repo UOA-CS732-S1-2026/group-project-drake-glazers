@@ -29,9 +29,7 @@ export function Input({ label, error, className = '', ...props }: Props) {
         onBlur={() => setFocused(false)}
         {...props}
       />
-      {error && (
-        <Text className="text-body-sm font-sans text-error">{error}</Text>
-      )}
+      {error && <Text className="text-body-sm font-sans text-error">{error}</Text>}
     </View>
   );
 }

@@ -1,4 +1,9 @@
-import { TouchableOpacity, Text, ActivityIndicator, type TouchableOpacityProps } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  type TouchableOpacityProps,
+} from 'react-native';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -20,7 +25,14 @@ const textClass: Record<Variant, string> = {
   ghost: 'text-primary',
 };
 
-export function Button({ label, variant = 'primary', loading = false, disabled, className = '', ...props }: Props) {
+export function Button({
+  label,
+  variant = 'primary',
+  loading = false,
+  disabled,
+  className = '',
+  ...props
+}: Props) {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -36,9 +48,7 @@ export function Button({ label, variant = 'primary', loading = false, disabled, 
       {loading ? (
         <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#b71422'} />
       ) : (
-        <Text className={`text-button font-sans-semibold ${textClass[variant]}`}>
-          {label}
-        </Text>
+        <Text className={`text-button font-sans-semibold ${textClass[variant]}`}>{label}</Text>
       )}
     </TouchableOpacity>
   );
