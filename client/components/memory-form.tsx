@@ -49,22 +49,11 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
     try {
       const memory = await api.post('/api/memories', {
         title: title.trim(),
+        description: description.trim() || undefined,
         latitude,
         longitude,
         visibility,
       });
-
-      if (description.trim()) {
-        console.log(description);
-        try {
-          await api.post(`/api/memories/${memory.id}/items`, {
-            title: title.trim(),
-            description: description.trim(),
-          });
-        } catch (err) {
-          console.error('Error adding description:', err);
-        }
-      }
 
       for (const item of mediaItems) {
         const mediaType = item.type.toLowerCase();

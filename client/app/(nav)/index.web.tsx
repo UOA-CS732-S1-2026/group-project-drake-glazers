@@ -55,6 +55,8 @@ export default function HomeScreen() {
 }
 
 function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => void }) {
+  const router = useRouter();
+
   console.log('Selected memory:', memory);
 
   const { data: mediaItems = [] } = useMemoryMedia(memory.id);
@@ -113,7 +115,9 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
           </p>
         </div>
 
-        <button style={styles.actionButton}>View Memory</button>
+        <button style={styles.actionButton} onClick={() => router.push(`/memory/${memory.id}`)}>
+          View Memory
+        </button>
       </div>
     </div>
   );
