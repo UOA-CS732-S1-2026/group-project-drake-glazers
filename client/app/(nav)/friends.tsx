@@ -1,314 +1,428 @@
-import { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
-
-import { Text } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useApiClient } from '@/lib/api';
+import { Input } from '@/components/ui/input';
+import { Text } from '@/components/ui/text';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface FriendRequest {
+type Tab = 'friends' | 'incoming' | 'outgoing' | 'blocked';
+
+interface User {
   id: string;
   name: string;
-  sub: string;
-  avatarBg: string;
-  avatarColor: string;
-  initials: string;
+  username: string;
+  avatar: string;
+  mutualFriends?: number;
+  since?: string;
 }
 
-interface Friend {
-  id: string;
-  name: string;
-  location: string;
-  online: boolean;
-  avatarBg: string;
-  avatarColor: string;
-  initials: string;
+// ─── Mock data ────────────────────────────────────────────────────────────────
+
+const FRIENDS: User[] = [
+  {
+    id: '1',
+    name: 'Aroha Ngata',
+    username: '@aroha',
+    avatar: 'https://i.pravatar.cc/150?img=47',
+    mutualFriends: 6,
+    since: 'Jan 2024',
+  },
+  {
+    id: '2',
+    name: 'Tama Waititi',
+    username: '@tamaw',
+    avatar: 'https://i.pravatar.cc/150?img=12',
+    mutualFriends: 2,
+    since: 'Mar 2024',
+  },
+  {
+    id: '3',
+    name: 'Hine Walker',
+    username: '@hinewalks',
+    avatar: 'https://i.pravatar.cc/150?img=32',
+    mutualFriends: 9,
+    since: 'Nov 2023',
+  },
+  {
+    id: '4',
+    name: 'Mere Tūhoe',
+    username: '@mere_t',
+    avatar: 'https://i.pravatar.cc/150?img=56',
+    mutualFriends: 1,
+    since: 'Jun 2024',
+  },
+];
+
+const INCOMING: User[] = [
+  {
+    id: '5',
+    name: 'James Pōhatu',
+    username: '@jamespohatu',
+    avatar: 'https://i.pravatar.cc/150?img=15',
+    mutualFriends: 3,
+  },
+  {
+    id: '6',
+    name: 'Sofia Renata',
+    username: '@sofiar',
+    avatar: 'https://i.pravatar.cc/150?img=44',
+    mutualFriends: 0,
+  },
+];
+
+const OUTGOING: User[] = [
+  {
+    id: '7',
+    name: 'Liam Tūhoe',
+    username: '@liamt',
+    avatar: 'https://i.pravatar.cc/150?img=68',
+    mutualFriends: 5,
+  },
+];
+
+const BLOCKED: User[] = [
+  {
+    id: '8',
+    name: 'Blocked User',
+    username: '@hidden',
+    avatar: 'https://i.pravatar.cc/150?img=70',
+  },
+];
+
+const SEARCH_RESULTS: User[] = [
+  {
+    id: '9',
+    name: 'Ngāti Raukawa',
+    username: '@ngatir',
+    avatar: 'https://i.pravatar.cc/150?img=25',
+    mutualFriends: 2,
+  },
+  {
+    id: '10',
+    name: 'Kiri Parata',
+    username: '@kiriparata',
+    avatar: 'https://i.pravatar.cc/150?img=37',
+    mutualFriends: 7,
+  },
+];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Avatar({ uri, size = 48 }: { uri: string; size?: number }) {
+  return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
 }
 
-interface Suggestion {
-  id: string;
-  name: string;
-  avatarBg: string;
-  avatarColor: string;
-  initials: string;
-}
-
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-
-interface AvatarProps {
-  initials: string;
-  bg: string;
-  color: string;
-  size?: number;
-  online?: boolean;
-}
-
-function Avatar({ initials, bg, color, size = 52, online = false }: AvatarProps) {
+function FriendRow({ user, onRemove }: { user: User; onRemove: (id: string) => void }) {
   return (
-    <View className="relative" style={{ width: size, height: size }}>
-      <View
-        className="items-center justify-center rounded-full"
-        style={{ width: size, height: size, backgroundColor: bg }}
-      >
-        <Text variant="label-md" className="font-sans-bold" style={{ color, fontSize: size * 0.3 }}>
-          {initials}
+    <Card elevated={false} className="flex-row items-center gap-md mb-sm">
+      <Avatar uri={user.avatar} />
+      <View className="flex-1 gap-xs">
+        <Text variant="body-md" className="font-sans-semibold">
+          {user.name}
+        </Text>
+        <Text variant="body-sm" className="text-on-surface-variant">
+          {user.username}
+        </Text>
+        {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
+          <Badge label={`${user.mutualFriends} mutual`} variant="secondary" />
+        )}
+      </View>
+      <Button label="Remove" variant="ghost" onPress={() => onRemove(user.id)} className="px-sm" />
+    </Card>
+  );
+}
+
+function IncomingRow({
+  user,
+  onAccept,
+  onDecline,
+}: {
+  user: User;
+  onAccept: (id: string) => void;
+  onDecline: (id: string) => void;
+}) {
+  return (
+    <Card elevated={false} className="mb-sm">
+      <View className="flex-row items-center gap-md mb-sm">
+        <Avatar uri={user.avatar} />
+        <View className="flex-1 gap-xs">
+          <Text variant="body-md" className="font-sans-semibold">
+            {user.name}
+          </Text>
+          <Text variant="body-sm" className="text-on-surface-variant">
+            {user.username}
+          </Text>
+          {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
+            <Badge label={`${user.mutualFriends} mutual`} variant="primary" />
+          )}
+        </View>
+      </View>
+      <View className="flex-row gap-sm">
+        <Button
+          label="Accept"
+          variant="primary"
+          onPress={() => onAccept(user.id)}
+          className="flex-1"
+        />
+        <Button
+          label="Decline"
+          variant="secondary"
+          onPress={() => onDecline(user.id)}
+          className="flex-1"
+        />
+      </View>
+    </Card>
+  );
+}
+
+function OutgoingRow({ user, onCancel }: { user: User; onCancel: (id: string) => void }) {
+  return (
+    <Card elevated={false} className="flex-row items-center gap-md mb-sm">
+      <Avatar uri={user.avatar} />
+      <View className="flex-1 gap-xs">
+        <Text variant="body-md" className="font-sans-semibold">
+          {user.name}
+        </Text>
+        <Text variant="body-sm" className="text-on-surface-variant">
+          {user.username}
+        </Text>
+        <Badge label="Pending" variant="tertiary" />
+      </View>
+      <Button label="Cancel" variant="ghost" onPress={() => onCancel(user.id)} className="px-sm" />
+    </Card>
+  );
+}
+
+function BlockedRow({ user, onUnblock }: { user: User; onUnblock: (id: string) => void }) {
+  return (
+    <Card elevated={false} className="flex-row items-center gap-md mb-sm">
+      <View style={{ opacity: 0.5 }}>
+        <Avatar uri={user.avatar} />
+      </View>
+      <View className="flex-1 gap-xs">
+        <Text variant="body-md" className="font-sans-semibold">
+          {user.name}
+        </Text>
+        <Text variant="body-sm" className="text-on-surface-variant">
+          {user.username}
         </Text>
       </View>
-      {online && (
-        <View className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#22c55e] border-2 border-[#ffffff]" />
-      )}
+      <Button
+        label="Unblock"
+        variant="secondary"
+        onPress={() => onUnblock(user.id)}
+        className="px-sm"
+      />
+    </Card>
+  );
+}
+
+function SearchResultRow({ user, onAdd }: { user: User; onAdd: (id: string) => void }) {
+  return (
+    <Card elevated={false} className="flex-row items-center gap-md mb-sm">
+      <Avatar uri={user.avatar} />
+      <View className="flex-1 gap-xs">
+        <Text variant="body-md" className="font-sans-semibold">
+          {user.name}
+        </Text>
+        <Text variant="body-sm" className="text-on-surface-variant">
+          {user.username}
+        </Text>
+        {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
+          <Badge label={`${user.mutualFriends} mutual`} variant="secondary" />
+        )}
+      </View>
+      <Button label="Add" variant="primary" onPress={() => onAdd(user.id)} className="px-md" />
+    </Card>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <View className="items-center justify-center py-xl gap-sm">
+      <Text variant="body-md" className="text-on-surface-variant text-center">
+        {message}
+      </Text>
     </View>
   );
 }
 
-// ─── Friend Request Card ──────────────────────────────────────────────────────
+// ─── Tab Bar ──────────────────────────────────────────────────────────────────
 
-interface FriendRequestCardProps extends FriendRequest {
-  onAccept: () => void;
-  onDecline: () => void;
-}
+const TABS: { key: Tab; label: string; count?: number }[] = [
+  { key: 'friends', label: 'Friends', count: FRIENDS.length },
+  { key: 'incoming', label: 'Requests', count: INCOMING.length },
+  { key: 'outgoing', label: 'Sent' },
+  { key: 'blocked', label: 'Blocked' },
+];
 
-function FriendRequestCard({
-  name,
-  sub,
-  initials,
-  avatarBg,
-  avatarColor,
-  onAccept,
-  onDecline,
-}: FriendRequestCardProps) {
-  return (
-    <Card className="mx-gutter mb-sm flex-row items-center gap-md bg-[#ffffff]">
-      <Avatar initials={initials} bg={avatarBg} color={avatarColor} />
-      <View className="flex-1">
-        <Text variant="body-lg" className="text-[#1c1b1b]">
-          {name}
-        </Text>
-        <Text variant="body-sm" className="text-[#6e5e5d]">
-          {sub}
-        </Text>
-      </View>
-      <TouchableOpacity
-        className="w-9 h-9 rounded-full bg-[#f0eded] items-center justify-center"
-        onPress={onDecline}
-        activeOpacity={0.7}
-      >
-        <IconSymbol name="xmark" size={16} color="#6e5e5d" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="w-9 h-9 rounded-full bg-primary items-center justify-center"
-        onPress={onAccept}
-        activeOpacity={0.7}
-      >
-        <IconSymbol name="checkmark" size={16} color="#ffffff" />
-      </TouchableOpacity>
-    </Card>
-  );
-}
-
-// ─── Friend Row ───────────────────────────────────────────────────────────────
-
-function FriendRow({ name, location, online, initials, avatarBg, avatarColor }: Friend) {
-  return (
-    <Card className="mx-gutter mb-sm flex-row items-center gap-md bg-[#ffffff]">
-      <Avatar initials={initials} bg={avatarBg} color={avatarColor} online={online} />
-      <View className="flex-1">
-        <Text variant="body-lg" className="text-[#1c1b1b]">
-          {name}
-        </Text>
-        <View className="flex-row items-center gap-xs mt-xs">
-          <IconSymbol name="location.fill" size={12} color="#6e5e5d" />
-          <Text variant="body-sm" className="text-[#6e5e5d]">
-            {location}
-          </Text>
-        </View>
-      </View>
-      <TouchableOpacity className="p-xs" activeOpacity={0.7}>
-        <IconSymbol name="message.fill" size={20} color="#c8c0bf" />
-      </TouchableOpacity>
-    </Card>
-  );
-}
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
-export default function FriendsScreen() {
-  const [search, setSearch] = useState('');
-  const api = useApiClient();
-
-  const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [allFriends, setAllFriends] = useState<Friend[]>([]);
-
-  const initialsFrom = (name?: string, id?: string) => {
-    const src = name || id || '';
-    const parts = src.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '??';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  };
-
-  const pickColors = (seed?: string) => {
-    const colors = ['#1a1a2e', '#2d2d2d', '#1e293b', '#2b2b2b', '#3b3b3b'];
-    const accents = ['#c8b8f8', '#a8d8f0', '#f8a8c8', '#f0c080', '#c8d8a8'];
-    const idx = seed
-      ? Math.abs(Array.from(seed).reduce((s, c) => s + c.charCodeAt(0), 0)) % colors.length
-      : 0;
-    return { bg: colors[idx], color: accents[idx] };
-  };
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [frResp, friendsResp] = await Promise.all([
-        api.get('/friend-requests'),
-        api.get('/friends'),
-      ] as const);
-
-      // friend-requests returns { incoming, outgoing }
-      const incoming: any[] = frResp.incoming || [];
-
-      const mappedRequests: FriendRequest[] = incoming.map((r) => {
-        const name = r.fromUserId || r.id;
-        const initials = initialsFrom(name, r.fromUserId);
-        const { bg, color } = pickColors(r.fromUserId);
-
-        return {
-          id: r.id,
-          name,
-          sub: 'Pending request',
-          initials,
-          avatarBg: bg,
-          avatarColor: color,
-        };
-      });
-
-      setRequests(mappedRequests);
-
-      // friends endpoint returns array with { id, createdAt, friend: { id, profile: { displayName, avatarUrl } } }
-      const mappedFriends: Friend[] = (friendsResp || []).map((f: any) => {
-        const displayName = f.friend?.profile?.displayName || 'Friend';
-        const initials = initialsFrom(displayName, f.friend?.id);
-        const { bg, color } = pickColors(f.friend?.id);
-
-        return {
-          id: f.friend?.id || f.id,
-          name: displayName,
-          location: 'Nearby',
-          online: false,
-          initials,
-          avatarBg: bg,
-          avatarColor: color,
-        };
-      });
-
-      setAllFriends(mappedFriends);
-    } catch (error) {
-      // Fail silently for now; in-app error handling could be added later.
-      console.warn('Failed to fetch friends or requests', error);
-    }
-  }, [api]);
-
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  const handleAccept = async (id: string) => {
-    try {
-      await api.put(`/friend-requests/${id}/accept`, {});
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-      // refresh friends list
-      const friendsResp = await api.get('/friends');
-      const mappedFriends: Friend[] = (friendsResp || []).map((f: any) => {
-        const displayName = f.friend?.profile?.displayName || 'Friend';
-        const initials = initialsFrom(displayName, f.friend?.id);
-        const { bg, color } = pickColors(f.friend?.id);
-
-        return {
-          id: f.friend?.id || f.id,
-          name: displayName,
-          location: 'Nearby',
-          online: false,
-          initials,
-          avatarBg: bg,
-          avatarColor: color,
-        };
-      });
-      setAllFriends(mappedFriends);
-    } catch (error) {
-      console.warn('Accept failed', error);
-    }
-  };
-
-  const handleDecline = async (id: string) => {
-    try {
-      await api.put(`/friend-requests/${id}/decline`, {});
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-    } catch (error) {
-      console.warn('Decline failed', error);
-    }
-  };
-
+function TabBar({
+  active,
+  onChange,
+  incomingCount,
+}: {
+  active: Tab;
+  onChange: (t: Tab) => void;
+  incomingCount: number;
+}) {
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f8]"
-      contentContainerClassName="flex-grow pb-24"
-      showsVerticalScrollIndicator={false}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      className="mb-md"
+      contentContainerStyle={{ gap: 8, paddingHorizontal: 0 }}
     >
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-gutter py-md bg-[#fcf9f8]">
-        <View className="flex-row items-center gap-sm">
-          <View className="w-9 h-9 rounded-full bg-primary items-center justify-center">
-            <IconSymbol name="person.crop.circle.fill" size={20} color="#ffffff" />
-          </View>
-          <Text variant="headline-md" className="text-[#1c1b1b]">
-            Memoriez
-          </Text>
-        </View>
-      </View>
+      {TABS.map((tab) => {
+        const isActive = tab.key === active;
+        const showBadge = tab.key === 'incoming' && incomingCount > 0;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            onPress={() => onChange(tab.key)}
+            activeOpacity={0.7}
+            className={`flex-row items-center gap-xs px-md py-sm rounded-full border ${
+              isActive
+                ? 'bg-primary border-primary'
+                : 'bg-surface-container-lowest border-outline-variant'
+            }`}
+          >
+            <Text
+              variant="label-md"
+              className={isActive ? 'text-on-primary' : 'text-on-surface-variant'}
+            >
+              {tab.label}
+            </Text>
+            {showBadge && (
+              <View className="bg-error rounded-full w-5 h-5 items-center justify-center">
+                <Text variant="label-md" className="text-on-primary text-xs">
+                  {incomingCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
 
-      {/* Search */}
-      <View className="px-gutter mb-md">
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function FriendsPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('friends');
+  const [search, setSearch] = useState('');
+
+  const [friends, setFriends] = useState(FRIENDS);
+  const [incoming, setIncoming] = useState(INCOMING);
+  const [outgoing, setOutgoing] = useState(OUTGOING);
+  const [blocked, setBlocked] = useState(BLOCKED);
+
+  const showSearch = search.trim().length > 0;
+
+  const handleAccept = (id: string) => {
+    const user = incoming.find((u) => u.id === id);
+    if (user) {
+      setFriends((prev) => [...prev, { ...user, since: 'Now' }]);
+      setIncoming((prev) => prev.filter((u) => u.id !== id));
+    }
+  };
+
+  const handleDecline = (id: string) => setIncoming((prev) => prev.filter((u) => u.id !== id));
+  const handleCancelOutgoing = (id: string) =>
+    setOutgoing((prev) => prev.filter((u) => u.id !== id));
+  const handleRemoveFriend = (id: string) => setFriends((prev) => prev.filter((u) => u.id !== id));
+  const handleUnblock = (id: string) => setBlocked((prev) => prev.filter((u) => u.id !== id));
+  const handleAddFromSearch = (id: string) => {
+    // In a real app: send friend request
+    setSearch('');
+  };
+
+  const renderContent = () => {
+    if (showSearch) {
+      return (
+        <>
+          <Text
+            variant="label-md"
+            className="text-on-surface-variant mb-sm tracking-widest uppercase"
+          >
+            Results for &ldquo;{search}&rdquo;
+          </Text>
+          {SEARCH_RESULTS.length === 0 ? (
+            <EmptyState message="No users found." />
+          ) : (
+            SEARCH_RESULTS.map((u) => (
+              <SearchResultRow key={u.id} user={u} onAdd={handleAddFromSearch} />
+            ))
+          )}
+        </>
+      );
+    }
+
+    switch (activeTab) {
+      case 'friends':
+        return friends.length === 0 ? (
+          <EmptyState message="No friends yet. Search above to find people." />
+        ) : (
+          friends.map((u) => <FriendRow key={u.id} user={u} onRemove={handleRemoveFriend} />)
+        );
+      case 'incoming':
+        return incoming.length === 0 ? (
+          <EmptyState message="No pending requests." />
+        ) : (
+          incoming.map((u) => (
+            <IncomingRow key={u.id} user={u} onAccept={handleAccept} onDecline={handleDecline} />
+          ))
+        );
+      case 'outgoing':
+        return outgoing.length === 0 ? (
+          <EmptyState message="No outgoing requests." />
+        ) : (
+          outgoing.map((u) => <OutgoingRow key={u.id} user={u} onCancel={handleCancelOutgoing} />)
+        );
+      case 'blocked':
+        return blocked.length === 0 ? (
+          <EmptyState message="No blocked users." />
+        ) : (
+          blocked.map((u) => <BlockedRow key={u.id} user={u} onUnblock={handleUnblock} />)
+        );
+    }
+  };
+
+  return (
+    <View className="flex-1 bg-surface">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <Text variant="headline-lg" className="mb-md">
+          Friends
+        </Text>
+
+        {/* Search */}
         <Input
-          placeholder="Find friends or scan QR..."
+          label={undefined}
+          placeholder="Search for people…"
           value={search}
           onChangeText={setSearch}
-          className="rounded-full"
+          returnKeyType="search"
+          autoCapitalize="none"
+          autoCorrect={false}
+          className="mb-md"
         />
-      </View>
 
-      {/* Friend Requests */}
-      <View className="flex-row items-center gap-sm px-gutter mb-sm">
-        <Text variant="headline-md" className="text-[#1c1b1b]">
-          Friend Requests
-        </Text>
-        <View className="w-6 h-6 rounded-full bg-primary items-center justify-center">
-          <Text variant="label-md" className="text-on-primary">
-            {requests.length}
-          </Text>
-        </View>
-      </View>
+        {/* Tabs (hidden while searching) */}
+        {!showSearch && (
+          <TabBar active={activeTab} onChange={setActiveTab} incomingCount={incoming.length} />
+        )}
 
-      {requests.map((req) => (
-        <FriendRequestCard
-          key={req.id}
-          {...req}
-          onAccept={() => handleAccept(req.id)}
-          onDecline={() => handleDecline(req.id)}
-        />
-      ))}
-
-      {/* All Friends */}
-      <View className="flex-row items-center justify-between px-gutter mt-lg mb-sm">
-        <Text variant="headline-md" className="text-[#1c1b1b]">
-          All Friends
-        </Text>
-      </View>
-
-      {allFriends.map((f) => (
-        <FriendRow key={f.id} {...f} />
-      ))}
-    </ScrollView>
+        {/* Content */}
+        {renderContent()}
+      </ScrollView>
+    </View>
   );
 }
