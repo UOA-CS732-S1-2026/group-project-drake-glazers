@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { ReactNode } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Badge } from '@/components/ui/badge';
@@ -88,75 +87,56 @@ export default function MemoryDetailScreen() {
       className="flex-1 bg-background"
       contentContainerClassName="px-gutter pt-xl pb-xl gap-md"
     >
-      <View className="flex-row items-center justify-between gap-md">
-        <Button label="Back" variant="ghost" onPress={() => router.back()} />
-        <Badge
-          label={visibilityLabel[memory.visibility]}
-          variant={visibilityVariant[memory.visibility]}
-        />
-      </View>
+      <Button label="Back" variant="ghost" onPress={() => router.back()} className="self-start" />
 
-      <Card className="gap-md">
-        <View className="gap-xs">
-          <Text variant="headline-lg">{memory.title}</Text>
+      <Card className="gap-sm">
+        <View className="flex-row items-start justify-between gap-sm">
+          <Text variant="headline-lg" className="flex-1">
+            {memory.title}
+          </Text>
+          <Badge
+            label={visibilityLabel[memory.visibility]}
+            variant={visibilityVariant[memory.visibility]}
+          />
+        </View>
+
+        <View className="flex-row items-center justify-between gap-sm">
+          {memory.relativeArea ? (
+            <View className="flex-row items-center gap-xs flex-1">
+              <MaterialIcons name="place" size={13} color="#9c7873" />
+              <Text
+                variant="body-sm"
+                className="text-on-surface-variant flex-shrink"
+                numberOfLines={1}
+              >
+                {memory.relativeArea}
+              </Text>
+            </View>
+          ) : (
+            <View className="flex-1" />
+          )}
           <Text variant="body-sm" className="text-on-surface-variant">
             {createdDate}
           </Text>
         </View>
 
-        <View className="h-px bg-outline-variant" />
-
-        <View className="gap-sm">
-          {memory.relativeArea ? (
-            <InfoRow icon="place" label="Location">
-              {memory.relativeArea}
-            </InfoRow>
-          ) : null}
-          <InfoRow icon="schedule" label="Created">
-            {new Date(memory.createdAt).toLocaleString()}
-          </InfoRow>
-        </View>
+        {memory.description ? (
+          <>
+            <View className="h-px bg-outline-variant" />
+            <Text variant="body-md">{memory.description}</Text>
+          </>
+        ) : null}
       </Card>
 
-      {memory.description ? (
-        <Card elevated={false} className="gap-xs">
-          <Text variant="label-md" className="text-on-surface-variant">
-            Description
-          </Text>
-          <Text variant="body-md">{memory.description}</Text>
-        </Card>
-      ) : null}
-
       {mediaItems.length > 0 ? (
-        <MediaCollage items={mediaItems} />
+        <View className="gap-sm">
+          <Text variant="headline-md">Media</Text>
+          <MediaCollage items={mediaItems} />
+        </View>
       ) : (
         <EmptyState label="No media has been attached to this memory." />
       )}
     </ScrollView>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: keyof typeof MaterialIcons.glyphMap;
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <View className="flex-row items-center gap-sm">
-      <View className="h-9 w-9 items-center justify-center rounded bg-surface-container-low">
-        <MaterialIcons name={icon} size={18} color="#5b403e" />
-      </View>
-      <View className="flex-1">
-        <Text variant="label-md" className="text-on-surface-variant">
-          {label}
-        </Text>
-        <Text variant="body-md">{children}</Text>
-      </View>
-    </View>
   );
 }
 
@@ -186,7 +166,7 @@ function ImageGrid({ images }: { images: Media[] }) {
       <View style={grid.clip}>
         <Image
           source={{ uri: images[0].signedUrl ?? undefined }}
-          style={{ width: '100%', aspectRatio: 16 / 9 }}
+          style={{ width: '100%', aspectRatio: 2 }}
           resizeMode="cover"
         />
       </View>
@@ -200,7 +180,7 @@ function ImageGrid({ images }: { images: Media[] }) {
           <Image
             key={img.id}
             source={{ uri: img.signedUrl ?? undefined }}
-            style={{ flex: 1, aspectRatio: 1 }}
+            style={{ flex: 1, aspectRatio: 4 / 3 }}
             resizeMode="cover"
           />
         ))}
@@ -213,7 +193,7 @@ function ImageGrid({ images }: { images: Media[] }) {
       <View style={[grid.clip, grid.col]}>
         <Image
           source={{ uri: images[0].signedUrl ?? undefined }}
-          style={{ width: '100%', aspectRatio: 16 / 9 }}
+          style={{ width: '100%', aspectRatio: 2 }}
           resizeMode="cover"
         />
         <View style={grid.row}>
@@ -221,7 +201,7 @@ function ImageGrid({ images }: { images: Media[] }) {
             <Image
               key={img.id}
               source={{ uri: img.signedUrl ?? undefined }}
-              style={{ flex: 1, aspectRatio: 1 }}
+              style={{ flex: 1, aspectRatio: 4 / 3 }}
               resizeMode="cover"
             />
           ))}
@@ -242,7 +222,7 @@ function ImageGrid({ images }: { images: Media[] }) {
           {row.map((img, colIndex) => {
             const showOverlay = overflow > 0 && rowIndex === 1 && colIndex === row.length - 1;
             return (
-              <View key={img.id} style={{ flex: 1, aspectRatio: 1, overflow: 'hidden' }}>
+              <View key={img.id} style={{ flex: 1, aspectRatio: 4 / 3, overflow: 'hidden' }}>
                 <Image
                   source={{ uri: img.signedUrl ?? undefined }}
                   style={{ flex: 1 }}
