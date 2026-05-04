@@ -48,6 +48,7 @@ const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: string }[] =
   { value: 'private', label: 'Private', icon: 'lock' },
 ];
 
+
 export default function MemoryDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
