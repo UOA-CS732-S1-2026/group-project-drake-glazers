@@ -3,6 +3,7 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -140,6 +141,30 @@ export default function MemoryDetailScreen() {
 
   const handleDeleteMemory = () => {
     setDeleteError('');
+
+    const confirmed =
+      Platform.OS === 'web'
+        ? window.confirm(
+            'This will permanently delete this memory and all its media. This cannot be undone.'
+          )
+        : null;
+
+    if (Platform.OS === 'web') {
+      if (!confirmed) return;
+      setDeleting(true);
+      api
+        .delete(`/api/memories/${memoryId}`)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['memories'] });
+          router.back();
+        })
+        .catch((e) => {
+          setDeleting(false);
+          setDeleteError(e instanceof Error ? e.message : 'Failed to delete memory.');
+        });
+      return;
+    }
+
     Alert.alert(
       'Delete Memory',
       'This will permanently delete this memory and all its media. This cannot be undone.',
@@ -150,6 +175,7 @@ export default function MemoryDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             setDeleting(true);
+
             try {
               await api.delete(`/api/memories/${memoryId}`);
               queryClient.invalidateQueries({ queryKey: ['memories'] });
