@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import Map, { Marker } from 'react-map-gl';
+import { Marker, Map } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
 import { Memory } from '@/lib/types';
