@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { OnboardingModal } from '@/components/OnboardingModal';
+import { OnboardingModal } from '@/components/onboarding-modal';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { HapticTab } from '@/components/haptic-tab';
 

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import type { Href } from 'expo-router';
 import { useApiClient } from '@/lib/api';
-import { OnboardingModal } from '@/components/OnboardingModal';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 export default function SignUpScreen() {
   const { signUp, fetchStatus } = useSignUp();
