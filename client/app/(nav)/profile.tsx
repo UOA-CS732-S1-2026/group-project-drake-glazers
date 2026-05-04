@@ -1,5 +1,20 @@
-import { View } from 'react-native';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/expo';
+import { ProfileHeader } from '@/components/profile-header';
+import { FlashbacksSection } from '@/components/flashbacks-section';
 
 export default function ProfileScreen() {
-  return <View></View>;
+  const { userId } = useAuth();
+
+  if (!userId) return null;
+
+  return (
+    <SafeAreaView className="flex-1 bg-surface">
+      <ScrollView className="flex-1">
+        <ProfileHeader userId={userId} onEditPress={() => {}} />
+        <FlashbacksSection userId={userId} />
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
