@@ -15,6 +15,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.drakeglazers.app',
+    infoPlist: {
+      NSPhotoLibraryUsageDescription:
+        'Memoriez needs access to your photo library to attach photos and videos to your memories.',
+      NSCameraUsageDescription:
+        'Memoriez needs camera access to capture photos and videos for your memories.',
+      NSMicrophoneUsageDescription:
+        'Memoriez needs microphone access to record voice notes for your memories.',
+    },
   },
   android: {
     package: 'com.drakeglazers.app',
