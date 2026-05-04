@@ -1,0 +1,70 @@
+import { Image, View } from 'react-native';
+import { useAuth } from '@clerk/expo';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+import { useFriends } from '@/hooks/use-friends';
+import { useUserMemories } from '@/hooks/use-user-memories';
+
+function formatCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
+function uniquePlacesCount(memories: { latitude: number; longitude: number }[]): number {
+  const seen = new Set(memories.map((m) => `${m.latitude.toFixed(2)},${m.longitude.toFixed(2)}`));
+  return seen.size;
+}
+
+function StatItem({ value, label }: { value: number; label: string }) {
+  return (
+    <View className="items-center gap-xs">
+      <Text variant="headline-md">{formatCount(value)}</Text>
+      <Text variant="label-md" className="text-on-surface-variant">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+type Props = {
+  userId: string;
+  onEditPress?: () => void;
+};
+
+export function ProfileHeader({ userId, onEditPress }: Props) {
+  const { userId: myId } = useAuth();
+  const isOwnProfile = userId === myId;
+
+  const { data: memories = [] } = useUserMemories(userId);
+  const { data: friends = [] } = useFriends();
+
+  return (
+    <View className="bg-surface-container-lowest mx-gutter mt-md rounded-xl p-md border border-outline-variant">
+      {/* Avatar + stats */}
+      <View className="flex-row items-center">
+        <Image
+          source={require('@/assets/images/default-pfp.png')}
+          style={{ width: 80, height: 80, borderRadius: 40 }}
+        />
+        <View className="flex-1 flex-row justify-around ml-md">
+          <StatItem value={memories.length} label="MEMORIES" />
+          <StatItem value={uniquePlacesCount(memories)} label="PLACES" />
+          {isOwnProfile && <StatItem value={friends.length} label="CONNECTIONS" />}
+        </View>
+      </View>
+
+      {/* Name + bio */}
+      <View className="mt-md">
+        <Text variant="headline-md">Name</Text>
+        <Text variant="body-md" className="text-on-surface-variant mt-xs">
+          Description
+        </Text>
+      </View>
+
+      {/* Edit profile — own profile only */}
+      {isOwnProfile && onEditPress && (
+        <Button label="Edit Profile" variant="primary" className="mt-md" onPress={onEditPress} />
+      )}
+    </View>
+  );
+}
