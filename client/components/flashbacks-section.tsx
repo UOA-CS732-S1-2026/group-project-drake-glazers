@@ -2,16 +2,31 @@ import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text } from '@/components/ui/text';
-import { useMemoryMedia } from '@/hooks/use-memory-media';
-import { useUserMemories } from '@/hooks/use-user-memories';
-import { Memory } from '@/lib/types';
+import { useUserMemoriesWithCovers } from '@/hooks/use-user-memories-with-covers';
+import { MemoryWithCover } from '@/lib/types';
 
 const GUTTER = 16;
 const GAP = 8;
 
-function MemoryCard({ memory, width }: { memory: Memory; width: number }) {
-  const { data: media = [] } = useMemoryMedia(memory.id);
-  const firstImage = media.find((m) => m.mediaType === 'image');
+function timeAgoLabel(createdAt: string): string {
+  const days = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
+  if (days < 7) {
+    const d = Math.max(1, Math.round(days));
+    return `${d} ${d === 1 ? 'DAY' : 'DAYS'} AGO`;
+  }
+  if (days < 30) {
+    const w = Math.round(days / 7);
+    return `${w} ${w === 1 ? 'WEEK' : 'WEEKS'} AGO`;
+  }
+  if (days < 365) {
+    const m = Math.round(days / 30);
+    return `${m} ${m === 1 ? 'MONTH' : 'MONTHS'} AGO`;
+  }
+  const y = Math.round(days / 365);
+  return `${y} ${y === 1 ? 'YEAR' : 'YEARS'} AGO`;
+}
+
+function MemoryCard({ memory, width }: { memory: MemoryWithCover; width: number }) {
   const height = Math.round(width * 1.3);
 
   return (
@@ -20,9 +35,9 @@ function MemoryCard({ memory, width }: { memory: Memory; width: number }) {
       style={{ width, height }}
       className="rounded-xl overflow-hidden"
     >
-      {firstImage?.signedUrl ? (
+      {memory.coverImage ? (
         <Image
-          source={{ uri: firstImage.signedUrl }}
+          source={{ uri: memory.coverImage }}
           style={{ position: 'absolute', width: '100%', height: '100%' }}
           resizeMode="cover"
         />
@@ -33,6 +48,11 @@ function MemoryCard({ memory, width }: { memory: Memory; width: number }) {
       <View className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.28)' }} />
 
       <View className="absolute bottom-0 left-0 right-0 p-sm">
+        <View className="self-start bg-secondary-container rounded px-xs py-xs mb-xs">
+          <Text variant="label-md" className="text-on-secondary-container">
+            {timeAgoLabel(memory.createdAt)}
+          </Text>
+        </View>
         <Text variant="body-sm" style={{ color: '#ffffff' }} numberOfLines={2}>
           {memory.title}
         </Text>
@@ -45,7 +65,7 @@ type Props = { userId: string };
 
 export function FlashbacksSection({ userId }: Props) {
   const { width } = useWindowDimensions();
-  const { data: memories = [] } = useUserMemories(userId);
+  const { data: memories = [] } = useUserMemoriesWithCovers(userId);
   const [expanded, setExpanded] = useState(false);
 
   if (memories.length === 0) return null;

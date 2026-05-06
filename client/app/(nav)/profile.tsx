@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/expo';
 import { ProfileHeader } from '@/components/profile-header';
 import { FlashbacksSection } from '@/components/flashbacks-section';
+import { PastCapturesSection } from '@/components/past-captures-section';
 
 export default function ProfileScreen() {
   const { userId } = useAuth();
@@ -14,6 +15,7 @@ export default function ProfileScreen() {
       <ScrollView className="flex-1">
         <ProfileHeader userId={userId} onEditPress={() => {}} />
         <FlashbacksSection userId={userId} />
+        <PastCapturesSection userId={userId} />
       </ScrollView>
     </SafeAreaView>
   );

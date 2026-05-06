@@ -15,3 +15,7 @@ export type Memory = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type MemoryWithCover = Memory & {
+  coverImage: string | null;
+};
