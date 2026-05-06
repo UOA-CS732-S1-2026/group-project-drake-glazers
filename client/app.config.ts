@@ -18,11 +18,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       NSPhotoLibraryUsageDescription:
         'Memoriez needs access to your photo library to attach photos and videos to memories.',
-      NSCameraUsageDescription: 'Memoriez needs camera access to take photos for your memories.',
-      NSMicrophoneUsageDescription: 'Memoriez needs microphone access to record voice memos.',
-        'Memoriez needs access to your photo library to attach photos and videos to your memories.',
       NSCameraUsageDescription:
         'Memoriez needs camera access to capture photos and videos for your memories.',
+      NSMicrophoneUsageDescription: 'Memoriez needs microphone access to record voice memos.',
     },
   },
   android: {
