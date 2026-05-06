@@ -1,5 +1,6 @@
 import { Image, View } from 'react-native';
 import { useAuth } from '@clerk/expo';
+import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useFriends } from '@/hooks/use-friends';
@@ -32,8 +33,14 @@ type Props = {
 };
 
 export function ProfileHeader({ userId, onEditPress }: Props) {
-  const { userId: myId } = useAuth();
+  const { userId: myId, signOut } = useAuth();
+  const router = useRouter();
   const isOwnProfile = userId === myId;
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/(auth)/sign-in');
+  };
 
   const { data: memories = [] } = useUserMemories(userId);
   const { data: friends = [] } = useFriends();
@@ -61,9 +68,12 @@ export function ProfileHeader({ userId, onEditPress }: Props) {
         </Text>
       </View>
 
-      {/* Edit profile — own profile only */}
-      {isOwnProfile && onEditPress && (
-        <Button label="Edit Profile" variant="primary" className="mt-md" onPress={onEditPress} />
+      {/* Edit profile + sign out — own profile only */}
+      {isOwnProfile && (
+        <View className="mt-md gap-sm">
+          {onEditPress && <Button label="Edit Profile" variant="primary" onPress={onEditPress} />}
+          <Button label="Sign Out" variant="secondary" onPress={handleSignOut} />
+        </View>
       )}
     </View>
   );
