@@ -7,6 +7,14 @@ export type User = {
 
 export type Visibility = 'public' | 'friends_only' | 'private';
 
+export type UserProfile = {
+  id: string;
+  userId: string;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+};
+
 export type Memory = {
   id: string;
   userId: string;

@@ -12,26 +12,48 @@ import {
   View,
 } from 'react-native';
 import type { Href } from 'expo-router';
+import { useApiClient } from '@/lib/api';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 type Step = 'credentials' | 'mfa';
 
 export default function SignInScreen() {
   const { signIn, fetchStatus } = useSignIn();
   const router = useRouter();
+  const api = useApiClient();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<Step>('credentials');
   const [error, setError] = useState('');
+  const [checkingProfile, setCheckingProfile] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const loading = fetchStatus === 'fetching';
+  const clerkLoading = fetchStatus === 'fetching';
+  const loading = clerkLoading || checkingProfile;
+
+  const syncAndCheckProfile = async () => {
+    setCheckingProfile(true);
+    try {
+      try {
+        await api.post('/api/users', { email });
+      } catch {}
+
+      try {
+        await api.get('/api/users/me/profile');
+        router.replace('/(nav)/' as Href);
+      } catch {
+        setShowOnboarding(true);
+      }
+    } finally {
+      setCheckingProfile(false);
+    }
+  };
 
   const finalize = async () => {
     await signIn.finalize({
-      navigate: () => {
-        router.replace('/(nav)/' as Href);
-      },
+      navigate: syncAndCheckProfile,
     });
   };
 
@@ -142,6 +164,11 @@ export default function SignInScreen() {
             <Text style={styles.link}>← Back to sign in</Text>
           </TouchableOpacity>
         </View>
+
+        <OnboardingModal
+          visible={showOnboarding}
+          onComplete={() => router.replace('/(nav)/' as Href)}
+        />
       </KeyboardAvoidingView>
     );
   }
@@ -198,6 +225,11 @@ export default function SignInScreen() {
           </Link>
         </View>
       </View>
+
+      <OnboardingModal
+        visible={showOnboarding}
+        onComplete={() => router.replace('/(nav)/' as Href)}
+      />
     </KeyboardAvoidingView>
   );
 }
