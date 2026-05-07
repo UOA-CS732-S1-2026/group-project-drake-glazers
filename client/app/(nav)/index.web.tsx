@@ -1,10 +1,15 @@
 import { useState, useCallback } from 'react';
+
+import { useRouter } from 'expo-router';
 import Map, { Marker } from 'react-map-gl';
+
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
+import { useMemoryMedia } from '@/hooks/use-memory-media';
 import { Memory } from '@/lib/types';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { data: memories = [] } = useMemories();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
 
@@ -42,11 +47,28 @@ export default function HomeScreen() {
       {selectedMemory && (
         <WebPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
+
+      {/* Create memory FAB */}
+      <button style={styles.fab} onClick={() => router.push('/memory')} aria-label="Create memory">
+        +
+      </button>
     </div>
   );
 }
 
 function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => void }) {
+  const router = useRouter();
+
+  console.log('Selected memory:', memory);
+
+  const { data: mediaItems = [] } = useMemoryMedia(memory.id);
+
+  console.log(mediaItems);
+
+  const firstImage = mediaItems.find(
+    (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
+  );
+
   const date = new Date(memory.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -55,10 +77,9 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
 
   return (
     <div style={styles.card}>
-      {/* Placeholder image */}
-      <div style={styles.cardImage}>
-        <span style={styles.cardImageText}>No photos yet</span>
-      </div>
+      {firstImage?.signedUrl ? (
+        <img src={firstImage.signedUrl} alt={`${memory.title} preview`} style={styles.cardImage} />
+      ) : null}
 
       <div style={styles.cardContent}>
         <div style={styles.cardHeader}>
@@ -96,7 +117,9 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
           </p>
         </div>
 
-        <button style={styles.actionButton}>View Memory</button>
+        <button style={styles.actionButton} onClick={() => router.push(`/memory/${memory.id}`)}>
+          View Memory
+        </button>
       </div>
     </div>
   );
@@ -155,14 +178,10 @@ const styles = {
   },
   cardImage: {
     height: 200,
-    backgroundColor: '#c8cdd6',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardImageText: {
-    color: '#888',
-    fontSize: 14,
+    width: '100%',
+    display: 'block',
+    objectFit: 'cover' as const,
+    backgroundColor: '#f0f0f0',
   },
   cardContent: {
     padding: '20px 20px 32px',
@@ -243,5 +262,25 @@ const styles = {
     border: 'none',
     borderRadius: 30,
     cursor: 'pointer',
+  },
+
+  fab: {
+    position: 'absolute' as const,
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: '50%',
+    backgroundColor: '#b71422',
+    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: 400,
+    lineHeight: '56px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 24px 0 rgba(183, 20, 34, 0.14), 0 2px 6px 0 rgba(0,0,0,0.10)',
   },
 } satisfies Record<string, React.CSSProperties | object>;

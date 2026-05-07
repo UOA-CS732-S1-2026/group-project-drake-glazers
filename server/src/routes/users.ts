@@ -234,7 +234,7 @@ usersRouter.get('/users/:userId/relationship', async (req: Request, res: Respons
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const [userAId, userBId] = [authUserId, userId].sort();
+  const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [blockedByMe, blockedByThem, friendship, pendingRequest] = await Promise.all([
     prisma.block.findUnique({
@@ -301,18 +301,15 @@ usersRouter.put(
     const data = req.validatedBody as UpdateUserProfileBody;
 
     try {
-      const updatedProfile = await prisma.userProfile.update({
+      const profile = await prisma.userProfile.upsert({
         where: { userId: authUserId },
-        data,
+        create: { userId: authUserId, ...data },
+        update: data,
         select: userProfileSelect,
       });
 
-      return res.status(200).json(updatedProfile);
-    } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
-        return errorResponse(res, 404, 'USER_PROFILE_NOT_FOUND', 'User profile not found');
-      }
-
+      return res.status(200).json(profile);
+    } catch {
       return errorResponse(res, 400, 'USER_PROFILE_UPDATE_FAILED', 'Unable to update user profile');
     }
   }

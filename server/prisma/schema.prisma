@@ -59,35 +59,21 @@ model UserProfile {
 }
 
 model Memory {
-  id         String     @id @default(uuid())
-  userId     String     @map("user_id")
-  title      String
-  latitude   Float
-  longitude  Float
-  visibility Visibility
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @updatedAt @map("updated_at")
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  title        String
+  description  String?
+  relativeArea String?  @map("relative_area")
+  latitude     Float
+  longitude    Float
+  visibility  Visibility
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  user  User         @relation(fields: [userId], references: [id])
-  items MemoryItem[]
+  user  User    @relation(fields: [userId], references: [id])
   media Media[]
 
   @@map("memories")
-}
-
-model MemoryItem {
-  id          String    @id @default(uuid())
-  memoryId    String    @map("memory_id")
-  title       String
-  description String?
-  mediaType   MediaType @map("media_type")
-  mediaUrl    String?   @map("media_url")
-  sortOrder   Int       @map("sort_order")
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-
-  @@map("memory_items")
 }
 
 model Media {

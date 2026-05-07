@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -9,7 +10,8 @@ import {
 } from 'react-native';
 import { useRef, useCallback } from 'react';
 import { router } from 'expo-router';
-import { Memory } from '@/lib/api';
+import { useMemoryMedia } from '@/hooks/use-memory-media';
+import type { Memory } from '@/lib/types';
 
 const PEEK_HEIGHT = 100;
 
@@ -19,6 +21,12 @@ type Props = {
 };
 
 export function MemoryPreviewCard({ memory, onClose }: Props) {
+  const { data: mediaItems = [] } = useMemoryMedia(memory.id);
+
+  const firstImage = mediaItems.find(
+    (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
+  );
+
   const date = new Date(memory.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -102,12 +110,9 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
         <Text style={styles.title}>{memory.title}</Text>
       </View>
 
-      {/* Placeholder image */}
-      <View style={styles.imageContainer}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>No photos yet</Text>
-        </View>
-      </View>
+      {firstImage?.signedUrl ? (
+        <Image source={{ uri: firstImage.signedUrl }} style={styles.image} resizeMode="cover" />
+      ) : null}
 
       {/* Content */}
       <View style={styles.content}>
@@ -119,7 +124,8 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
           </View>
           <View>
             <Text style={styles.rowPrimary}>
-              {memory.latitude.toFixed(4)}°, {memory.longitude.toFixed(4)}°
+              {memory.relativeArea ??
+                `${memory.latitude.toFixed(4)}°, ${memory.longitude.toFixed(4)}°`}
             </Text>
             <Text style={styles.rowSecondary}>{date}</Text>
           </View>
@@ -198,18 +204,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
 
-  imageContainer: {
+  image: {
     height: 220,
-  },
-  imagePlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#c8cdd6',
-  },
-  imagePlaceholderText: {
-    color: '#888',
-    fontSize: 14,
+    width: '100%',
+    backgroundColor: '#f0f0f0',
   },
 
   content: {

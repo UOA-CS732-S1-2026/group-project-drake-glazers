@@ -1,6 +1,9 @@
-import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useMapStore } from '@/stores/map-store';
 import { MapPin } from '@/components/map-pin';
 import { MemoryPreviewCard } from '@/components/memory-preview-card';
 import { useMemories } from '@/hooks/use-memories';
@@ -9,7 +12,10 @@ import { Memory } from '@/lib/types';
 const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { data: memories = [] } = useMemories();
+  const pendingCenter = useMapStore((s) => s.pendingCenter);
+  const setPendingCenter = useMapStore((s) => s.setPendingCenter);
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
   const [zoomLevel, setZoomLevel] = useState(1.5);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -34,6 +40,17 @@ export default function HomeScreen() {
     setZoomLevel(zoom);
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
+
+  useEffect(() => {
+    if (!pendingCenter) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: pendingCenter,
+      zoomLevel: 14,
+      animationDuration: 2000,
+      animationMode: 'flyTo',
+    });
+    setPendingCenter(null);
+  }, [pendingCenter, setPendingCenter]);
 
   return (
     <View style={styles.container}>
@@ -84,6 +101,13 @@ export default function HomeScreen() {
       {selectedMemory && (
         <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
+      <TouchableOpacity
+        className="absolute bottom-lg right-margin w-14 h-14 rounded-full bg-primary items-center justify-center shadow-fab"
+        onPress={() => router.push('/memory')}
+        activeOpacity={0.85}
+      >
+        <MaterialIcons name="add" size={28} color="#ffffff" />
+      </TouchableOpacity>
     </View>
   );
 }

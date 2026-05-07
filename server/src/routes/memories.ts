@@ -6,39 +6,23 @@ import { prisma } from '../lib/prisma.js';
 import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from '../lib/supabase.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import {
-  createMemoryBodySchema,
-  createMemoryItemBodySchema,
-  updateMemoryBodySchema,
-  updateMemoryItemBodySchema,
-} from '../schemas/memories.js';
+import { createMemoryBodySchema, updateMemoryBodySchema } from '../schemas/memories.js';
 
 type CreateMemoryBody = z.infer<typeof createMemoryBodySchema>;
 type UpdateMemoryBody = z.infer<typeof updateMemoryBodySchema>;
-type CreateMemoryItemBody = z.infer<typeof createMemoryItemBodySchema>;
-type UpdateMemoryItemBody = z.infer<typeof updateMemoryItemBodySchema>;
 
 const memorySelect = {
   id: true,
   userId: true,
   title: true,
+  description: true,
+  relativeArea: true,
   latitude: true,
   longitude: true,
   visibility: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.MemorySelect;
-
-const memoryItemSelect = {
-  id: true,
-  memoryId: true,
-  title: true,
-  description: true,
-  mediaType: true,
-  mediaUrl: true,
-  sortOrder: true,
-  createdAt: true,
-} satisfies Prisma.MemoryItemSelect;
 
 const mediaSelect = {
   id: true,
@@ -56,14 +40,10 @@ const memoryDetailSelect = {
 
 export const memoriesRouter = express.Router();
 
-const getAuthUserId = (req: Request): string => {
-  return req.authUserId as string;
-};
+const getAuthUserId = (req: Request): string => req.authUserId as string;
 
 const getPrismaErrorCode = (error: unknown): string | null => {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    return error.code;
-  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code;
   return null;
 };
 
@@ -119,7 +99,15 @@ memoriesRouter.put(
   async (req: Request, res: Response) => {
     const authUserId = getAuthUserId(req);
     const id = req.params.id as string;
-    const data = req.validatedBody as UpdateMemoryBody;
+    const body = req.validatedBody as UpdateMemoryBody;
+
+    const data: Prisma.MemoryUpdateInput = {};
+    if (body.title !== undefined) data.title = body.title;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.relativeArea !== undefined) data.relativeArea = body.relativeArea;
+    if (body.latitude !== undefined) data.latitude = body.latitude;
+    if (body.longitude !== undefined) data.longitude = body.longitude;
+    if (body.visibility !== undefined) data.visibility = body.visibility;
 
     try {
       const memory = await prisma.memory.update({
@@ -133,7 +121,6 @@ memoriesRouter.put(
       if (getPrismaErrorCode(error) === 'P2025') {
         return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
       }
-
       return errorResponse(res, 400, 'MEMORY_UPDATE_FAILED', 'Unable to update memory');
     }
   }
@@ -151,9 +138,8 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
   });
 
   try {
-    const memory = await prisma.memory.delete({
+    await prisma.memory.delete({
       where: { id, userId: authUserId },
-      select: memorySelect,
     });
 
     if (mediaItems.length > 0) {
@@ -162,155 +148,24 @@ memoriesRouter.delete('/memories/:id', async (req: Request, res: Response) => {
         .remove(mediaItems.map((m) => m.mediaPath));
 
       if (storageRemoveError) {
-        console.error(
-          'Failed to remove media objects from Supabase Storage during memory deletion',
-          {
-            memoryId: id,
-            userId: authUserId,
-            mediaPaths: mediaItems.map((m) => m.mediaPath),
-            error: storageRemoveError,
-          }
-        );
+        console.error('Failed to remove media objects during memory deletion', {
+          memoryId: id,
+          error: storageRemoveError,
+        });
       }
     }
 
-    return res.status(200).json(memory);
+    return res.status(200).json({ id });
   } catch (error) {
     if (getPrismaErrorCode(error) === 'P2025') {
       return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
     }
-
     return errorResponse(res, 400, 'MEMORY_DELETE_FAILED', 'Unable to delete memory');
   }
 });
 
-memoriesRouter.get('/memories/:id/items', async (req: Request, res: Response) => {
-  const authUserId = getAuthUserId(req);
-  const id = req.params.id as string;
-
-  const memory = await prisma.memory.findUnique({
-    where: { id, userId: authUserId },
-    select: { id: true },
-  });
-
-  if (!memory) {
-    return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-  }
-
-  const items = await prisma.memoryItem.findMany({
-    where: { memoryId: id },
-    select: memoryItemSelect,
-    orderBy: { sortOrder: 'asc' },
-  });
-
-  return res.status(200).json(items);
-});
-
-memoriesRouter.put(
-  '/memories/:id/items/:itemId',
-  validateBody(updateMemoryItemBodySchema),
-  async (req: Request, res: Response) => {
-    const authUserId = getAuthUserId(req);
-    const id = req.params.id as string;
-    const itemId = req.params.itemId as string;
-    const data = req.validatedBody as UpdateMemoryItemBody;
-
-    const memory = await prisma.memory.findUnique({
-      where: { id, userId: authUserId },
-      select: { id: true },
-    });
-
-    if (!memory) {
-      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-    }
-
-    try {
-      const item = await prisma.memoryItem.update({
-        where: { id: itemId, memoryId: id },
-        data,
-        select: memoryItemSelect,
-      });
-
-      return res.status(200).json(item);
-    } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
-        return errorResponse(res, 404, 'MEMORY_ITEM_NOT_FOUND', 'Memory item not found');
-      }
-
-      return errorResponse(res, 400, 'MEMORY_ITEM_UPDATE_FAILED', 'Unable to update memory item');
-    }
-  }
-);
-
-memoriesRouter.delete('/memories/:id/items/:itemId', async (req: Request, res: Response) => {
-  const authUserId = getAuthUserId(req);
-  const id = req.params.id as string;
-  const itemId = req.params.itemId as string;
-
-  const memory = await prisma.memory.findUnique({
-    where: { id, userId: authUserId },
-    select: { id: true },
-  });
-
-  if (!memory) {
-    return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-  }
-
-  try {
-    const item = await prisma.memoryItem.delete({
-      where: { id: itemId, memoryId: id },
-      select: memoryItemSelect,
-    });
-
-    return res.status(200).json(item);
-  } catch (error) {
-    if (getPrismaErrorCode(error) === 'P2025') {
-      return errorResponse(res, 404, 'MEMORY_ITEM_NOT_FOUND', 'Memory item not found');
-    }
-
-    return errorResponse(res, 400, 'MEMORY_ITEM_DELETE_FAILED', 'Unable to delete memory item');
-  }
-});
-
-memoriesRouter.post(
-  '/memories/:id/items',
-  validateBody(createMemoryItemBodySchema),
-  async (req: Request, res: Response) => {
-    const authUserId = getAuthUserId(req);
-    const id = req.params.id as string;
-    const body = req.validatedBody as CreateMemoryItemBody;
-
-    const memory = await prisma.memory.findUnique({
-      where: { id, userId: authUserId },
-      select: { id: true },
-    });
-
-    if (!memory) {
-      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-    }
-
-    try {
-      const item = await prisma.memoryItem.create({
-        data: {
-          memoryId: id,
-          title: body.title,
-          description: body.description ?? null,
-          mediaType: body.mediaType,
-          mediaUrl: body.mediaUrl ?? null,
-          sortOrder: body.sortOrder,
-        },
-        select: memoryItemSelect,
-      });
-
-      return res.status(201).json(item);
-    } catch {
-      return errorResponse(res, 400, 'MEMORY_ITEM_CREATE_FAILED', 'Unable to create memory item');
-    }
-  }
-);
-
 // GET /users/:userId/memories - List a user's memories filtered by relationship
-// owner → all; friends → public + friends_only; stranger → public only; blocked (either direction) → 404
+// owner → all; friends → public + friends_only; stranger → public only; blocked → 404
 memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
   const userId = req.params.userId as string;
@@ -324,16 +179,10 @@ memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response
     return res.status(200).json(memories);
   }
 
-  const target = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true },
-  });
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!target) return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
 
-  if (!target) {
-    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
-  }
-
-  const [userAId, userBId] = [authUserId, userId].sort();
+  const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [block, friendship] = await Promise.all([
     prisma.block.findFirst({
@@ -351,13 +200,11 @@ memoriesRouter.get('/users/:userId/memories', async (req: Request, res: Response
     }),
   ]);
 
-  if (block) {
-    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
-  }
+  if (block) return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
 
-  const visibilityFilter = friendship
-    ? { in: ['public', 'friends_only'] as const }
-    : { equals: 'public' as const };
+  const visibilityFilter: Prisma.MemoryWhereInput['visibility'] = friendship
+    ? { in: ['public', 'friends_only'] }
+    : { equals: 'public' };
 
   const memories = await prisma.memory.findMany({
     where: { userId, visibility: visibilityFilter },
@@ -378,8 +225,10 @@ memoriesRouter.post(
     try {
       const memory = await prisma.memory.create({
         data: {
-          userId: authUserId,
+          user: { connect: { id: authUserId } },
           title: body.title,
+          description: body.description ?? null,
+          relativeArea: body.relativeArea ?? null,
           latitude: body.latitude,
           longitude: body.longitude,
           visibility: body.visibility,
@@ -389,10 +238,10 @@ memoriesRouter.post(
 
       return res.status(201).json(memory);
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2003') {
+      const code = getPrismaErrorCode(error);
+      if (code === 'P2003' || code === 'P2025') {
         return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
       }
-
       return errorResponse(res, 400, 'MEMORY_CREATE_FAILED', 'Unable to create memory');
     }
   }
