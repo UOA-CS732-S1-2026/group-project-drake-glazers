@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-        
+
 import { useRouter } from 'expo-router';
 import Map, { Marker } from 'react-map-gl';
 
@@ -30,10 +30,11 @@ export default function HomeScreen() {
             key={memory.id}
             longitude={memory.longitude}
             latitude={memory.latitude}
+            anchor="bottom"
             onClick={() => handleMarkerClick(memory)}
             style={{ cursor: 'pointer' }}
           >
-            <div style={styles.pin} />
+            <WebMapPin memory={memory} />
           </Marker>
         ))}
       </Map>
@@ -52,6 +53,64 @@ export default function HomeScreen() {
       <button style={styles.fab} onClick={() => router.push('/memory')} aria-label="Create memory">
         +
       </button>
+    </div>
+  );
+}
+
+type WebPinBadgeIcon = 'heart' | 'music' | 'home';
+
+const webBadgeIcons: Record<WebPinBadgeIcon, () => React.ReactElement> = {
+  heart: () => (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"
+        fill="currentColor"
+      />
+    </svg>
+  ),
+  music: () => (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+      <path d="M12 3v10.55A4 4 0 1 1 10 10.1V5h9v4h-7Z" fill="currentColor" />
+    </svg>
+  ),
+  home: () => (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8Z" fill="currentColor" />
+    </svg>
+  ),
+};
+
+function WebMapPin({
+  memory,
+  badgeIcon = 'heart',
+}: {
+  memory: Memory;
+  badgeIcon?: WebPinBadgeIcon;
+}) {
+  const initial = memory.title.trim()[0]?.toUpperCase() ?? '?';
+  const BadgeIcon = webBadgeIcons[badgeIcon];
+
+  return (
+    <div style={styles.pinWrapper}>
+      <div style={styles.pinBubble}>
+        <div style={styles.pinImageClip}>
+          {memory.thumbnailUrl ? (
+            <img
+              src={memory.thumbnailUrl}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              style={styles.pinImage}
+            />
+          ) : (
+            <span style={styles.pinInitial}>{initial}</span>
+          )}
+        </div>
+        <div style={styles.pinBadge}>
+          <BadgeIcon />
+        </div>
+      </div>
+      <div style={styles.pinTail} />
     </div>
   );
 }
@@ -133,14 +192,69 @@ const styles = {
     fontFamily: 'sans-serif',
   },
 
-  // Pin
-  pin: {
-    width: 16,
-    height: 16,
+  pinWrapper: {
+    width: 98,
+    height: 85,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    transform: 'translateY(1px)',
+  },
+  pinBubble: {
+    position: 'relative' as const,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    border: '5px solid #ffffff',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.28)',
+    boxSizing: 'border-box' as const,
+  },
+  pinImageClip: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    display: 'block',
+  },
+  pinInitial: {
+    color: '#1c1b1b',
+    fontSize: 28,
+    lineHeight: '28px',
+    fontWeight: 700,
+  },
+  pinBadge: {
+    position: 'absolute' as const,
+    right: -13,
+    bottom: -13,
+    width: 40,
+    height: 40,
     borderRadius: '50%',
-    backgroundColor: '#ff385c',
-    border: '2px solid white',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    backgroundColor: '#b71422',
+    border: '5px solid #ffffff',
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box' as const,
+    boxShadow: '0 2px 5px rgba(0,0,0,0.18)',
+  },
+  pinTail: {
+    width: 0,
+    height: 0,
+    borderLeft: '15px solid transparent',
+    borderRight: '15px solid transparent',
+    borderTop: '13px solid #ffffff',
+    marginTop: -1,
   },
 
   // Header

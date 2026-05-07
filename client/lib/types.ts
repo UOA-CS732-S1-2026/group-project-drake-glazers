@@ -24,6 +24,7 @@ export type Memory = {
   latitude: number;
   longitude: number;
   visibility: Visibility;
+  thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 };
