@@ -33,7 +33,7 @@ export function InfiniteCarousel({ items, onPress, autoScrollInterval = 3000 }: 
     if (items.length === 0) return;
     listRef.current?.scrollToOffset({ offset: singleWidth, animated: false });
     scrollXRef.current = singleWidth;
-  }, [singleWidth]);
+  }, [singleWidth, items.length]);
 
   // Auto-advance one card at a time
   useEffect(() => {

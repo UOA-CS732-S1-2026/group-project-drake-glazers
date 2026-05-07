@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
 
 import React, { useState } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';

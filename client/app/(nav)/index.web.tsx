@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-        
+
 import { useRouter } from 'expo-router';
-import Map, { Marker } from 'react-map-gl';
+import ReactMapGL, { Marker } from 'react-map-gl';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMemories } from '@/hooks/use-memories';
@@ -19,7 +19,7 @@ export default function HomeScreen() {
 
   return (
     <div style={styles.container}>
-      <Map
+      <ReactMapGL
         mapboxAccessToken={process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? ''}
         initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
         style={{ width: '100%', height: '100%' }}
@@ -36,7 +36,7 @@ export default function HomeScreen() {
             <div style={styles.pin} />
           </Marker>
         ))}
-      </Map>
+      </ReactMapGL>
 
       {/* Header */}
       <div style={styles.header}>
