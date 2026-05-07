@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ScrollView,
+  RefreshControl,
   View,
   Image,
   TouchableOpacity,
@@ -204,15 +205,24 @@ export default function ExploreScreen() {
   const [activeFilter, setActiveFilter] = useState('all');
   const api = useApiClient();
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const {
     data: memories,
     isLoading,
     isError,
+    refetch,
   } = useQuery<ExploreMemory[]>({
     queryKey: ['explore'],
     queryFn: () => api.get('/api/explore'),
     staleTime: 60_000,
   });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const featured = memories?.[0];
   const gridMemories = memories?.slice(1, 9) ?? [];
@@ -222,12 +232,23 @@ export default function ExploreScreen() {
       style={{ flex: 1, backgroundColor: '#fcf9f8' }}
       contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#b71422"
+          colors={['#b71422']}
+        />
+      }
     >
       {/* Page header */}
       <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 16, paddingBottom: 4 }}>
-        <Text variant="headline-lg" style={{ color: '#1c1b1b' }}>
-          Explore memories
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text variant="headline-lg" style={{ color: '#1c1b1b' }}>
+            Explore memories
+          </Text>
+          {isLoading && <ActivityIndicator size="small" color="#b71422" />}
+        </View>
         <Text variant="body-md" style={{ color: '#5b403e', marginTop: 2 }}>
           Discover what&apos;s happening around you.
         </Text>
@@ -238,16 +259,7 @@ export default function ExploreScreen() {
         <FilterChips filters={FILTERS} active={activeFilter} onSelect={setActiveFilter} />
       </View>
 
-      {/* Loading / error states */}
-      {isLoading && (
-        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-          <ActivityIndicator size="large" color="#b71422" />
-          <Text variant="body-sm" style={{ color: '#5b403e', marginTop: 12 }}>
-            Loading memories…
-          </Text>
-        </View>
-      )}
-
+      {/* Error state */}
       {isError && (
         <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 24 }}>
           <MaterialIcons name="error-outline" size={32} color="#b71422" />
