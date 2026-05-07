@@ -95,15 +95,6 @@ mediaRouter.post(
 
     const storagePath = `avatars/${authUserId}/avatar.${fileExtension}`;
 
-    const { data: existingFiles } = await supabase.storage
-      .from(PROFILE_PICTURES_BUCKET)
-      .list(`avatars/${authUserId}`);
-
-    if (existingFiles && existingFiles.length > 0) {
-      const paths = existingFiles.map((f) => `avatars/${authUserId}/${f.name}`);
-      await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove(paths);
-    }
-
     const { data, error } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
       .createSignedUploadUrl(storagePath);
