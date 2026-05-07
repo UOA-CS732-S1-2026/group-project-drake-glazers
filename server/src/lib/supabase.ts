@@ -10,4 +10,5 @@ if (!supabaseUrl || !supabaseServiceKey) {
 export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export const MEDIA_BUCKET = 'memories-media';
+export const PROFILE_PICTURES_BUCKET = 'profile-pictures';
 export const SIGNED_URL_EXPIRY_SECONDS = 3600;
