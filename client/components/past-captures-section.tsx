@@ -1,15 +1,13 @@
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Text } from '@/components/ui/text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUserMemoriesWithCovers } from '@/hooks/use-user-memories-with-covers';
 import { MemoryWithCover } from '@/lib/types';
 
 const GUTTER = 16;
 const GAP = 8;
-
-type ViewMode = 'mosaic' | 'grid';
+const MAX_CARDS = 4;
 
 function CaptureCard({
   memory,
@@ -35,6 +33,29 @@ function CaptureCard({
       ) : (
         <View className="absolute inset-0 bg-surface-container-high" />
       )}
+
+      {memory.relativeArea && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(0,0,0,0.72)',
+            borderRadius: 999,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.15)',
+          }}
+        >
+          <Text
+            style={{ color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 }}
+            numberOfLines={1}
+          >
+            {memory.relativeArea}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -44,7 +65,6 @@ type Props = { userId: string };
 export function PastCapturesSection({ userId }: Props) {
   const { width } = useWindowDimensions();
   const { data: memories = [] } = useUserMemoriesWithCovers(userId);
-  const [viewMode, setViewMode] = useState<ViewMode>('mosaic');
 
   const shuffled = useMemo(() => {
     const copy = [...memories];
@@ -52,7 +72,7 @@ export function PastCapturesSection({ userId }: Props) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j]!, copy[i]!];
     }
-    return copy;
+    return copy.slice(0, MAX_CARDS);
   }, [userId, memories.length]);
 
   if (memories.length === 0) return null;
@@ -61,40 +81,29 @@ export function PastCapturesSection({ userId }: Props) {
   const halfWidth = (contentWidth - GAP) / 2;
   const fullHeight = Math.round(contentWidth * 0.55);
   const halfHeight = Math.round(halfWidth * 0.95);
-  const gridHeight = Math.round(halfWidth * 1.1);
 
-  function cardDims(index: number): { w: number; h: number } {
-    if (viewMode === 'grid') return { w: halfWidth, h: gridHeight };
-    return index % 3 === 0 ? { w: contentWidth, h: fullHeight } : { w: halfWidth, h: halfHeight };
-  }
+  const [a, b, c, d] = shuffled;
 
   return (
     <View className="mt-lg mb-xl">
-      <View className="flex-row justify-between items-center mx-gutter mb-sm">
+      <View className="mx-gutter mb-sm">
         <Text variant="headline-md">Past Captures</Text>
-        <View style={{ flexDirection: 'row', gap: GAP }}>
-          <Pressable onPress={() => setViewMode('mosaic')}>
-            <IconSymbol
-              name="square.grid.2x2.fill"
-              size={22}
-              color={viewMode === 'mosaic' ? '#b71422' : '#8f6f6d'}
-            />
-          </Pressable>
-          <Pressable onPress={() => setViewMode('grid')}>
-            <IconSymbol
-              name="rectangle.grid.1x2.fill"
-              size={22}
-              color={viewMode === 'grid' ? '#b71422' : '#8f6f6d'}
-            />
-          </Pressable>
-        </View>
       </View>
 
-      <View style={{ marginHorizontal: GUTTER, flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
-        {shuffled.map((memory, index) => {
-          const { w, h } = cardDims(index);
-          return <CaptureCard key={memory.id} memory={memory} width={w} height={h} />;
-        })}
+      <View style={{ marginHorizontal: GUTTER, gap: GAP }}>
+        {/* Row 1 — full width */}
+        {a && <CaptureCard memory={a} width={contentWidth} height={fullHeight} />}
+
+        {/* Row 2 — two halves side by side */}
+        {(b || c) && (
+          <View style={{ flexDirection: 'row', gap: GAP }}>
+            {b && <CaptureCard memory={b} width={halfWidth} height={halfHeight} />}
+            {c && <CaptureCard memory={c} width={halfWidth} height={halfHeight} />}
+          </View>
+        )}
+
+        {/* Row 3 — full width */}
+        {d && <CaptureCard memory={d} width={contentWidth} height={fullHeight} />}
       </View>
     </View>
   );

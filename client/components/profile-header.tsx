@@ -14,8 +14,8 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-function uniquePlacesCount(memories: { latitude: number; longitude: number }[]): number {
-  const seen = new Set(memories.map((m) => `${m.latitude.toFixed(2)},${m.longitude.toFixed(2)}`));
+function uniquePlacesCount(memories: { relativeArea?: string | null }[]): number {
+  const seen = new Set(memories.map((m) => m.relativeArea).filter((r): r is string => !!r));
   return seen.size;
 }
 
@@ -77,7 +77,7 @@ export function ProfileHeader({ userId }: Props) {
 
         {/* Edit profile + sign out — own profile only */}
         {isOwnProfile && (
-          <View className="mt-md gap-sm">
+          <View className="mt-md flex-row gap-sm">
             <Button label="Edit Profile" variant="primary" onPress={() => setEditVisible(true)} />
             <Button label="Sign Out" variant="secondary" onPress={handleSignOut} />
           </View>
