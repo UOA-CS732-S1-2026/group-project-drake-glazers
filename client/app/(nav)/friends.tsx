@@ -170,36 +170,40 @@ function RequestsSection() {
       )}
       {!isLoading &&
         !isError &&
-        list?.map((req) => (
-          <Card key={req.id} elevated={false} className="flex-row items-center gap-md">
-            <AvatarCircle name={null} />
-            <Text variant="body-md" className="flex-1" numberOfLines={1}>
-              {`User ${tab === 'incoming' ? req.fromUserId.slice(0, 8) : req.toUserId.slice(0, 8)}…`}
-            </Text>
-            {tab === 'incoming' ? (
-              <View className="flex-row gap-sm">
+        list?.map((req) => {
+          const otherUser = tab === 'incoming' ? req.fromUser : req.toUser;
+          const displayName = otherUser.profile?.displayName ?? 'Unknown User';
+          return (
+            <Card key={req.id} elevated={false} className="flex-row items-center gap-md">
+              <AvatarCircle name={displayName} />
+              <Text variant="body-md" className="flex-1" numberOfLines={1}>
+                {displayName}
+              </Text>
+              {tab === 'incoming' ? (
+                <View className="flex-row gap-sm">
+                  <Button
+                    label="Accept"
+                    loading={accept.isPending && accept.variables === req.id}
+                    onPress={() => accept.mutate(req.id)}
+                  />
+                  <Button
+                    label="Reject"
+                    variant="secondary"
+                    loading={reject.isPending && reject.variables === req.id}
+                    onPress={() => reject.mutate(req.id)}
+                  />
+                </View>
+              ) : (
                 <Button
-                  label="Accept"
-                  loading={accept.isPending && accept.variables === req.id}
-                  onPress={() => accept.mutate(req.id)}
-                />
-                <Button
-                  label="Reject"
+                  label="Cancel"
                   variant="secondary"
-                  loading={reject.isPending && reject.variables === req.id}
-                  onPress={() => reject.mutate(req.id)}
+                  loading={cancel.isPending && cancel.variables === req.id}
+                  onPress={() => cancel.mutate(req.id)}
                 />
-              </View>
-            ) : (
-              <Button
-                label="Cancel"
-                variant="secondary"
-                loading={cancel.isPending && cancel.variables === req.id}
-                onPress={() => cancel.mutate(req.id)}
-              />
-            )}
-          </Card>
-        ))}
+              )}
+            </Card>
+          );
+        })}
     </View>
   );
 }

@@ -110,6 +110,17 @@ friendRequestsRouter.post(
   }
 );
 
+const userProfileSelect = {
+  select: {
+    profile: {
+      select: {
+        displayName: true,
+        avatarUrl: true,
+      },
+    },
+  },
+};
+
 // GET /friend-requests - List incoming and outgoing pending requests
 friendRequestsRouter.get('/friend-requests', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
@@ -117,12 +128,12 @@ friendRequestsRouter.get('/friend-requests', async (req: Request, res: Response)
   const [incoming, outgoing] = await Promise.all([
     prisma.friendRequest.findMany({
       where: { toUserId: authUserId, status: 'pending' },
-      select: friendRequestSelect,
+      select: { ...friendRequestSelect, fromUser: userProfileSelect, toUser: userProfileSelect },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.friendRequest.findMany({
       where: { fromUserId: authUserId, status: 'pending' },
-      select: friendRequestSelect,
+      select: { ...friendRequestSelect, fromUser: userProfileSelect, toUser: userProfileSelect },
       orderBy: { createdAt: 'desc' },
     }),
   ]);

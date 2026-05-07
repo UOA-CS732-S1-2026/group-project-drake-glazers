@@ -19,6 +19,13 @@ export type Friendship = {
   friend: FriendUser;
 };
 
+export type FriendRequestUser = {
+  profile: {
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
 export type FriendRequest = {
   id: string;
   fromUserId: string;
@@ -26,6 +33,8 @@ export type FriendRequest = {
   status: string;
   createdAt: string;
   updatedAt: string;
+  fromUser: FriendRequestUser;
+  toUser: FriendRequestUser;
 };
 
 export type FriendRequestsResponse = {
