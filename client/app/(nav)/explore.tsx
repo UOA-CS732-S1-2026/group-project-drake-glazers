@@ -35,7 +35,6 @@ type ExploreMemory = {
 
 // ─── Placeholder data ─────────────────────────────────────────────────────────
 
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800';
 const PLACEHOLDER_GRID = [
   'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400',
   'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400',
@@ -45,100 +44,51 @@ const PLACEHOLDER_GRID = [
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function FeaturedCard({ memory, onPress }: { memory: ExploreMemory; onPress: () => void }) {
-  const imageUri = memory.imageUrl ?? PLACEHOLDER_IMAGE;
-
-  return (
-    <TouchableOpacity style={styles.featuredCard} onPress={onPress} activeOpacity={0.92}>
-      <Image source={{ uri: imageUri }} style={styles.featuredImage} resizeMode="cover" />
-
-      {/* Location chip */}
-      {memory.relativeArea && (
-        <View style={styles.locationChip}>
-          <MaterialIcons name="place" size={12} color="#b71422" />
-          <Text variant="label-md" style={{ color: '#b71422', marginLeft: 3 }}>
-            {memory.relativeArea}
-          </Text>
-        </View>
-      )}
-
-      {/* Bottom overlay */}
-      <View style={styles.featuredOverlay}>
-        <Text variant="body-lg" style={styles.featuredQuote} numberOfLines={2}>
-          {memory.title}
-        </Text>
-        <Text variant="body-sm" style={styles.featuredAuthor}>
-          @{memory.author}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-function GridCard({
-  memory,
-  index,
-  onPress,
-}: {
-  memory: ExploreMemory;
-  index: number;
-  onPress: () => void;
-}) {
-  const imageUri = memory.imageUrl ?? PLACEHOLDER_GRID[index % PLACEHOLDER_GRID.length];
+function FeedCard({ memory, onPress }: { memory: ExploreMemory; onPress: () => void }) {
+  const imageUri = memory.imageUrl ?? PLACEHOLDER_GRID[0];
   const isVideo = memory.mediaType === 'video';
 
   return (
-    <TouchableOpacity style={styles.gridCard} onPress={onPress} activeOpacity={0.88}>
-      <Image source={{ uri: imageUri }} style={styles.gridImage} resizeMode="cover" />
-
-      {/* Video overlay */}
-      {isVideo && (
-        <View style={styles.videoPlay}>
-          <MaterialIcons name="play-circle-outline" size={28} color="#fff" />
-        </View>
-      )}
-
-      {/* Label below image */}
-      <View style={styles.gridLabel}>
-        <Text variant="body-sm" style={{ color: '#1c1b1b' }} numberOfLines={2}>
-          {memory.title}
-        </Text>
-        {memory.relativeArea && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-            <MaterialIcons name="place" size={11} color="#b71422" />
-            <Text variant="label-md" style={{ color: '#b71422', marginLeft: 2 }}>
-              {memory.relativeArea}
+    <TouchableOpacity style={styles.feedCard} onPress={onPress} activeOpacity={0.92}>
+      <View style={styles.feedHeader}>
+        <View style={styles.feedAuthorRow}>
+          <MaterialIcons name="account-circle" size={32} color="#c9a9a6" />
+          <View style={{ marginLeft: 8 }}>
+            <Text variant="label-md" style={{ color: '#1c1b1b' }}>
+              @{memory.author}
             </Text>
+            {memory.relativeArea && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
+                <MaterialIcons name="place" size={11} color="#b71422" />
+                <Text variant="label-md" style={{ color: '#b71422', marginLeft: 2 }}>
+                  {memory.relativeArea}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+
+      <View style={{ position: 'relative' }}>
+        <Image source={{ uri: imageUri }} style={styles.feedImage} resizeMode="cover" />
+        {isVideo && (
+          <View style={styles.videoPlay}>
+            <MaterialIcons name="play-circle-outline" size={36} color="#fff" />
           </View>
         )}
       </View>
+
+      <View style={styles.feedFooter}>
+        <Text variant="body-md" style={{ color: '#1c1b1b', fontWeight: '600' }} numberOfLines={2}>
+          {memory.title}
+        </Text>
+        {memory.description && (
+          <Text variant="body-sm" style={{ color: '#5b403e', marginTop: 4 }} numberOfLines={2}>
+            {memory.description}
+          </Text>
+        )}
+      </View>
     </TouchableOpacity>
-  );
-}
-
-function StoriesGrid({
-  memories,
-  onPress,
-}: {
-  memories: ExploreMemory[];
-  onPress: (m: ExploreMemory) => void;
-}) {
-  const left = memories.filter((_, i) => i % 2 === 0);
-  const right = memories.filter((_, i) => i % 2 !== 0);
-
-  return (
-    <View style={styles.grid}>
-      <View style={styles.gridCol}>
-        {left.map((m, i) => (
-          <GridCard key={m.id} memory={m} index={i * 2} onPress={() => onPress(m)} />
-        ))}
-      </View>
-      <View style={[styles.gridCol, { marginTop: 24 }]}>
-        {right.map((m, i) => (
-          <GridCard key={m.id} memory={m} index={i * 2 + 1} onPress={() => onPress(m)} />
-        ))}
-      </View>
-    </View>
   );
 }
 
@@ -168,8 +118,7 @@ export default function ExploreScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const featured = memories?.[0];
-  const gridMemories = memories?.slice(1, 9) ?? [];
+  const feedMemories = memories ?? [];
 
   return (
     <ScrollView
@@ -208,19 +157,12 @@ export default function ExploreScreen() {
         </View>
       )}
 
-      {/* Featured story */}
-      {featured && (
-        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-          <FeaturedCard memory={featured} onPress={() => router.push(`/memory/${featured.id}`)} />
+      {/* Feed */}
+      {feedMemories.map((m) => (
+        <View key={m.id} style={{ marginBottom: 16 }}>
+          <FeedCard memory={m} onPress={() => router.push(`/memory/${m.id}`)} />
         </View>
-      )}
-
-      {/* Stories grid */}
-      {gridMemories.length > 0 && (
-        <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-          <StoriesGrid memories={gridMemories} onPress={(m) => router.push(`/memory/${m.id}`)} />
-        </View>
-      )}
+      ))}
 
       {/* Empty state */}
       {!isLoading && !isError && memories?.length === 0 && (
@@ -244,83 +186,37 @@ export default function ExploreScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  // Featured card
-  featuredCard: {
+  feedCard: {
+    backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    marginHorizontal: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  featuredImage: {
-    width: '100%',
-    height: 340,
-  },
-  locationChip: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  featuredOverlay: {
-    position: 'absolute',
-    bottom: 64,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(0,0,0,0.38)',
-  },
-  featuredQuote: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  featuredAuthor: {
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 6,
-  },
-  // Grid
-  grid: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  gridCol: {
-    flex: 1,
-    gap: 10,
-  },
-  gridCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
-  gridImage: {
+  feedHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  feedAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  feedImage: {
     width: '100%',
-    height: 150,
+    aspectRatio: 1,
+  },
+  feedFooter: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   videoPlay: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -14 }, { translateY: -14 }],
-  },
-  gridLabel: {
-    padding: 10,
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
 });
