@@ -1,87 +1,135 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/expo';
 import { useApiClient } from '@/lib/api';
-
-export interface FriendUser {
-  id: string;
-  name: string;
-  avatar: string;
-  requestId?: string;
-}
-
-function mapFriend(item: any): FriendUser {
-  return {
-    id: item.friend.id,
-    name: item.friend.profile?.displayName ?? item.friend.id,
-    avatar: item.friend.profile?.avatarUrl ?? '',
-  };
-}
-
-function mapRequest(item: any, direction: 'incoming' | 'outgoing'): FriendUser {
-  const profile = direction === 'incoming' ? item.fromUser?.profile : item.toUser?.profile;
-  const userId = direction === 'incoming' ? item.fromUserId : item.toUserId;
-  return {
-    id: userId,
-    name: profile?.displayName ?? userId,
-    avatar: profile?.avatarUrl ?? '',
-    requestId: item.id,
-  };
-}
-
-function mapBlock(item: any): FriendUser {
-  return {
-    id: item.blocked.id,
-    name: item.blocked.profile?.displayName ?? item.blocked.id,
-    avatar: item.blocked.profile?.avatarUrl ?? '',
-  };
-}
+import type { Friendship, FriendRequestsResponse, BlockEntry, SearchUser } from '@/lib/types';
 
 export function useFriends() {
   const { userId } = useAuth();
   const api = useApiClient();
 
-  const friendsQuery = useQuery<FriendUser[]>({
+  return useQuery<Friendship[]>({
     queryKey: ['friends'],
-    queryFn: async () => {
-      const data = await api.get('/api/friends');
-      return data.map(mapFriend);
-    },
+    queryFn: () => api.get('/api/friends'),
     enabled: !!userId,
   });
+}
 
-  const requestsQuery = useQuery<{ incoming: FriendUser[]; outgoing: FriendUser[] }>({
+export function useFriendRequests() {
+  const { userId } = useAuth();
+  const api = useApiClient();
+
+  return useQuery<FriendRequestsResponse>({
     queryKey: ['friend-requests'],
-    queryFn: async () => {
-      const data = await api.get('/api/friend-requests');
-      return {
-        incoming: data.incoming.map((r: any) => mapRequest(r, 'incoming')),
-        outgoing: data.outgoing.map((r: any) => mapRequest(r, 'outgoing')),
-      };
-    },
+    queryFn: () => api.get('/api/friend-requests'),
     enabled: !!userId,
   });
+}
 
-  const blocksQuery = useQuery<FriendUser[]>({
+export function useBlockedUsers() {
+  const { userId } = useAuth();
+  const api = useApiClient();
+
+  return useQuery<BlockEntry[]>({
     queryKey: ['blocks'],
-    queryFn: async () => {
-      const data = await api.get('/api/blocks');
-      return data.map(mapBlock);
-    },
+    queryFn: () => api.get('/api/blocks'),
     enabled: !!userId,
   });
+}
 
-  const loading = friendsQuery.isLoading || requestsQuery.isLoading || blocksQuery.isLoading;
-  const error =
-    friendsQuery.error || requestsQuery.error || blocksQuery.error
-      ? 'Failed to load friends data.'
-      : null;
+export function useUserSearch(query: string) {
+  const { userId } = useAuth();
+  const api = useApiClient();
 
-  return {
-    friends: friendsQuery.data ?? [],
-    incoming: requestsQuery.data?.incoming ?? [],
-    outgoing: requestsQuery.data?.outgoing ?? [],
-    blocked: blocksQuery.data ?? [],
-    loading,
-    error,
-  };
+  return useQuery<SearchUser[]>({
+    queryKey: ['users', 'search', query],
+    queryFn: () => api.get(`/api/users/search?q=${encodeURIComponent(query)}`),
+    enabled: !!userId && query.trim().length > 0,
+  });
+}
+
+export function useSendFriendRequest() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (toUserId: string) => api.post('/api/friend-requests', { toUserId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    },
+  });
+}
+
+export function useAcceptFriendRequest() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.put(`/api/friend-requests/${id}/accept`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+    },
+  });
+}
+
+export function useRejectFriendRequest() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.put(`/api/friend-requests/${id}/decline`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    },
+  });
+}
+
+export function useCancelFriendRequest() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/friend-requests/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    },
+  });
+}
+
+export function useRemoveFriend() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => api.delete(`/api/friends/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+    },
+  });
+}
+
+export function useBlockUser() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (blockedId: string) => api.post('/api/blocks', { blockedId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blocks'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    },
+  });
+}
+
+export function useUnblockUser() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => api.delete(`/api/blocks/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blocks'] });
+    },
+  });
 }

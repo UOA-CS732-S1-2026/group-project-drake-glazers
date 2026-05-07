@@ -5,6 +5,57 @@ export type User = {
   updatedAt: string;
 };
 
+export type FriendUser = {
+  id: string;
+  profile: {
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
+export type Friendship = {
+  id: string;
+  createdAt: string;
+  friend: FriendUser;
+};
+
+export type FriendRequestUser = {
+  profile: {
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
+export type FriendRequest = {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  fromUser: FriendRequestUser;
+  toUser: FriendRequestUser;
+};
+
+export type FriendRequestsResponse = {
+  incoming: FriendRequest[];
+  outgoing: FriendRequest[];
+};
+
+export type BlockEntry = {
+  id: string;
+  createdAt: string;
+  blocked: FriendUser;
+};
+
+export type SearchUser = {
+  id: string;
+  profile: {
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
 export type Visibility = 'public' | 'friends_only' | 'private';
 
 export type UserProfile = {
