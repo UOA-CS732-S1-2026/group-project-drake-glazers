@@ -163,11 +163,37 @@ mediaRouter.get('/memories/:memoryId/media', async (req: Request, res: Response)
 
   const memory = await prisma.memory.findUnique({
     where: { id: memoryId },
-    select: { userId: true },
+    select: { userId: true, visibility: true },
   });
 
-  if (!memory || memory.userId !== authUserId) {
+  if (!memory) {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  if (memory.userId !== authUserId) {
+    const block = await prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: authUserId, blockedId: memory.userId },
+          { blockerId: memory.userId, blockedId: authUserId },
+        ],
+      },
+      select: { id: true },
+    });
+    if (block) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+
+    if (memory.visibility === 'private') {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+
+    if (memory.visibility === 'friends_only') {
+      const [userAId, userBId] = [authUserId, memory.userId].sort() as [string, string];
+      const friendship = await prisma.friendship.findUnique({
+        where: { userAId_userBId: { userAId, userBId } },
+        select: { id: true },
+      });
+      if (!friendship) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
   }
 
   const mediaItems = await prisma.media.findMany({

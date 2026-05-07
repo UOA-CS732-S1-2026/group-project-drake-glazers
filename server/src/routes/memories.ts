@@ -47,6 +47,73 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+// ─── Explore feed: recent public memories from all users ──────────────────────
+
+memoriesRouter.get('/explore', async (req: Request, res: Response) => {
+  const limit = Math.min(Number(req.query.limit) || 20, 50);
+
+  const memories = await prisma.memory.findMany({
+    where: { visibility: 'public' },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      ...memorySelect,
+      media: {
+        select: mediaSelect,
+        orderBy: { createdAt: 'asc' as const },
+        take: 1,
+      },
+      user: {
+        select: {
+          profile: {
+            select: { displayName: true, avatarUrl: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Generate signed URLs for the first media item of each memory
+  const paths = memories.map((m) => m.media[0]?.mediaPath).filter(Boolean) as string[];
+
+  let signedUrlMap = new Map<string, string>();
+
+  if (paths.length > 0) {
+    const { data: signedUrls } = await supabase.storage
+      .from(MEDIA_BUCKET)
+      .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+
+    signedUrlMap = new Map(
+      (signedUrls ?? [])
+        .filter((s) => s.path != null && s.signedUrl != null)
+        .map((s) => [s.path as string, s.signedUrl as string])
+    );
+  }
+
+  const result = memories.map((m) => {
+    const firstMedia = m.media[0];
+    return {
+      id: m.id,
+      userId: m.userId,
+      title: m.title,
+      description: m.description,
+      relativeArea: m.relativeArea,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      visibility: m.visibility,
+      createdAt: m.createdAt,
+      author: m.user.profile?.displayName ?? 'Unknown',
+      avatarUrl: m.user.profile?.avatarUrl ?? null,
+      imageUrl: firstMedia ? (signedUrlMap.get(firstMedia.mediaPath) ?? null) : null,
+      mediaType: firstMedia?.mediaType ?? null,
+    };
+  });
+
+  return res.status(200).json(result);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 memoriesRouter.get('/memories', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
 
@@ -68,8 +135,38 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
     select: memoryDetailSelect,
   });
 
-  if (!memory || memory.userId !== authUserId) {
+  if (!memory) {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  // Owner can always view their own memory
+  if (memory.userId !== authUserId) {
+    // Check for blocks first
+    const block = await prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: authUserId, blockedId: memory.userId },
+          { blockerId: memory.userId, blockedId: authUserId },
+        ],
+      },
+      select: { id: true },
+    });
+    if (block) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+
+    // Check visibility against friendship
+    if (memory.visibility === 'private') {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+
+    if (memory.visibility === 'friends_only') {
+      const [userAId, userBId] = [authUserId, memory.userId].sort() as [string, string];
+      const friendship = await prisma.friendship.findUnique({
+        where: { userAId_userBId: { userAId, userBId } },
+        select: { id: true },
+      });
+      if (!friendship) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+    // visibility === 'public' falls through
   }
 
   if (memory.media.length === 0) {
