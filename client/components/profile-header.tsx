@@ -1,10 +1,13 @@
 import { Image, View } from 'react-native';
+import { useState } from 'react';
 import { useAuth } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useFriends } from '@/hooks/use-friends';
 import { useUserMemories } from '@/hooks/use-user-memories';
+import { useUserProfile } from '@/hooks/use-user-profile';
+import { EditProfileModal } from '@/components/edit-profile-modal';
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -29,13 +32,13 @@ function StatItem({ value, label }: { value: number; label: string }) {
 
 type Props = {
   userId: string;
-  onEditPress?: () => void;
 };
 
-export function ProfileHeader({ userId, onEditPress }: Props) {
+export function ProfileHeader({ userId }: Props) {
   const { userId: myId, signOut } = useAuth();
   const router = useRouter();
   const isOwnProfile = userId === myId;
+  const [editVisible, setEditVisible] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,37 +47,50 @@ export function ProfileHeader({ userId, onEditPress }: Props) {
 
   const { data: memories = [] } = useUserMemories(userId);
   const { friends } = useFriends();
+  const { data: profile } = useUserProfile(isOwnProfile ? undefined : userId);
 
   return (
-    <View className="bg-surface-container-lowest mx-gutter mt-md rounded-xl p-md border border-outline-variant">
-      {/* Avatar + stats */}
-      <View className="flex-row items-center">
-        <Image
-          source={require('@/assets/images/default-pfp.png')}
-          style={{ width: 80, height: 80, borderRadius: 40 }}
-        />
-        <View className="flex-1 flex-row justify-around ml-md">
-          <StatItem value={memories.length} label="MEMORIES" />
-          <StatItem value={uniquePlacesCount(memories)} label="PLACES" />
-          {isOwnProfile && <StatItem value={friends.length} label="CONNECTIONS" />}
+    <>
+      <View className="bg-surface-container-lowest mx-gutter mt-md rounded-xl p-md border border-outline-variant">
+        {/* Avatar + stats */}
+        <View className="flex-row items-center">
+          <Image
+            source={require('@/assets/images/default-pfp.png')}
+            style={{ width: 80, height: 80, borderRadius: 40 }}
+          />
+          <View className="flex-1 flex-row justify-around ml-md">
+            <StatItem value={memories.length} label="MEMORIES" />
+            <StatItem value={uniquePlacesCount(memories)} label="PLACES" />
+            {isOwnProfile && <StatItem value={friends.length} label="CONNECTIONS" />}
+          </View>
         </View>
+
+        {/* Name + bio */}
+        <View className="mt-md">
+          <Text variant="headline-md">{profile?.displayName ?? 'Name'}</Text>
+          {profile?.bio ? (
+            <Text variant="body-md" className="text-on-surface-variant mt-xs">
+              {profile.bio}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Edit profile + sign out — own profile only */}
+        {isOwnProfile && (
+          <View className="mt-md gap-sm">
+            <Button label="Edit Profile" variant="primary" onPress={() => setEditVisible(true)} />
+            <Button label="Sign Out" variant="secondary" onPress={handleSignOut} />
+          </View>
+        )}
       </View>
 
-      {/* Name + bio */}
-      <View className="mt-md">
-        <Text variant="headline-md">Name</Text>
-        <Text variant="body-md" className="text-on-surface-variant mt-xs">
-          Description
-        </Text>
-      </View>
-
-      {/* Edit profile + sign out — own profile only */}
       {isOwnProfile && (
-        <View className="mt-md gap-sm">
-          {onEditPress && <Button label="Edit Profile" variant="primary" onPress={onEditPress} />}
-          <Button label="Sign Out" variant="secondary" onPress={handleSignOut} />
-        </View>
+        <EditProfileModal
+          visible={editVisible}
+          profile={profile ?? null}
+          onClose={() => setEditVisible(false)}
+        />
       )}
-    </View>
+    </>
   );
 }

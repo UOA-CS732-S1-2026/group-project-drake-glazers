@@ -13,7 +13,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScrollView className="flex-1">
-        <ProfileHeader userId={userId} onEditPress={() => {}} />
+        <ProfileHeader userId={userId} />
         <FlashbacksSection userId={userId} />
         <PastCapturesSection userId={userId} />
       </ScrollView>
