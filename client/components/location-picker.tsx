@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
@@ -23,7 +23,21 @@ type Props = {
   onConfirm: (lat: number, lng: number, name?: string) => void;
 };
 
+type MapCameraState = {
+  properties?: {
+    center?: GeoJSON.Position;
+  };
+};
+
+function toLngLat(coordinates?: GeoJSON.Position): [number, number] | null {
+  const [lng, lat] = coordinates ?? [];
+  if (typeof lng !== 'number' || typeof lat !== 'number') return null;
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return [lng, lat];
+}
+
 export function LocationPicker({ onConfirm }: Props) {
+  const cameraRef = useRef<MapboxGL.Camera>(null);
   const [mode, setMode] = useState<'search' | 'pin'>('search');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeocodingResult[]>([]);
@@ -59,16 +73,26 @@ export function LocationPicker({ onConfirm }: Props) {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const extractCoords = (feature: GeoJSON.Feature): [number, number] =>
-    (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+  const handleMapPress = useCallback((feature: GeoJSON.Feature<GeoJSON.Point>) => {
+    const coords = toLngLat(feature.geometry.coordinates);
+    if (!coords) return;
 
-  const handleRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
-    setPinCoords(extractCoords(feature));
+    setPinCoords(coords);
+    cameraRef.current?.setCamera({
+      centerCoordinate: coords,
+      animationDuration: 250,
+      animationMode: 'easeTo',
+    });
   }, []);
 
-  const handleRegionDidChange = useCallback((feature: GeoJSON.Feature) => {
-    setPinCoords(extractCoords(feature));
+  const handleCameraChanged = useCallback((state: MapCameraState) => {
+    const coords = toLngLat(state.properties?.center);
+    if (coords) setPinCoords(coords);
   }, []);
+
+  const confirmPinLocation = useCallback(() => {
+    onConfirm(pinCoords[1], pinCoords[0]);
+  }, [onConfirm, pinCoords]);
 
   return (
     <View className="flex-1 bg-background">
@@ -148,10 +172,12 @@ export function LocationPicker({ onConfirm }: Props) {
               logoEnabled={false}
               attributionEnabled={false}
               scaleBarEnabled={false}
-              onRegionIsChanging={handleRegionIsChanging}
-              onRegionDidChange={handleRegionDidChange}
+              onPress={handleMapPress}
+              onCameraChanged={handleCameraChanged}
+              onMapIdle={handleCameraChanged}
             >
               <MapboxGL.Camera
+                ref={cameraRef}
                 defaultSettings={{
                   centerCoordinate: DEFAULT_COORDS,
                   zoomLevel: 12,
@@ -169,10 +195,7 @@ export function LocationPicker({ onConfirm }: Props) {
             <Text variant="body-sm" className="text-on-surface-variant text-center">
               {pinCoords[1].toFixed(5)}°, {pinCoords[0].toFixed(5)}°
             </Text>
-            <Button
-              label="Confirm Location"
-              onPress={() => onConfirm(pinCoords[1], pinCoords[0])}
-            />
+            <Button label="Confirm Location" onPress={confirmPinLocation} />
           </View>
         </View>
       )}
