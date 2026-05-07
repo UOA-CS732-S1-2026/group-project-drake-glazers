@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
 import { useApiClient } from '@/lib/api';
+import { useRouter } from 'expo-router';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,11 +91,11 @@ function FilterChips({
   );
 }
 
-function FeaturedCard({ memory }: { memory: ExploreMemory }) {
+function FeaturedCard({ memory, onPress }: { memory: ExploreMemory; onPress: () => void }) {
   const imageUri = memory.imageUrl ?? PLACEHOLDER_IMAGE;
 
   return (
-    <View style={styles.featuredCard}>
+    <TouchableOpacity style={styles.featuredCard} onPress={onPress} activeOpacity={0.92}>
       <Image source={{ uri: imageUri }} style={styles.featuredImage} resizeMode="cover" />
 
       {/* Location chip */}
@@ -141,16 +142,24 @@ function FeaturedCard({ memory }: { memory: ExploreMemory }) {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-function GridCard({ memory, index }: { memory: ExploreMemory; index: number }) {
+function GridCard({
+  memory,
+  index,
+  onPress,
+}: {
+  memory: ExploreMemory;
+  index: number;
+  onPress: () => void;
+}) {
   const imageUri = memory.imageUrl ?? PLACEHOLDER_GRID[index % PLACEHOLDER_GRID.length];
   const isVideo = memory.mediaType === 'video';
 
   return (
-    <View style={styles.gridCard}>
+    <TouchableOpacity style={styles.gridCard} onPress={onPress} activeOpacity={0.88}>
       <Image source={{ uri: imageUri }} style={styles.gridImage} resizeMode="cover" />
 
       {/* Video overlay */}
@@ -174,11 +183,17 @@ function GridCard({ memory, index }: { memory: ExploreMemory; index: number }) {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-function StoriesGrid({ memories }: { memories: ExploreMemory[] }) {
+function StoriesGrid({
+  memories,
+  onPress,
+}: {
+  memories: ExploreMemory[];
+  onPress: (m: ExploreMemory) => void;
+}) {
   const left = memories.filter((_, i) => i % 2 === 0);
   const right = memories.filter((_, i) => i % 2 !== 0);
 
@@ -186,12 +201,12 @@ function StoriesGrid({ memories }: { memories: ExploreMemory[] }) {
     <View style={styles.grid}>
       <View style={styles.gridCol}>
         {left.map((m, i) => (
-          <GridCard key={m.id} memory={m} index={i * 2} />
+          <GridCard key={m.id} memory={m} index={i * 2} onPress={() => onPress(m)} />
         ))}
       </View>
       <View style={[styles.gridCol, { marginTop: 24 }]}>
         {right.map((m, i) => (
-          <GridCard key={m.id} memory={m} index={i * 2 + 1} />
+          <GridCard key={m.id} memory={m} index={i * 2 + 1} onPress={() => onPress(m)} />
         ))}
       </View>
     </View>
@@ -203,6 +218,7 @@ function StoriesGrid({ memories }: { memories: ExploreMemory[] }) {
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState('all');
+  const router = useRouter();
   const api = useApiClient();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -272,14 +288,14 @@ export default function ExploreScreen() {
       {/* Featured story */}
       {featured && (
         <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-          <FeaturedCard memory={featured} />
+          <FeaturedCard memory={featured} onPress={() => router.push(`/memory/${featured.id}`)} />
         </View>
       )}
 
       {/* Stories grid */}
       {gridMemories.length > 0 && (
         <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-          <StoriesGrid memories={gridMemories} />
+          <StoriesGrid memories={gridMemories} onPress={(m) => router.push(`/memory/${m.id}`)} />
         </View>
       )}
 

@@ -18,14 +18,18 @@ const PEEK_HEIGHT = 100;
 type Props = {
   memory: Memory;
   onClose: () => void;
+  /** Pre-fetched image URL (e.g. from the explore feed). Shown when useMemoryMedia returns nothing. */
+  imageUrl?: string | null;
 };
 
-export function MemoryPreviewCard({ memory, onClose }: Props) {
+export function MemoryPreviewCard({ memory, onClose, imageUrl }: Props) {
   const { data: mediaItems = [] } = useMemoryMedia(memory.id);
 
   const firstImage = mediaItems.find(
     (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
   );
+
+  const resolvedImageUrl = firstImage?.signedUrl ?? imageUrl ?? null;
 
   const date = new Date(memory.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
@@ -110,8 +114,8 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
         <Text style={styles.title}>{memory.title}</Text>
       </View>
 
-      {firstImage?.signedUrl ? (
-        <Image source={{ uri: firstImage.signedUrl }} style={styles.image} resizeMode="cover" />
+      {resolvedImageUrl ? (
+        <Image source={{ uri: resolvedImageUrl }} style={styles.image} resizeMode="cover" />
       ) : null}
 
       {/* Content */}
