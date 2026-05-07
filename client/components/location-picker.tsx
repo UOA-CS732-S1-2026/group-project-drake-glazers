@@ -59,9 +59,15 @@ export function LocationPicker({ onConfirm }: Props) {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const extractCoords = (feature: GeoJSON.Feature): [number, number] =>
+    (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+
+  const handleRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
+    setPinCoords(extractCoords(feature));
+  }, []);
+
   const handleRegionDidChange = useCallback((feature: GeoJSON.Feature) => {
-    const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
-    setPinCoords(coords);
+    setPinCoords(extractCoords(feature));
   }, []);
 
   return (
@@ -142,12 +148,14 @@ export function LocationPicker({ onConfirm }: Props) {
               logoEnabled={false}
               attributionEnabled={false}
               scaleBarEnabled={false}
+              onRegionIsChanging={handleRegionIsChanging}
               onRegionDidChange={handleRegionDidChange}
             >
               <MapboxGL.Camera
-                zoomLevel={12}
-                centerCoordinate={DEFAULT_COORDS}
-                animationMode="none"
+                defaultSettings={{
+                  centerCoordinate: DEFAULT_COORDS,
+                  zoomLevel: 12,
+                }}
               />
             </MapboxGL.MapView>
 
