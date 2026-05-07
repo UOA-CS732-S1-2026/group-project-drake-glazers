@@ -43,7 +43,7 @@ export function ProfileHeader({ userId, onEditPress }: Props) {
   };
 
   const { data: memories = [] } = useUserMemories(userId);
-  const { data: friends = [] } = useFriends();
+  const { friends } = useFriends();
 
   return (
     <View className="bg-surface-container-lowest mx-gutter mt-md rounded-xl p-md border border-outline-variant">

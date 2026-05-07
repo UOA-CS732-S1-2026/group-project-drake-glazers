@@ -11,18 +11,43 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { Href } from 'expo-router';
+import { useApiClient } from '@/lib/api';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 export default function SignUpScreen() {
   const { signUp, fetchStatus } = useSignUp();
   const router = useRouter();
+  const api = useApiClient();
 
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [checkingProfile, setCheckingProfile] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const loading = fetchStatus === 'fetching';
+  const clerkLoading = fetchStatus === 'fetching';
+  const loading = clerkLoading || checkingProfile;
+
+  const syncAndCheckProfile = async () => {
+    setCheckingProfile(true);
+    try {
+      try {
+        await api.post('/api/users', { email });
+      } catch {}
+
+      try {
+        await api.get('/api/users/me/profile');
+        router.replace('/(nav)/' as Href);
+      } catch {
+        setShowOnboarding(true);
+      }
+    } finally {
+      setCheckingProfile(false);
+    }
+  };
 
   const onSignUpPress = async () => {
     setError('');
@@ -42,7 +67,7 @@ export default function SignUpScreen() {
       }
       setStep('verify');
     } else if (signUp.status === 'complete') {
-      await signUp.finalize({ navigate: () => router.replace('/') });
+      await signUp.finalize({ navigate: syncAndCheckProfile });
     }
   };
 
@@ -57,7 +82,7 @@ export default function SignUpScreen() {
     }
 
     if (signUp.status === 'complete') {
-      await signUp.finalize({ navigate: () => router.replace('/') });
+      await signUp.finalize({ navigate: syncAndCheckProfile });
     } else {
       setError('Verification could not be completed. Please try again.');
     }
@@ -159,6 +184,11 @@ export default function SignUpScreen() {
           </>
         )}
       </View>
+
+      <OnboardingModal
+        visible={showOnboarding}
+        onComplete={() => router.replace('/(nav)/' as Href)}
+      />
     </KeyboardAvoidingView>
   );
 }

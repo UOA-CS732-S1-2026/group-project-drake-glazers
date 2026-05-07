@@ -103,7 +103,11 @@ mediaRouter.post(
 
     try {
       const media = await prisma.media.create({
-        data: { memoryId, mediaPath, mediaType },
+        data: {
+          memory: { connect: { id: memoryId } },
+          mediaPath,
+          mediaType,
+        },
         select: mediaSelect,
       });
 
