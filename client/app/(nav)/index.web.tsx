@@ -17,6 +17,10 @@ export default function HomeScreen() {
     setSelectedMemory(memory);
   }, []);
 
+  const handleMapClick = useCallback(() => {
+    setSelectedMemory(null);
+  }, []);
+
   return (
     <div style={styles.container}>
       <Map
@@ -24,6 +28,7 @@ export default function HomeScreen() {
         initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+        onClick={handleMapClick}
       >
         {memories.map((memory) => (
           <Marker
@@ -31,7 +36,10 @@ export default function HomeScreen() {
             longitude={memory.longitude}
             latitude={memory.latitude}
             anchor="bottom"
-            onClick={() => handleMarkerClick(memory)}
+            onClick={(event) => {
+              event.originalEvent.stopPropagation();
+              handleMarkerClick(memory);
+            }}
             style={{ cursor: 'pointer' }}
           >
             <WebMapPin memory={memory} />
@@ -39,12 +47,13 @@ export default function HomeScreen() {
         ))}
       </Map>
 
+      {selectedMemory && <div style={styles.mapDimmer} />}
+
       {/* Header */}
       <div style={styles.header}>
         <span style={styles.headerTitle}>Memoriez</span>
       </div>
 
-      {/* Preview card */}
       {selectedMemory && (
         <WebPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
@@ -117,12 +126,7 @@ function WebMapPin({
 
 function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => void }) {
   const router = useRouter();
-
-  console.log('Selected memory:', memory);
-
   const { data: mediaItems = [] } = useMemoryMedia(memory.id);
-
-  console.log(mediaItems);
 
   const firstImage = mediaItems.find(
     (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
@@ -134,16 +138,22 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
     day: 'numeric',
   });
 
+  const locationLabel =
+    memory.relativeArea ?? `${memory.latitude.toFixed(4)}°, ${memory.longitude.toFixed(4)}°`;
+
   return (
-    <div style={styles.card}>
+    <aside style={styles.sidePanel} aria-label={`${memory.title} preview`}>
       {firstImage?.signedUrl ? (
-        <img src={firstImage.signedUrl} alt={`${memory.title} preview`} style={styles.cardImage} />
+        <img src={firstImage.signedUrl} alt={`${memory.title} preview`} style={styles.panelImage} />
       ) : null}
 
-      <div style={styles.cardContent}>
-        <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}>{memory.title}</h2>
-          <button onClick={onClose} style={styles.closeButton}>
+      <div style={styles.panelContent}>
+        <div style={styles.panelHeader}>
+          <div>
+            <h2 style={styles.panelTitle}>{memory.title}</h2>
+            <p style={styles.panelSubtitle}>{locationLabel}</p>
+          </div>
+          <button onClick={onClose} style={styles.closeButton} aria-label="Close memory preview">
             ✕
           </button>
         </div>
@@ -155,9 +165,7 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
             <div style={styles.iconPin} />
           </div>
           <div>
-            <p style={styles.rowPrimary}>
-              {memory.latitude.toFixed(4)}°, {memory.longitude.toFixed(4)}°
-            </p>
+            <p style={styles.rowPrimary}>{locationLabel}</p>
             <p style={styles.rowSecondary}>{date}</p>
           </div>
         </div>
@@ -180,7 +188,7 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
           View Memory
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
 
@@ -190,6 +198,13 @@ const styles = {
     height: '100vh',
     position: 'relative' as const,
     fontFamily: 'sans-serif',
+  },
+  mapDimmer: {
+    position: 'absolute' as const,
+    inset: 0,
+    backgroundColor: 'rgba(4, 8, 13, 0.54)',
+    pointerEvents: 'none' as const,
+    zIndex: 2,
   },
 
   pinWrapper: {
@@ -276,51 +291,64 @@ const styles = {
     fontFamily: 'PlaywriteNO, serif',
   },
 
-  // Card
-  card: {
+  sidePanel: {
     position: 'absolute' as const,
-    bottom: 0,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '100%',
-    maxWidth: 480,
+    top: 84,
+    bottom: 24,
+    left: 24,
+    width: 'min(420px, calc(100vw - 48px))',
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
-    boxShadow: '0 -4px 24px rgba(0,0,0,0.15)',
+    boxShadow: '0 22px 70px rgba(0,0,0,0.34)',
+    zIndex: 4,
+    display: 'flex',
+    flexDirection: 'column',
   },
-  cardImage: {
-    height: 200,
+  panelImage: {
+    height: 230,
     width: '100%',
     display: 'block',
     objectFit: 'cover' as const,
     backgroundColor: '#f0f0f0',
+    flexShrink: 0,
   },
-  cardContent: {
-    padding: '20px 20px 32px',
+  panelContent: {
+    padding: '22px 22px 28px',
+    overflowY: 'auto' as const,
   },
-  cardHeader: {
+  panelHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 18,
   },
-  cardTitle: {
+  panelTitle: {
     margin: 0,
-    fontSize: 22,
+    fontSize: 28,
+    lineHeight: 1.12,
     fontWeight: 700,
     color: '#111',
-    flex: 1,
+  },
+  panelSubtitle: {
+    margin: '8px 0 0',
+    fontSize: 14,
+    color: '#626262',
+    lineHeight: 1.35,
   },
   closeButton: {
-    background: 'none',
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    background: '#f1f1f1',
     border: 'none',
-    fontSize: 18,
-    color: '#888',
+    fontSize: 16,
+    color: '#333',
     cursor: 'pointer',
-    padding: '0 0 0 12px',
-    lineHeight: 1,
+    lineHeight: '36px',
+    padding: 0,
+    flexShrink: 0,
   },
   divider: {
     border: 'none',
