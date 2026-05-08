@@ -31,7 +31,10 @@ export function OnboardingModal({ visible, onComplete }: Props) {
   const upsert = useUpsertUserProfile();
   const uploadAvatar = useUploadAvatar();
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
   const handlePickImage = async () => {
+    setAvatarError(null);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -42,19 +45,23 @@ export function OnboardingModal({ visible, onComplete }: Props) {
     if (result.canceled) return;
 
     const file = result.assets[0];
-    const extension = file.mimeType?.split('/').pop() ?? 'jpg';
 
+    if (file.fileSize && file.fileSize > MAX_FILE_SIZE) {
+      setAvatarError('Image must be smaller than 5MB.');
+      return;
+    }
+
+    const extension = file.mimeType?.split('/').pop() ?? 'jpg';
     setAvatarUri(file.uri);
     setAvatarUrl(null);
-    setAvatarError(null);
 
     uploadAvatar.mutate(
       { uri: file.uri, extension },
       {
         onSuccess: (url) => setAvatarUrl(url),
-        onError: () => {
+        onError: (error: Error) => {
           setAvatarUri(null);
-          setAvatarError('Failed to upload photo. Tap to try again.');
+          setAvatarError(error.message ?? 'Failed to upload photo. Please try again.');
         },
       }
     );
