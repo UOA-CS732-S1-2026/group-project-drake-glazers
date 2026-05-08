@@ -43,6 +43,12 @@ export function useApiClient() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => null);
+
+      if (res.status === 400 && body?.error?.details?.fieldErrors) {
+        const firstFieldError = Object.values(body.error.details.fieldErrors).flat()[0];
+        if (firstFieldError) throw new Error(firstFieldError as string);
+      }
+
       const detail = body?.error?.message ?? body?.message ?? res.statusText;
       throw new Error(`API request failed: ${res.status} ${detail}`);
     }
