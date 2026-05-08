@@ -162,34 +162,6 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
   }
 
-  // Owner can always view their own memory
-  if (memory.userId !== authUserId) {
-    // Check for blocks first
-    const block = await prisma.block.findFirst({
-      where: {
-        OR: [
-          { blockerId: authUserId, blockedId: memory.userId },
-          { blockerId: memory.userId, blockedId: authUserId },
-        ],
-      },
-      select: { id: true },
-    });
-    if (block) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-
-    // Check visibility against friendship
-    if (memory.visibility === 'private') {
-      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-    }
-
-    if (memory.visibility === 'friends_only') {
-      const [userAId, userBId] = [authUserId, memory.userId].sort() as [string, string];
-      const friendship = await prisma.friendship.findUnique({
-        where: { userAId_userBId: { userAId, userBId } },
-        select: { id: true },
-      });
-      if (!friendship) return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
-    }
-    // visibility === 'public' falls through
   if (memory.userId !== authUserId) {
     const ownerId = memory.userId;
     const [userAId, userBId] = [authUserId, ownerId].sort();
