@@ -68,8 +68,40 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
     select: memoryDetailSelect,
   });
 
-  if (!memory || memory.userId !== authUserId) {
+  if (!memory) {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+  }
+
+  if (memory.userId !== authUserId) {
+    const ownerId = memory.userId;
+    const [userAId, userBId] = [authUserId, ownerId].sort();
+
+    const [block, friendship] = await Promise.all([
+      prisma.block.findFirst({
+        where: {
+          OR: [
+            { blockerId: authUserId, blockedId: ownerId },
+            { blockerId: ownerId, blockedId: authUserId },
+          ],
+        },
+        select: { id: true },
+      }),
+      prisma.friendship.findUnique({
+        where: { userAId_userBId: { userAId, userBId } },
+        select: { id: true },
+      }),
+    ]);
+
+    if (block) {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
+
+    const canAccess =
+      memory.visibility === 'public' || (memory.visibility === 'friends_only' && !!friendship);
+
+    if (!canAccess) {
+      return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
+    }
   }
 
   if (memory.media.length === 0) {
