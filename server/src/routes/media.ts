@@ -97,7 +97,7 @@ mediaRouter.post(
 
     const { data, error } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
-      .createSignedUploadUrl(storagePath);
+      .createSignedUploadUrl(storagePath, { upsert: true });
 
     if (error || !data) {
       return errorResponse(res, 500, 'UPLOAD_URL_FAILED', 'Failed to generate upload URL');
