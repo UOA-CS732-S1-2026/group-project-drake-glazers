@@ -160,7 +160,7 @@ export default function ExploreScreen() {
       {/* Feed */}
       {feedMemories.map((m) => (
         <View key={m.id} style={{ marginBottom: 16 }}>
-          <FeedCard memory={m} onPress={() => router.push(`/memory/${m.id}`)} />
+          <FeedCard memory={m} onPress={() => router.push(`/memory/${m.id}/public`)} />
         </View>
       ))}
 
