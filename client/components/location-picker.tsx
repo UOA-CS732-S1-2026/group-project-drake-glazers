@@ -1,6 +1,6 @@
-import { View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
@@ -11,6 +11,10 @@ const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
 
 // Auckland as default starting point
 const DEFAULT_COORDS: [number, number] = [174.7633, -36.8485];
+const DEFAULT_CAMERA_SETTINGS = {
+  centerCoordinate: DEFAULT_COORDS,
+  zoomLevel: 12,
+};
 
 type GeocodingResult = {
   id: string;
@@ -23,7 +27,24 @@ type Props = {
   onConfirm: (lat: number, lng: number, name?: string) => void;
 };
 
+type MapCameraState = {
+  properties?: {
+    center?: GeoJSON.Position;
+  };
+};
+
+function toLngLat(coordinates?: GeoJSON.Position): [number, number] | null {
+  const [lng, lat] = coordinates ?? [];
+  if (typeof lng !== 'number' || typeof lat !== 'number') return null;
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return [lng, lat];
+}
+
 export function LocationPicker({ onConfirm }: Props) {
+  const cameraRef = useRef<MapboxGL.Camera>(null);
+  const pinCoordsRef = useRef<[number, number]>(DEFAULT_COORDS);
+  const lastTappedCoordsRef = useRef<[number, number] | null>(null);
+  const lastTappedAtRef = useRef(0);
   const [mode, setMode] = useState<'search' | 'pin'>('search');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeocodingResult[]>([]);
@@ -59,10 +80,44 @@ export function LocationPicker({ onConfirm }: Props) {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const handleRegionDidChange = useCallback((feature: GeoJSON.Feature) => {
-    const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+  const updatePinCoords = useCallback((coords: [number, number]) => {
+    pinCoordsRef.current = coords;
     setPinCoords(coords);
   }, []);
+
+  const handleMapPress = useCallback(
+    (feature: GeoJSON.Feature<GeoJSON.Point>) => {
+      const coords = toLngLat(feature.geometry.coordinates);
+      if (!coords) return;
+
+      updatePinCoords(coords);
+      lastTappedCoordsRef.current = coords;
+      lastTappedAtRef.current = Date.now();
+      cameraRef.current?.setCamera({
+        centerCoordinate: coords,
+        animationDuration: 250,
+        animationMode: 'easeTo',
+      });
+    },
+    [updatePinCoords]
+  );
+
+  const handleCameraChanged = useCallback(
+    (state: MapCameraState) => {
+      const coords = toLngLat(state.properties?.center);
+      if (coords) updatePinCoords(coords);
+    },
+    [updatePinCoords]
+  );
+
+  const confirmPinLocation = useCallback(() => {
+    const recentTappedCoords =
+      Date.now() - lastTappedAtRef.current < 750 ? lastTappedCoordsRef.current : null;
+    const coords = recentTappedCoords ?? pinCoordsRef.current;
+
+    updatePinCoords(coords);
+    onConfirm(coords[1], coords[0]);
+  }, [onConfirm, updatePinCoords]);
 
   return (
     <View className="flex-1 bg-background">
@@ -137,37 +192,86 @@ export function LocationPicker({ onConfirm }: Props) {
         <View className="flex-1">
           <View className="flex-1">
             <MapboxGL.MapView
-              style={{ flex: 1 }}
-              styleURL="mapbox://styles/mapbox/streets-v12"
+              style={styles.dropPinMap}
+              styleURL="mapbox://styles/mapbox/satellite-streets-v12"
               logoEnabled={false}
               attributionEnabled={false}
               scaleBarEnabled={false}
-              onRegionDidChange={handleRegionDidChange}
+              onPress={handleMapPress}
+              onCameraChanged={handleCameraChanged}
+              onMapIdle={handleCameraChanged}
             >
-              <MapboxGL.Camera
-                zoomLevel={12}
-                centerCoordinate={DEFAULT_COORDS}
-                animationMode="none"
-              />
+              <MapboxGL.Camera ref={cameraRef} defaultSettings={DEFAULT_CAMERA_SETTINGS} />
             </MapboxGL.MapView>
 
             <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-              <View className="w-5 h-5 rounded-full bg-primary border-2 border-white shadow-fab" />
-              <View style={{ width: 2, height: 10, backgroundColor: '#b71422', marginTop: -1 }} />
+              <View style={styles.pinHalo}>
+                <View style={styles.pinHead} />
+              </View>
+              <View style={styles.pinStem} />
             </View>
           </View>
 
-          <View className="px-gutter py-md bg-background gap-sm">
+          <View style={styles.pinFooter} className="px-gutter py-md gap-sm">
             <Text variant="body-sm" className="text-on-surface-variant text-center">
               {pinCoords[1].toFixed(5)}°, {pinCoords[0].toFixed(5)}°
             </Text>
-            <Button
-              label="Confirm Location"
-              onPress={() => onConfirm(pinCoords[1], pinCoords[0])}
-            />
+            <Button label="Confirm Location" onPress={confirmPinLocation} />
           </View>
         </View>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  dropPinMap: {
+    flex: 1,
+    backgroundColor: '#05070a',
+  },
+  pinHalo: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(183, 20, 34, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.32,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  pinHead: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#b71422',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  pinStem: {
+    width: 3,
+    height: 18,
+    backgroundColor: '#ffffff',
+    marginTop: -2,
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.26,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  pinFooter: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 12,
+  },
+});

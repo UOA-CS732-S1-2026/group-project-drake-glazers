@@ -15,17 +15,29 @@ const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
     const res = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&types=place&limit=1`
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&limit=1`
     );
     if (!res.ok) return null;
     const data = await res.json();
     const feature = data.features?.[0];
     if (!feature) return null;
-    const city: string = feature.text;
-    const country: string | undefined = (feature.context ?? []).find((c: any) =>
-      (c.id as string).startsWith('country.')
-    )?.text;
-    return country ? `${city}, ${country}` : (city ?? null);
+
+    // Walk the context array for named administrative levels
+    const context: { id: string; text: string }[] = feature.context ?? [];
+    const byType = (prefix: string) => context.find((c) => c.id.startsWith(prefix))?.text ?? null;
+
+    const country = byType('country.');
+    // Prefer city-level (place), fall back to state/region, then the feature itself
+    const city =
+      byType('place.') ??
+      byType('locality.') ??
+      byType('region.') ??
+      (feature.place_type?.[0] !== 'country' ? (feature.text as string) : null);
+
+    if (city && country) return `${city}, ${country}`;
+    if (city) return city;
+    if (country) return country;
+    return null;
   } catch {
     return null;
   }

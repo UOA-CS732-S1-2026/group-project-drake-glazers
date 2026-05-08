@@ -6,6 +6,7 @@ import type { UserProfile } from '@/lib/types';
 type UpsertProfileData = {
   displayName?: string;
   bio?: string;
+  avatarUrl?: string;
 };
 
 export function useUserProfile(userId?: string) {

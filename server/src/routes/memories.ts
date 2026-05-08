@@ -52,11 +52,34 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
 
   const memories = await prisma.memory.findMany({
     where: { userId: authUserId },
-    select: memorySelect,
+    select: {
+      ...memorySelect,
+      media: {
+        select: { mediaPath: true },
+        where: { mediaType: 'image' },
+        orderBy: { createdAt: 'asc' as const },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
 
-  return res.status(200).json(memories);
+  const thumbnailPaths = memories.map((m) => m.media[0]?.mediaPath).filter((p): p is string => !!p);
+
+  let signedUrlMap = new Map<string, string>();
+  if (thumbnailPaths.length > 0) {
+    const { data: signedUrls } = await supabase.storage
+      .from(MEDIA_BUCKET)
+      .createSignedUrls(thumbnailPaths, SIGNED_URL_EXPIRY_SECONDS);
+    signedUrlMap = new Map((signedUrls ?? []).map((s) => [s.path, s.signedUrl]));
+  }
+
+  return res.status(200).json(
+    memories.map(({ media, ...memory }) => ({
+      ...memory,
+      thumbnailUrl: media[0] ? (signedUrlMap.get(media[0].mediaPath) ?? null) : null,
+    }))
+  );
 });
 
 memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
