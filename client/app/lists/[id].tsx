@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, FlatList, Pressable, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Image, FlatList, Pressable, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -20,10 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 
-function formatCoord(n: number, type: 'lat' | 'lng'): string {
-  const abs = Math.abs(n).toFixed(4);
-  return type === 'lat' ? `${abs}° ${n >= 0 ? 'N' : 'S'}` : `${abs}° ${n >= 0 ? 'E' : 'W'}`;
-}
 
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,7 +57,7 @@ export default function ListDetailScreen() {
 
   if (listLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-[#111111] items-center justify-center">
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
         <ActivityIndicator color="#b71422" />
       </SafeAreaView>
     );
@@ -69,20 +65,20 @@ export default function ListDetailScreen() {
 
   if (!list) {
     return (
-      <SafeAreaView className="flex-1 bg-[#111111] items-center justify-center">
-        <Text color="#555">List not found.</Text>
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
+        <Text variant="body-md" className="text-on-surface-variant">List not found.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#111111]">
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <View className="flex-row items-center px-margin pt-md pb-sm">
         <Pressable onPress={() => router.back()} className="mr-sm p-xs">
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
+          <MaterialIcons name="arrow-back" size={24} color="#1c1b1b" />
         </Pressable>
         <Text variant="headline-md" className="flex-1" numberOfLines={1}>
           {list.name}
@@ -96,12 +92,12 @@ export default function ListDetailScreen() {
       </View>
 
       {list.description ? (
-        <Text variant="body-sm" color="#666" className="px-margin pb-sm">
+        <Text variant="body-sm" className="px-margin pb-sm text-on-surface-variant">
           {list.description}
         </Text>
       ) : null}
 
-      <View className="h-px bg-[#1c1c1c] mx-margin mb-xs" />
+      <View className="h-px bg-outline-variant mx-margin mb-xs" />
 
       {/* Items */}
       <FlatList
@@ -110,29 +106,34 @@ export default function ListDetailScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         renderItem={({ item }) => (
-          <Card elevated={false}>
-            <View className="flex-row items-start">
+          <Card elevated={false} className="p-0 overflow-hidden">
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={{ width: '100%', height: 200 }}
+                resizeMode="cover"
+              />
+            ) : null}
+            <View className="flex-row items-start p-md">
               <View className="flex-1">
-                <View className="flex-row items-center mb-xs" style={{ gap: 4 }}>
-                  <MaterialIcons name="location-on" size={14} color="#b71422" />
-                  <Text variant="label-md" color="#aaa">
-                    {formatCoord(item.latitude, 'lat')} · {formatCoord(item.longitude, 'lng')}
-                  </Text>
-                </View>
+                {item.placeName ? (
+                  <View className="flex-row items-center mb-xs" style={{ gap: 4 }}>
+                    <MaterialIcons name="location-on" size={14} color="#b71422" />
+                    <Text variant="label-md" className="text-on-surface-variant flex-1" numberOfLines={1}>
+                      {item.placeName}
+                    </Text>
+                  </View>
+                ) : null}
                 {item.notes ? (
                   <Text variant="body-sm">{item.notes}</Text>
-                ) : (
-                  <Text variant="body-sm" color="#555" style={{ fontStyle: 'italic' }}>
-                    No note
-                  </Text>
-                )}
+                ) : null}
               </View>
               <View className="flex-row" style={{ gap: 4, marginLeft: 8 }}>
                 <Pressable onPress={() => setEditingItem(item)} className="p-xs">
-                  <MaterialIcons name="edit" size={16} color="#555" />
+                  <MaterialIcons name="edit" size={16} color="#888" />
                 </Pressable>
                 <Pressable onPress={() => setDeletingItemId(item.id)} className="p-xs">
-                  <MaterialIcons name="delete-outline" size={16} color="#555" />
+                  <MaterialIcons name="delete-outline" size={16} color="#888" />
                 </Pressable>
               </View>
             </View>
@@ -141,7 +142,7 @@ export default function ListDetailScreen() {
         ListEmptyComponent={
           !itemsLoading ? (
             <View className="items-center py-12">
-              <Text variant="body-md" color="#444" className="text-center">
+              <Text variant="body-md" className="text-on-surface-variant text-center">
                 {'No places yet.\nTap Add Place to get started.'}
               </Text>
             </View>
@@ -160,18 +161,14 @@ export default function ListDetailScreen() {
         onClose={() => setEditListVisible(false)}
         existing={list}
         loading={updateList.isPending}
-        onSubmit={(data) =>
-          updateList.mutate(data, { onSuccess: () => setEditListVisible(false) })
-        }
+        onSubmit={(data) => updateList.mutate(data, { onSuccess: () => setEditListVisible(false) })}
       />
 
       <ListItemFormSheet
         visible={addItemVisible}
         onClose={() => setAddItemVisible(false)}
         loading={createItem.isPending}
-        onSubmit={(data) =>
-          createItem.mutate(data, { onSuccess: () => setAddItemVisible(false) })
-        }
+        onSubmit={(data) => createItem.mutate(data, { onSuccess: () => setAddItemVisible(false) })}
       />
 
       <ListItemFormSheet

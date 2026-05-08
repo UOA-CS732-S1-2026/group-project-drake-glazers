@@ -5,12 +5,22 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../lib/prisma.js';
-import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from '../lib/supabase.js';
+import {
+  supabase,
+  MEDIA_BUCKET,
+  SIGNED_URL_EXPIRY_SECONDS,
+  PROFILE_PICTURES_BUCKET,
+} from '../lib/supabase.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { uploadUrlBodySchema, confirmUploadBodySchema } from '../schemas/media.js';
+import {
+  uploadUrlBodySchema,
+  confirmUploadBodySchema,
+  avatarUrlBodySchema,
+} from '../schemas/media.js';
 
 type UploadUrlBody = z.infer<typeof uploadUrlBodySchema>;
+type AvatarUrlBody = z.infer<typeof avatarUrlBodySchema>;
 type ConfirmUploadBody = z.infer<typeof confirmUploadBodySchema>;
 
 const mediaSelect = {
@@ -73,6 +83,39 @@ mediaRouter.post(
   }
 );
 
+// POST /api/media/avatar-url
+// Generates a signed upload URL for avatars for direct client-to-Supabase upload.
+mediaRouter.post(
+  '/media/avatar-url',
+  uploadUrlRateLimit,
+  validateBody(avatarUrlBodySchema),
+  async (req: Request, res: Response) => {
+    const authUserId = getAuthUserId(req);
+    const { fileExtension } = req.validatedBody as AvatarUrlBody;
+
+    const storagePath = `avatars/${authUserId}/avatar.${fileExtension}`;
+
+    const { data, error } = await supabase.storage
+      .from(PROFILE_PICTURES_BUCKET)
+      .createSignedUploadUrl(storagePath, { upsert: true });
+
+    if (error || !data) {
+      return errorResponse(res, 500, 'UPLOAD_URL_FAILED', 'Failed to generate upload URL');
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(PROFILE_PICTURES_BUCKET)
+      .getPublicUrl(storagePath);
+
+    return res.status(200).json({
+      signedUrl: data.signedUrl,
+      token: data.token,
+      path: storagePath,
+      publicUrl: publicUrlData.publicUrl,
+    });
+  }
+);
+
 // POST /api/memories/:memoryId/media
 // Confirms a completed upload and creates the Media row.
 mediaRouter.post(
@@ -103,7 +146,11 @@ mediaRouter.post(
 
     try {
       const media = await prisma.media.create({
-        data: { memoryId, mediaPath, mediaType },
+        data: {
+          memory: { connect: { id: memoryId } },
+          mediaPath,
+          mediaType,
+        },
         select: mediaSelect,
       });
 

@@ -1,4 +1,5 @@
-import { Modal, View, Pressable, Text } from 'react-native';
+import { Modal, View, Pressable } from 'react-native';
+import { Text } from '@/components/ui/text';
 
 type Props = {
   visible: boolean;
@@ -13,25 +14,18 @@ export function DeleteConfirmModal({ visible, title, message, onCancel, onConfir
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable className="flex-1 bg-black/70 justify-center items-center px-margin" onPress={onCancel}>
-        <Pressable onPress={() => {}} className="w-full bg-[#1c1c1c] rounded-2xl overflow-hidden">
+        <Pressable onPress={() => {}} className="w-full bg-surface-container-lowest rounded-xl overflow-hidden">
           <View className="p-lg">
-            <Text className="text-white font-sans-bold text-lg text-center mb-xs">{title}</Text>
-            <Text className="text-[#888] font-sans text-sm text-center">{message}</Text>
+            <Text variant="headline-md" className="text-center mb-xs">{title}</Text>
+            <Text variant="body-sm" className="text-on-surface-variant text-center">{message}</Text>
           </View>
-          <View className="h-px bg-[#2a2a2a]" />
+          <View className="h-px bg-outline-variant" />
           <View className="flex-row">
-            <Pressable
-              onPress={onCancel}
-              className="flex-1 py-md items-center border-r border-[#2a2a2a]"
-            >
-              <Text className="text-white font-sans-semibold text-base">Cancel</Text>
+            <Pressable onPress={onCancel} className="flex-1 py-md items-center border-r border-outline-variant">
+              <Text variant="button" className="text-on-surface">Cancel</Text>
             </Pressable>
-            <Pressable
-              onPress={onConfirm}
-              disabled={loading}
-              className="flex-1 py-md items-center"
-            >
-              <Text className="text-red-500 font-sans-semibold text-base">
+            <Pressable onPress={onConfirm} disabled={loading} className="flex-1 py-md items-center">
+              <Text variant="button" className="text-error">
                 {loading ? 'Deleting…' : 'Delete'}
               </Text>
             </Pressable>

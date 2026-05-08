@@ -22,6 +22,22 @@ export const uploadUrlBodySchema = z
     }
   });
 
+const ALLOWED_AVATAR_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+export const avatarUrlBodySchema = z
+  .object({
+    fileExtension: z.string().trim().toLowerCase(),
+  })
+  .superRefine((data, ctx) => {
+    if (!ALLOWED_AVATAR_EXTENSIONS.includes(data.fileExtension)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid extension for avatar. Allowed: ${ALLOWED_AVATAR_EXTENSIONS.join(', ')}`,
+        path: ['fileExtension'],
+      });
+    }
+  });
+
 export const confirmUploadBodySchema = z.object({
   mediaPath: z.string().trim().min(1),
   mediaType: z.enum(['image', 'video', 'voice_note']),

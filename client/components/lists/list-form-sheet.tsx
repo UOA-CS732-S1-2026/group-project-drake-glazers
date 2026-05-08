@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Modal, View, TextInput, Pressable, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import { Modal, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { List } from '@/lib/types';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   visible: boolean;
@@ -28,68 +32,63 @@ export function ListFormSheet({ visible, onClose, onSubmit, loading = false, exi
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/60" onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View className="bg-[#1c1c1c] rounded-t-3xl px-md pt-sm pb-xl">
-          {/* Handle */}
-          <View className="w-10 h-1 bg-[#444] rounded-full self-center mb-lg" />
-
-          <Text className="text-white font-sans-bold text-xl mb-lg">
-            {existing ? 'Edit List' : 'New List'}
-          </Text>
-
-          <Text className="text-[#888] text-xs font-sans-semibold tracking-widest uppercase mb-xs">
-            Name
-          </Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g. Coffee Spots"
-            placeholderTextColor="#555"
-            className="bg-[#2a2a2a] text-white font-sans text-base rounded-xl px-md py-sm mb-md"
-            maxLength={255}
-            autoFocus
-            returnKeyType="next"
-          />
-
-          <Text className="text-[#888] text-xs font-sans-semibold tracking-widest uppercase mb-xs">
-            Description (optional)
-          </Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder="What's this list for?"
-            placeholderTextColor="#555"
-            className="bg-[#2a2a2a] text-white font-sans text-base rounded-xl px-md py-sm mb-lg"
-            maxLength={1000}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            returnKeyType="done"
-          />
-
-          <View className="flex-row gap-sm">
-            <Pressable
-              onPress={onClose}
-              className="flex-1 py-md rounded-full bg-[#2a2a2a] items-center"
-            >
-              <Text className="text-white font-sans-semibold text-base">Cancel</Text>
-            </Pressable>
-            <Pressable
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView className="flex-1 bg-background">
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          {/* Header */}
+          <View className="flex-row items-center px-gutter py-md border-b border-outline-variant">
+            <TouchableOpacity onPress={onClose} hitSlop={8} className="mr-md">
+              <MaterialIcons name="close" size={24} color="#1c1b1b" />
+            </TouchableOpacity>
+            <Text variant="headline-md" className="flex-1">
+              {existing ? 'Edit List' : 'New List'}
+            </Text>
+            <Button
+              label={loading ? 'Saving…' : existing ? 'Save' : 'Create'}
               onPress={handleSubmit}
-              disabled={loading || !name.trim()}
-              className={`flex-1 py-md rounded-full items-center ${
-                name.trim() ? 'bg-primary' : 'bg-[#3a1a1e]'
-              }`}
-            >
-              <Text className="text-white font-sans-semibold text-base">
-                {loading ? 'Saving…' : existing ? 'Save' : 'Create'}
-              </Text>
-            </Pressable>
+              disabled={!name.trim()}
+              loading={loading}
+            />
           </View>
-        </View>
-      </KeyboardAvoidingView>
+
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ padding: 16, gap: 16 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View>
+              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="e.g. Coffee Spots"
+                placeholderTextColor="#9e9e9e"
+                className="bg-surface-container-low text-on-surface rounded-lg"
+                style={{ paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 }}
+                maxLength={255}
+                autoFocus
+                returnKeyType="next"
+              />
+            </View>
+
+            <View>
+              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Description (optional)</Text>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="What's this list for?"
+                placeholderTextColor="#9e9e9e"
+                className="bg-surface-container-low text-on-surface rounded-lg"
+                style={{ paddingHorizontal: 14, paddingVertical: 12, minHeight: 90, textAlignVertical: 'top', fontSize: 16 }}
+                maxLength={1000}
+                multiline
+                numberOfLines={4}
+                returnKeyType="done"
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 }

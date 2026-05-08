@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -9,9 +10,10 @@ import {
 } from 'react-native';
 import { useRef, useCallback } from 'react';
 import { router } from 'expo-router';
-import { Memory } from '@/lib/api';
+import { useMemoryMedia } from '@/hooks/use-memory-media';
+import type { Memory } from '@/lib/types';
 
-const PEEK_HEIGHT = 100;
+const PEEK_HEIGHT = 136;
 
 type Props = {
   memory: Memory;
@@ -19,11 +21,20 @@ type Props = {
 };
 
 export function MemoryPreviewCard({ memory, onClose }: Props) {
+  const { data: mediaItems = [] } = useMemoryMedia(memory.id);
+
+  const firstImage = mediaItems.find(
+    (item) => item.mediaType === 'image' && typeof item.signedUrl === 'string'
+  );
+
   const date = new Date(memory.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  const locationLabel =
+    memory.relativeArea ?? `${memory.latitude.toFixed(4)}°, ${memory.longitude.toFixed(4)}°`;
+  const initial = memory.title.trim()[0]?.toUpperCase() ?? '?';
 
   const translateY = useRef(new Animated.Value(1000)).current;
   const cardHeightRef = useRef(0);
@@ -93,61 +104,77 @@ export function MemoryPreviewCard({ memory, onClose }: Props) {
       onLayout={handleLayout}
       {...panResponder.panHandlers}
     >
-      {/* Drag handle + title */}
-      <View style={styles.handleBar}>
+      <View style={styles.sheetTop}>
         <View style={styles.handle} />
-        <TouchableOpacity onPress={onClose} style={styles.backButton} hitSlop={12}>
-          <Text style={styles.backButtonText}>‹</Text>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton} hitSlop={12}>
+          <Text style={styles.closeButtonText}>x</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{memory.title}</Text>
       </View>
 
-      {/* Placeholder image */}
-      <View style={styles.imageContainer}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>No photos yet</Text>
-        </View>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <View style={styles.divider} />
-
-        <View style={styles.row}>
-          <View style={styles.iconBox}>
-            <View style={styles.iconPin} />
-          </View>
-          <View>
-            <Text style={styles.rowPrimary}>
-              {memory.latitude.toFixed(4)}°, {memory.longitude.toFixed(4)}°
-            </Text>
-            <Text style={styles.rowSecondary}>{date}</Text>
-          </View>
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.iconBox}>
-            <View
-              style={[
-                styles.iconDot,
-                memory.visibility === 'public' ? styles.iconDotPublic : styles.iconDotPrivate,
-              ]}
+      <View style={styles.peekContent}>
+        <View style={styles.peekThumbnail}>
+          {firstImage?.signedUrl ? (
+            <Image
+              source={{ uri: firstImage.signedUrl }}
+              style={styles.peekImage}
+              resizeMode="cover"
             />
-          </View>
-          <Text style={styles.rowPrimary}>
-            {memory.visibility === 'public' ? 'Public memory' : 'Private memory'}
+          ) : (
+            <Text style={styles.peekInitial}>{initial}</Text>
+          )}
+        </View>
+        <View style={styles.peekText}>
+          <Text style={styles.title} numberOfLines={1}>
+            {memory.title}
           </Text>
+          <Text style={styles.peekLocation} numberOfLines={1}>
+            {locationLabel}
+          </Text>
+          <Text style={styles.peekDate}>{date}</Text>
         </View>
       </View>
 
-      {/* Action button */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push(`/memory/${memory.id}`)}
-        >
-          <Text style={styles.actionText}>View Memory</Text>
-        </TouchableOpacity>
+      <View style={styles.expandedContent}>
+        {firstImage?.signedUrl ? (
+          <Image source={{ uri: firstImage.signedUrl }} style={styles.image} resizeMode="cover" />
+        ) : null}
+
+        <View style={styles.content}>
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <View style={styles.iconBox}>
+              <View style={styles.iconPin} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowPrimary}>{locationLabel}</Text>
+              <Text style={styles.rowSecondary}>{date}</Text>
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.iconBox}>
+              <View
+                style={[
+                  styles.iconDot,
+                  memory.visibility === 'public' ? styles.iconDotPublic : styles.iconDotPrivate,
+                ]}
+              />
+            </View>
+            <Text style={styles.rowPrimary}>
+              {memory.visibility === 'public' ? 'Public memory' : 'Private memory'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push(`/memory/${memory.id}`)}
+          >
+            <Text style={styles.actionText}>View Memory</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Animated.View>
   );
@@ -160,14 +187,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 18,
   },
 
-  handleBar: {
+  sheetTop: {
+    height: 36,
     paddingTop: 10,
-    paddingBottom: 14,
     paddingHorizontal: 20,
     backgroundColor: '#ffffff',
     alignItems: 'center',
@@ -177,39 +209,77 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: '#ccc',
-    marginBottom: 14,
   },
-  backButton: {
+  closeButton: {
     position: 'absolute',
-    top: 10,
-    left: 16,
-    padding: 4,
-  },
-  backButtonText: {
-    fontSize: 28,
-    lineHeight: 30,
-    color: '#555',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111',
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
-
-  imageContainer: {
-    height: 220,
-  },
-  imagePlaceholder: {
-    flex: 1,
+    top: 8,
+    right: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#c8cdd6',
   },
-  imagePlaceholderText: {
-    color: '#888',
+  closeButtonText: {
+    fontSize: 16,
+    lineHeight: 18,
+    color: '#555',
+    fontWeight: '700',
+  },
+  peekContent: {
+    minHeight: PEEK_HEIGHT - 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+  },
+  peekThumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f2f2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  peekImage: {
+    width: '100%',
+    height: '100%',
+  },
+  peekInitial: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1c1b1b',
+  },
+  peekText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111',
+  },
+  peekLocation: {
+    marginTop: 5,
     fontSize: 14,
+    color: '#555',
+  },
+  peekDate: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#888',
+  },
+  expandedContent: {
+    backgroundColor: '#ffffff',
+  },
+
+  image: {
+    height: 220,
+    width: '100%',
+    backgroundColor: '#f0f0f0',
   },
 
   content: {
@@ -227,6 +297,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 14,
     marginBottom: 16,
+  },
+  rowText: {
+    flex: 1,
+    minWidth: 0,
   },
   iconBox: {
     width: 36,

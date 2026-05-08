@@ -1,18 +1,59 @@
 import { useState, useEffect } from 'react';
-import { Modal, View, TextInput, Pressable, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  Modal,
+  View,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { ListItem } from '@/lib/types';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
+import { useApiClient, uploadFile } from '@/lib/api';
+import { LocationPicker } from '@/components/location-picker';
 
-type Mode =
-  | { type: 'create' }
-  | { type: 'edit'; item: ListItem };
+type SelectedLocation = { lat: number; lng: number; name: string };
+
+type PendingImage = { uri: string; mimeType: string; ext: string };
+
+type Mode = { type: 'create' } | { type: 'edit'; item: ListItem };
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (data: { latitude: number; longitude: number; notes?: string }) => void;
+  onSubmit: (data: {
+    latitude: number;
+    longitude: number;
+    placeName?: string;
+    notes?: string;
+    imagePath?: string;
+  }) => void;
   loading?: boolean;
   mode?: Mode;
 };
+
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/heic': 'heic',
+  'image/heif': 'heic',
+  'image/webp': 'webp',
+};
+
+function getExtension(uri: string, mimeType?: string | null): string {
+  if (mimeType && MIME_TO_EXT[mimeType]) return MIME_TO_EXT[mimeType];
+  const ext = uri.split('.').pop();
+  if (ext && ext.length <= 5 && /^[a-zA-Z0-9]+$/.test(ext)) return ext.toLowerCase();
+  return 'jpg';
+}
 
 export function ListItemFormSheet({
   visible,
@@ -21,118 +62,226 @@ export function ListItemFormSheet({
   loading = false,
   mode = { type: 'create' },
 }: Props) {
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
+  const api = useApiClient();
+  const [location, setLocation] = useState<SelectedLocation | null>(null);
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [notes, setNotes] = useState('');
+  const [image, setImage] = useState<PendingImage | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (visible) {
       if (mode.type === 'edit') {
-        setLat(String(mode.item.latitude));
-        setLng(String(mode.item.longitude));
         setNotes(mode.item.notes ?? '');
       } else {
-        setLat('');
-        setLng('');
+        setLocation(null);
         setNotes('');
       }
+      setImage(null);
     }
   }, [visible, mode]);
 
   const isEditing = mode.type === 'edit';
-  const latNum = parseFloat(lat);
-  const lngNum = parseFloat(lng);
-  const isValid =
-    isEditing
-      ? notes.trim().length > 0
-      : !isNaN(latNum) && !isNaN(lngNum) &&
-        latNum >= -90 && latNum <= 90 &&
-        lngNum >= -180 && lngNum <= 180;
+  const isValid = isEditing
+    ? notes.trim().length > 0
+    : location !== null && image !== null;
 
-  function handleSubmit() {
-    if (!isValid) return;
-    if (isEditing) {
-      onSubmit({ latitude: mode.item.latitude, longitude: mode.item.longitude, notes: notes.trim() || undefined });
-    } else {
-      onSubmit({ latitude: latNum, longitude: lngNum, notes: notes.trim() || undefined });
+  async function pickFromLibrary() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow access to your photo library in Settings.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setImage({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg', ext: getExtension(asset.uri, asset.mimeType) });
     }
   }
 
+  async function takePhoto() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow camera access in Settings.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setImage({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg', ext: getExtension(asset.uri, asset.mimeType) });
+    }
+  }
+
+  async function handleSubmit() {
+    if (!isValid) return;
+
+    let imagePath: string | undefined;
+    if (image) {
+      setUploading(true);
+      try {
+        const { signedUrl, path } = await api.post('/api/media/upload-url', { fileExtension: image.ext, mediaType: 'image' });
+        await uploadFile(signedUrl, image.uri, image.mimeType);
+        imagePath = path;
+      } catch {
+        Alert.alert('Upload failed', 'Could not upload the photo. Please try again.');
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
+    if (isEditing) {
+      onSubmit({
+        latitude: (mode as { type: 'edit'; item: ListItem }).item.latitude,
+        longitude: (mode as { type: 'edit'; item: ListItem }).item.longitude,
+        notes: notes.trim() || undefined,
+      });
+    } else {
+      onSubmit({ latitude: location!.lat, longitude: location!.lng, placeName: location!.name, notes: notes.trim() || undefined, imagePath });
+    }
+  }
+
+  const isBusy = loading || uploading;
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/60" onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View className="bg-[#1c1c1c] rounded-t-3xl px-md pt-sm pb-xl">
-          <View className="w-10 h-1 bg-[#444] rounded-full self-center mb-lg" />
-
-          <Text className="text-white font-sans-bold text-xl mb-lg">
-            {isEditing ? 'Edit Note' : 'Add Place'}
-          </Text>
-
-          {!isEditing && (
-            <>
-              <Text className="text-[#888] text-xs font-sans-semibold tracking-widest uppercase mb-xs">
-                Latitude
+    <>
+      <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+        <SafeAreaView className="flex-1 bg-background">
+          <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            {/* Header */}
+            <View className="flex-row items-center px-gutter py-md border-b border-outline-variant">
+              <TouchableOpacity onPress={onClose} hitSlop={8} className="mr-md">
+                <MaterialIcons name="close" size={24} color="#1c1b1b" />
+              </TouchableOpacity>
+              <Text variant="headline-md" className="flex-1">
+                {isEditing ? 'Edit Note' : 'Add Place'}
               </Text>
-              <TextInput
-                value={lat}
-                onChangeText={setLat}
-                placeholder="-90 to 90"
-                placeholderTextColor="#555"
-                className="bg-[#2a2a2a] text-white font-sans text-base rounded-xl px-md py-sm mb-md"
-                keyboardType="decimal-pad"
-                returnKeyType="next"
+              <Button
+                label={isEditing ? 'Save' : 'Add'}
+                onPress={handleSubmit}
+                disabled={!isValid}
+                loading={isBusy}
               />
+            </View>
 
-              <Text className="text-[#888] text-xs font-sans-semibold tracking-widest uppercase mb-xs">
-                Longitude
-              </Text>
-              <TextInput
-                value={lng}
-                onChangeText={setLng}
-                placeholder="-180 to 180"
-                placeholderTextColor="#555"
-                className="bg-[#2a2a2a] text-white font-sans text-base rounded-xl px-md py-sm mb-md"
-                keyboardType="decimal-pad"
-                returnKeyType="next"
-              />
-            </>
-          )}
-
-          <Text className="text-[#888] text-xs font-sans-semibold tracking-widest uppercase mb-xs">
-            Note {!isEditing && '(optional)'}
-          </Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder={isEditing ? 'Update your note…' : 'e.g. Closed Mondays, try the matcha latte'}
-            placeholderTextColor="#555"
-            className="bg-[#2a2a2a] text-white font-sans text-base rounded-xl px-md py-sm mb-lg"
-            maxLength={1000}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-
-          <View className="flex-row gap-sm">
-            <Pressable
-              onPress={onClose}
-              className="flex-1 py-md rounded-full bg-[#2a2a2a] items-center"
+            <ScrollView
+              className="flex-1"
+              contentContainerStyle={{ padding: 16, gap: 16 }}
+              keyboardShouldPersistTaps="handled"
             >
-              <Text className="text-white font-sans-semibold text-base">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading || !isValid}
-              className={`flex-1 py-md rounded-full items-center ${isValid ? 'bg-primary' : 'bg-[#3a1a1e]'}`}
-            >
-              <Text className="text-white font-sans-semibold text-base">
-                {loading ? 'Saving…' : isEditing ? 'Save' : 'Add'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+              {/* Location (create only) */}
+              {!isEditing && (
+                <View>
+                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Location</Text>
+                  {location ? (
+                    <View className="flex-row items-center gap-sm">
+                      <TouchableOpacity
+                        onPress={() => setLocationPickerVisible(true)}
+                        className="flex-1 flex-row items-center bg-surface-container-low rounded-lg gap-sm"
+                        style={{ paddingHorizontal: 12, paddingVertical: 12 }}
+                      >
+                        <MaterialIcons name="place" size={16} color="#b71422" />
+                        <Text variant="body-sm" className="flex-1" numberOfLines={2}>{location.name}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setLocation(null)} className="p-sm">
+                        <MaterialIcons name="close" size={20} color="#9e9e9e" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => setLocationPickerVisible(true)}
+                      className="flex-row items-center bg-surface-container-low rounded-lg gap-sm"
+                      style={{ paddingHorizontal: 14, paddingVertical: 14 }}
+                    >
+                      <MaterialIcons name="search" size={20} color="#9e9e9e" />
+                      <Text variant="body-md" className="text-on-surface-variant">Search for a place...</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* Photo (create only) */}
+              {!isEditing && (
+                <View>
+                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Photo</Text>
+                  {image ? (
+                    <View>
+                      <Image source={{ uri: image.uri }} style={{ width: '100%', height: 220, borderRadius: 16 }} resizeMode="cover" />
+                      <TouchableOpacity
+                        onPress={() => setImage(null)}
+                        style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 6 }}
+                      >
+                        <MaterialIcons name="close" size={18} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View className="flex-row gap-sm">
+                      <TouchableOpacity
+                        onPress={pickFromLibrary}
+                        className="flex-1 bg-surface-container-low rounded-lg items-center justify-center gap-sm"
+                        style={{ height: 110 }}
+                      >
+                        <MaterialIcons name="photo-library" size={28} color="#9e9e9e" />
+                        <Text variant="label-md" className="text-on-surface-variant">Library</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={takePhoto}
+                        className="flex-1 bg-surface-container-low rounded-lg items-center justify-center gap-sm"
+                        style={{ height: 110 }}
+                      >
+                        <MaterialIcons name="camera-alt" size={28} color="#9e9e9e" />
+                        <Text variant="label-md" className="text-on-surface-variant">Camera</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Existing image (edit only) */}
+              {isEditing && mode.type === 'edit' && mode.item.imageUrl && (
+                <Image
+                  source={{ uri: mode.item.imageUrl }}
+                  style={{ width: '100%', height: 200, borderRadius: 16 }}
+                  resizeMode="cover"
+                />
+              )}
+
+              {/* Notes */}
+              <View>
+                <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">
+                  {isEditing ? 'Note' : 'Note (optional)'}
+                </Text>
+                <TextInput
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder={isEditing ? 'Update your note…' : 'e.g. Closed Mondays, try the matcha latte'}
+                  placeholderTextColor="#9e9e9e"
+                  className="bg-surface-container-low text-on-surface rounded-lg"
+                  style={{ paddingHorizontal: 14, paddingVertical: 12, minHeight: 90, textAlignVertical: 'top', fontSize: 16 }}
+                  maxLength={1000}
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Location picker */}
+      <Modal
+        visible={locationPickerVisible}
+        animationType="slide"
+        onRequestClose={() => setLocationPickerVisible(false)}
+      >
+        <LocationPicker
+          onConfirm={(lat, lng, name) => {
+            setLocation({ lat, lng, name: name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
+            setLocationPickerVisible(false);
+          }}
+          onClose={() => setLocationPickerVisible(false)}
+        />
+      </Modal>
+    </>
   );
 }

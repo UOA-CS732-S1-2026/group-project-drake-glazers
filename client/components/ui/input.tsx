@@ -11,7 +11,7 @@ export function Input({ label, error, className = '', ...props }: Props) {
 
   return (
     <View className="gap-xs">
-      {label && (
+      {!!label && (
         <Text className="text-label-md font-sans-semibold text-on-surface-variant tracking-[0.05em]">
           {label}
         </Text>
@@ -29,7 +29,7 @@ export function Input({ label, error, className = '', ...props }: Props) {
         onBlur={() => setFocused(false)}
         {...props}
       />
-      {error && <Text className="text-body-sm font-sans text-error">{error}</Text>}
+      {!!error && <Text className="text-body-sm font-sans text-error">{error}</Text>}
     </View>
   );
 }

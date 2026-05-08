@@ -9,7 +9,7 @@ export function useLists() {
 
   return useQuery<List[]>({
     queryKey: ['lists'],
-    queryFn: () => api.get('/lists'),
+    queryFn: () => api.get('/api/lists'),
     enabled: !!userId,
   });
 }
@@ -19,7 +19,7 @@ export function useList(id: string) {
 
   return useQuery<List>({
     queryKey: ['lists', id],
-    queryFn: () => api.get(`/lists/${id}`),
+    queryFn: () => api.get(`/api/lists/${id}`),
     enabled: !!id,
   });
 }
@@ -29,7 +29,7 @@ export function useListItems(listId: string) {
 
   return useQuery<ListItem[]>({
     queryKey: ['lists', listId, 'items'],
-    queryFn: () => api.get(`/lists/${listId}/items`),
+    queryFn: () => api.get(`/api/lists/${listId}/items`),
     enabled: !!listId,
   });
 }
@@ -39,7 +39,7 @@ export function useCreateList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name: string; description?: string }) => api.post('/lists', body),
+    mutationFn: (body: { name: string; description?: string }) => api.post('/api/lists', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists'] }),
   });
 }
@@ -49,7 +49,7 @@ export function useUpdateList(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name?: string; description?: string }) => api.put(`/lists/${id}`, body),
+    mutationFn: (body: { name?: string; description?: string }) => api.put(`/api/lists/${id}`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       queryClient.invalidateQueries({ queryKey: ['lists', id] });
@@ -62,7 +62,7 @@ export function useDeleteList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/lists/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/lists/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists'] }),
   });
 }
@@ -72,8 +72,8 @@ export function useCreateListItem(listId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { latitude: number; longitude: number; notes?: string }) =>
-      api.post(`/lists/${listId}/items`, body),
+    mutationFn: (body: { latitude: number; longitude: number; placeName?: string; notes?: string; imagePath?: string }) =>
+      api.post(`/api/lists/${listId}/items`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists', listId, 'items'] }),
   });
 }
@@ -83,8 +83,8 @@ export function useUpdateListItem(listId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ itemId, body }: { itemId: string; body: { notes?: string } }) =>
-      api.put(`/lists/${listId}/items/${itemId}`, body),
+    mutationFn: ({ itemId, body }: { itemId: string; body: { notes?: string; imagePath?: string } }) =>
+      api.put(`/api/lists/${listId}/items/${itemId}`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists', listId, 'items'] }),
   });
 }
@@ -94,7 +94,7 @@ export function useDeleteListItem(listId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemId: string) => api.delete(`/lists/${listId}/items/${itemId}`),
+    mutationFn: (itemId: string) => api.delete(`/api/lists/${listId}/items/${itemId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists', listId, 'items'] }),
   });
 }

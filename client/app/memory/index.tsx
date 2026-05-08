@@ -1,21 +1,24 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { router } from 'expo-router';
+import { LocationPicker } from '@/components/location-picker';
+import { MemoryForm } from '@/components/memory-form';
+
+type Location = { lat: number; lng: number; name?: string };
 
 export default function CreateMemoryScreen() {
+  const [location, setLocation] = useState<Location | null>(null);
+
+  if (!location) {
+    return <LocationPicker onConfirm={(lat, lng, name) => setLocation({ lat, lng, name })} />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Memory</Text>
-    </View>
+    <MemoryForm
+      latitude={location.lat}
+      longitude={location.lng}
+      locationName={location.name}
+      onSaved={() => router.dismiss()}
+      onBack={() => setLocation(null)}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-});
