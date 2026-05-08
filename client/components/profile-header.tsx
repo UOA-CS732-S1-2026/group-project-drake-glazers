@@ -46,7 +46,7 @@ export function ProfileHeader({ userId }: Props) {
   };
 
   const { data: memories = [] } = useUserMemories(userId);
-  const { friends } = useFriends();
+  const { data: friends = [] } = useFriends();
   const { data: profile } = useUserProfile(isOwnProfile ? undefined : userId);
 
   return (
