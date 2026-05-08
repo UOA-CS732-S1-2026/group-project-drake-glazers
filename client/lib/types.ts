@@ -75,8 +75,13 @@ export type Memory = {
   latitude: number;
   longitude: number;
   visibility: Visibility;
+  thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type MemoryWithCover = Memory & {
+  coverImage: string | null;
 };
 
 export type MediaType = 'image' | 'video' | 'voice_note';

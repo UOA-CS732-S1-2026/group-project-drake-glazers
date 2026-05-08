@@ -17,7 +17,6 @@ export default function HomeScreen() {
   const pendingCenter = useMapStore((s) => s.pendingCenter);
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
-  const [zoomLevel, setZoomLevel] = useState(1.5);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
@@ -37,7 +36,6 @@ export default function HomeScreen() {
 
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
-    setZoomLevel(zoom);
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
 
@@ -79,7 +77,7 @@ export default function HomeScreen() {
             id={memory.id}
             coordinate={[memory.longitude, memory.latitude]}
             title={memory.title}
-            showTitle={zoomLevel >= 4}
+            thumbnailUrl={memory.thumbnailUrl}
             onPress={handlePinPress}
           />
         ))}

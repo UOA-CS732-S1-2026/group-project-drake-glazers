@@ -8,8 +8,9 @@ export function useMemoryMedia(memoryId?: string) {
   const api = useApiClient();
 
   return useQuery<Media[]>({
-    queryKey: ['memory-media', memoryId],
+    queryKey: ['memories', memoryId, 'media'],
     queryFn: () => api.get(`/api/memories/${memoryId}/media`),
     enabled: !!userId && !!memoryId,
+    retry: false,
   });
 }
