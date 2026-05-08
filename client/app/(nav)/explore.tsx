@@ -131,6 +131,7 @@ export default function ExploreScreen() {
           onRefresh={onRefresh}
           tintColor="#b71422"
           colors={['#b71422']}
+          progressViewOffset={insets.top - 8}
         />
       }
     >
