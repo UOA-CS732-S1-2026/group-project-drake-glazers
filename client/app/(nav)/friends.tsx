@@ -1,5 +1,6 @@
-import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -252,10 +253,15 @@ function FriendsSection() {
           )}
           {friends?.map(({ id, friend }) => (
             <Card key={id} elevated={false} className="flex-row items-center gap-md">
-              <AvatarCircle name={friend.profile?.displayName} />
-              <Text variant="body-md" className="flex-1" numberOfLines={1}>
-                {friend.profile?.displayName ?? 'Unknown User'}
-              </Text>
+              <Pressable
+                onPress={() => router.push(`/friends/${friend.id}` as any)}
+                className="flex-row items-center gap-md flex-1 min-w-0"
+              >
+                <AvatarCircle name={friend.profile?.displayName} />
+                <Text variant="body-md" className="flex-1" numberOfLines={1}>
+                  {friend.profile?.displayName ?? 'Unknown User'}
+                </Text>
+              </Pressable>
               <View className="flex-row gap-sm">
                 <Button
                   label="Block"

@@ -80,6 +80,10 @@ export type Memory = {
   updatedAt: string;
 };
 
+export type MemoryWithCover = Memory & {
+  coverImage: string | null;
+};
+
 export type MediaType = 'image' | 'video' | 'voice_note';
 
 export type Media = {

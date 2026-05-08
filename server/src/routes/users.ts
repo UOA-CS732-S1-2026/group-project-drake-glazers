@@ -292,6 +292,38 @@ usersRouter.get('/users/me/profile', async (req: Request, res: Response) => {
   return res.status(200).json(profile);
 });
 
+// GET /users/:userId/profile - Public profile for any user (respects blocks)
+// Must be defined AFTER /users/me/profile so 'me' is not captured as :userId
+usersRouter.get('/users/:userId/profile', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const userId = req.params['userId'] as string;
+
+  const block = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: authUserId, blockedId: userId },
+        { blockerId: userId, blockedId: authUserId },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (block) {
+    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: userProfileSelect,
+  });
+
+  if (!profile) {
+    return errorResponse(res, 404, 'USER_PROFILE_NOT_FOUND', 'User profile not found');
+  }
+
+  return res.status(200).json(profile);
+});
+
 usersRouter.put(
   '/users/me/profile',
   validateBody(upsertUserProfileBodySchema),

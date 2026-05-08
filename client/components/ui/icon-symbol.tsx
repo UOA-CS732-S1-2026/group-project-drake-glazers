@@ -22,6 +22,8 @@ const MAPPING = {
   'person.2.fill': 'group',
   'list.bullet': 'list',
   'person.crop.circle.fill': 'account-circle',
+  'square.grid.2x2.fill': 'apps',
+  'rectangle.grid.1x2.fill': 'view-agenda',
 } as IconMapping;
 
 /**

@@ -1,30 +1,22 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { ProfileHeader } from '@/components/profile-header';
+import { FlashbacksSection } from '@/components/flashbacks-section';
+import { PastCapturesSection } from '@/components/past-captures-section';
 
 export default function FriendProfileScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  if (!id) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Friend Profile</Text>
-      <Text style={styles.subtitle}>ID: {id}</Text>
-    </View>
+    <SafeAreaView className="flex-1 bg-surface">
+      <ScrollView className="flex-1">
+        <ProfileHeader userId={id} />
+        <FlashbacksSection userId={id} />
+        <PastCapturesSection userId={id} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 8,
-    color: 'gray',
-  },
-});

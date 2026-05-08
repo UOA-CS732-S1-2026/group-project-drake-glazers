@@ -7,7 +7,7 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -15,13 +15,18 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useUpsertUserProfile } from '@/hooks/use-user-profile';
 import { useUploadAvatar } from '@/hooks/use-upload-avatar';
+import type { UserProfile } from '@/lib/types';
 
 type Props = {
   visible: boolean;
   onComplete: () => void;
+  profile?: UserProfile | null;
+  onClose?: () => void;
 };
 
-export function OnboardingModal({ visible, onComplete }: Props) {
+export function OnboardingModal({ visible, onComplete, profile, onClose }: Props) {
+  const isEditMode = !!onClose;
+
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -32,6 +37,16 @@ export function OnboardingModal({ visible, onComplete }: Props) {
   const uploadAvatar = useUploadAvatar();
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+  useEffect(() => {
+    if (visible) {
+      setDisplayName(profile?.displayName ?? '');
+      setBio(profile?.bio ?? '');
+      setAvatarUri(profile?.avatarUrl ?? null);
+      setAvatarUrl(profile?.avatarUrl ?? null);
+      setAvatarError(null);
+    }
+  }, [visible, profile]);
 
   const handlePickImage = async () => {
     setAvatarError(null);
@@ -60,7 +75,8 @@ export function OnboardingModal({ visible, onComplete }: Props) {
       {
         onSuccess: (url) => setAvatarUrl(url),
         onError: (error: Error) => {
-          setAvatarUri(null);
+          setAvatarUri(profile?.avatarUrl ?? null);
+          setAvatarUrl(profile?.avatarUrl ?? null);
           setAvatarError(error.message ?? 'Failed to upload photo. Please try again.');
         },
       }
@@ -85,8 +101,8 @@ export function OnboardingModal({ visible, onComplete }: Props) {
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={() => {}}
+      presentationStyle={isEditMode ? 'pageSheet' : 'fullScreen'}
+      onRequestClose={onClose ?? (() => {})}
     >
       <KeyboardAvoidingView
         className="flex-1 bg-background"
@@ -98,15 +114,19 @@ export function OnboardingModal({ visible, onComplete }: Props) {
         >
           <View className="gap-xl">
             <View className="gap-sm">
-              <Text variant="headline-xl" className="text-primary text-center font-display">
-                Memoriez
-              </Text>
+              {!isEditMode && (
+                <Text variant="headline-xl" className="text-primary text-center font-display">
+                  Memoriez
+                </Text>
+              )}
               <Text variant="headline-md" className="text-center">
-                Set up your profile
+                {isEditMode ? 'Edit Profile' : 'Set up your profile'}
               </Text>
-              <Text variant="body-md" className="text-on-surface-variant text-center">
-                Tell us how you&apos;d like to appear to other users
-              </Text>
+              {!isEditMode && (
+                <Text variant="body-md" className="text-on-surface-variant text-center">
+                  Tell us how you&apos;d like to appear to other users
+                </Text>
+              )}
             </View>
 
             {/* Avatar picker */}
@@ -157,12 +177,13 @@ export function OnboardingModal({ visible, onComplete }: Props) {
                 </Text>
               )}
               <Button
-                label="Get Started"
+                label={isEditMode ? 'Save' : 'Get Started'}
                 loading={isLoading}
                 disabled={!displayName.trim() || uploadAvatar.isPending}
                 onPress={handleSubmit}
                 className="mt-sm w-full"
               />
+              {isEditMode && <Button label="Cancel" variant="secondary" onPress={onClose} />}
             </Card>
           </View>
         </ScrollView>
