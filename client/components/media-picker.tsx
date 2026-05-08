@@ -52,11 +52,18 @@ export function MediaPicker({ value, onChange }: Props) {
       mediaTypes: ['images', 'videos'],
       allowsMultipleSelection: true,
       quality: 0.8,
+      exif: true,
     });
     if (!result.canceled) {
       const newItems: PendingMedia[] = result.assets.map((asset) => {
         const isVideo = asset.mimeType?.startsWith('video') ?? false;
         const ext = getExtension(asset.uri, asset.mimeType, isVideo ? 'mp4' : 'jpg');
+        console.log('[MediaPicker] EXIF data:', JSON.stringify(asset.exif, null, 2));
+        console.log('[MediaPicker] GPS:', {
+          latitude: asset.exif?.GPSLatitude,
+          longitude: asset.exif?.GPSLongitude,
+          altitude: asset.exif?.GPSAltitude,
+        });
         return {
           uri: asset.uri,
           type: isVideo ? 'VIDEO' : 'IMAGE',
@@ -77,10 +84,17 @@ export function MediaPicker({ value, onChange }: Props) {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       quality: 0.8,
+      exif: true,
     });
     if (!result.canceled) {
       const asset = result.assets[0];
       const ext = getExtension(asset.uri, asset.mimeType, 'jpg');
+      console.log('[MediaPicker] EXIF data:', JSON.stringify(asset.exif, null, 2));
+      console.log('[MediaPicker] GPS:', {
+        latitude: asset.exif?.GPSLatitude,
+        longitude: asset.exif?.GPSLongitude,
+        altitude: asset.exif?.GPSAltitude,
+      });
       onChange([
         ...value,
         {
