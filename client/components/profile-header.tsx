@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useFriends } from '@/hooks/use-friends';
 import { useUserMemories } from '@/hooks/use-user-memories';
 import { useUserProfile } from '@/hooks/use-user-profile';
-import { EditProfileModal } from '@/components/edit-profile-modal';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -55,7 +55,11 @@ export function ProfileHeader({ userId }: Props) {
         {/* Avatar + stats */}
         <View className="flex-row items-center">
           <Image
-            source={require('@/assets/images/default-pfp.png')}
+            source={
+              profile?.avatarUrl
+                ? { uri: profile.avatarUrl }
+                : require('@/assets/images/default-pfp.png')
+            }
             style={{ width: 80, height: 80, borderRadius: 40 }}
           />
           <View className="flex-1 flex-row justify-around ml-md">
@@ -85,9 +89,10 @@ export function ProfileHeader({ userId }: Props) {
       </View>
 
       {isOwnProfile && (
-        <EditProfileModal
+        <OnboardingModal
           visible={editVisible}
           profile={profile ?? null}
+          onComplete={() => setEditVisible(false)}
           onClose={() => setEditVisible(false)}
         />
       )}
