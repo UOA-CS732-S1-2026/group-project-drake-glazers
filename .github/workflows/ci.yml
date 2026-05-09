@@ -41,6 +41,7 @@ jobs:
         with:
           node-version: 20
       - run: npm run install:all
+      - run: cd server && npx prisma generate
       - run: npm test
 
   prisma:

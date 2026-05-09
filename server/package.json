@@ -36,6 +36,7 @@
     "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^10.2.1",
     "nodemon": "^3.1.14",
     "prisma": "^7.7.0",
