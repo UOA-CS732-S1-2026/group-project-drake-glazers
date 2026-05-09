@@ -81,7 +81,8 @@ function InitialLayout() {
         <Stack.Screen name="(nav)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="memory/[id]/index" options={{ title: 'Memory' }} />
+        <Stack.Screen name="memory/[id]/index" options={{ headerShown: false }} />
+        <Stack.Screen name="memory/[id]/public" options={{ headerShown: false }} />
         <Stack.Screen name="friends/[id]" options={{ title: 'Friend' }} />
         <Stack.Screen name="memory/index" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>

@@ -52,6 +52,7 @@ const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: string }[] =
 export default function MemoryDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const memoryId = Array.isArray(id) ? id[0] : id;
   const queryClient = useQueryClient();
   const api = useApiClient();
@@ -237,7 +238,8 @@ export default function MemoryDetailScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-gutter pt-xl pb-xl gap-md"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 }}
+      contentContainerClassName="px-gutter gap-md"
       keyboardShouldPersistTaps="handled"
     >
       <View className="flex-row items-center justify-between">

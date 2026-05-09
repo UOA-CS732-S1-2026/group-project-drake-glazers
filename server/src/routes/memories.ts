@@ -47,6 +47,73 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+// ─── Explore feed: recent public memories from all users ──────────────────────
+
+memoriesRouter.get('/explore', async (req: Request, res: Response) => {
+  const limit = Math.min(Number(req.query.limit) || 20, 50);
+
+  const memories = await prisma.memory.findMany({
+    where: { visibility: 'public' },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      ...memorySelect,
+      media: {
+        select: mediaSelect,
+        orderBy: { createdAt: 'asc' as const },
+        take: 1,
+      },
+      user: {
+        select: {
+          profile: {
+            select: { displayName: true, avatarUrl: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Generate signed URLs for the first media item of each memory
+  const paths = memories.map((m) => m.media[0]?.mediaPath).filter(Boolean) as string[];
+
+  let signedUrlMap = new Map<string, string>();
+
+  if (paths.length > 0) {
+    const { data: signedUrls } = await supabase.storage
+      .from(MEDIA_BUCKET)
+      .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+
+    signedUrlMap = new Map(
+      (signedUrls ?? [])
+        .filter((s) => s.path != null && s.signedUrl != null)
+        .map((s) => [s.path as string, s.signedUrl as string])
+    );
+  }
+
+  const result = memories.map((m) => {
+    const firstMedia = m.media[0];
+    return {
+      id: m.id,
+      userId: m.userId,
+      title: m.title,
+      description: m.description,
+      relativeArea: m.relativeArea,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      visibility: m.visibility,
+      createdAt: m.createdAt,
+      author: m.user.profile?.displayName ?? 'Unknown',
+      avatarUrl: m.user.profile?.avatarUrl ?? null,
+      imageUrl: firstMedia ? (signedUrlMap.get(firstMedia.mediaPath) ?? null) : null,
+      mediaType: firstMedia?.mediaType ?? null,
+    };
+  });
+
+  return res.status(200).json(result);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 memoriesRouter.get('/memories', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
 
