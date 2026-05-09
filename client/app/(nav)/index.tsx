@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapboxGL from '@rnmapbox/maps';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: memories = [] } = useMemories();
   const pendingCenter = useMapStore((s) => s.pendingCenter);
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
@@ -100,7 +102,15 @@ export default function HomeScreen() {
         <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
       <TouchableOpacity
-        className="absolute bottom-lg right-margin w-14 h-14 rounded-full bg-primary items-center justify-center shadow-fab"
+        className="absolute right-margin w-14 h-14 rounded-full bg-primary items-center justify-center"
+        style={{
+          bottom: insets.bottom + 90,
+          shadowColor: '#b71422',
+          shadowOpacity: 0.55,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: 6,
+        }}
         onPress={() => router.push('/memory')}
         activeOpacity={0.85}
       >

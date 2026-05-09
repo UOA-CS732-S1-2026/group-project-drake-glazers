@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Badge } from '@/components/ui/badge';
@@ -51,9 +52,11 @@ const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: string }[] =
 export default function MemoryDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const memoryId = Array.isArray(id) ? id[0] : id;
   const queryClient = useQueryClient();
   const api = useApiClient();
+  const { userId } = useAuth();
 
   const {
     data: memory,
@@ -129,7 +132,7 @@ export default function MemoryDetailScreen() {
 
       queryClient.invalidateQueries({ queryKey: ['memories'] });
       queryClient.invalidateQueries({ queryKey: ['memories', memoryId] });
-      queryClient.invalidateQueries({ queryKey: ['memory-media', memoryId] });
+      queryClient.invalidateQueries({ queryKey: ['memories', memoryId, 'media'] });
       setIsEditing(false);
       setPendingMedia([]);
     } catch {
@@ -194,7 +197,7 @@ export default function MemoryDetailScreen() {
     setDeletingMediaIds((prev) => new Set([...prev, mediaId]));
     try {
       await api.delete(`/api/media/${mediaId}`);
-      queryClient.invalidateQueries({ queryKey: ['memory-media', memoryId] });
+      queryClient.invalidateQueries({ queryKey: ['memories', memoryId, 'media'] });
     } catch {
       setDeletingMediaIds((prev) => {
         const next = new Set(prev);
@@ -235,33 +238,41 @@ export default function MemoryDetailScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-gutter pt-xl pb-xl gap-md"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 }}
+      contentContainerClassName="px-gutter gap-md"
       keyboardShouldPersistTaps="handled"
     >
       <View className="flex-row items-center justify-between">
         <Button label="Back" variant="ghost" onPress={() => router.back()} />
-        <View className="flex-row items-center gap-sm">
-          <TouchableOpacity
-            onPress={handleDeleteMemory}
-            disabled={deleting}
-            hitSlop={8}
-            className="h-9 w-9 items-center justify-center"
-          >
-            {deleting ? (
-              <ActivityIndicator size="small" color="#c0392b" />
+        {memory.userId === userId && (
+          <View className="flex-row items-center gap-sm">
+            <TouchableOpacity
+              onPress={handleDeleteMemory}
+              disabled={deleting}
+              hitSlop={8}
+              className="h-9 w-9 items-center justify-center"
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color="#c0392b" />
+              ) : (
+                <MaterialIcons name="delete-outline" size={22} color="#c0392b" />
+              )}
+            </TouchableOpacity>
+            {isEditing ? (
+              <>
+                <Button
+                  label="Cancel"
+                  variant="ghost"
+                  onPress={handleCancelEdit}
+                  disabled={saving}
+                />
+                <Button label="Save" loading={saving} onPress={handleSave} />
+              </>
             ) : (
-              <MaterialIcons name="delete-outline" size={22} color="#c0392b" />
+              <Button label="Edit" variant="secondary" onPress={handleStartEdit} />
             )}
-          </TouchableOpacity>
-          {isEditing ? (
-            <>
-              <Button label="Cancel" variant="ghost" onPress={handleCancelEdit} disabled={saving} />
-              <Button label="Save" loading={saving} onPress={handleSave} />
-            </>
-          ) : (
-            <Button label="Edit" variant="secondary" onPress={handleStartEdit} />
-          )}
-        </View>
+          </View>
+        )}
       </View>
       {deleteError ? (
         <Text variant="body-sm" className="text-error text-center">

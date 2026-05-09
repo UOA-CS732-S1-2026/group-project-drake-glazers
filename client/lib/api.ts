@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/expo';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 export async function uploadFile(
   signedUrl: string,
@@ -37,6 +37,7 @@ export function useApiClient() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true',
         ...options.headers,
       },
     });
