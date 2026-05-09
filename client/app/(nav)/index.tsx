@@ -1,6 +1,10 @@
-import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapboxGL from '@rnmapbox/maps';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useMapStore } from '@/stores/map-store';
 import { MapPin } from '@/components/map-pin';
 import { MemoryPreviewCard } from '@/components/memory-preview-card';
 import { useMemories } from '@/hooks/use-memories';
@@ -9,9 +13,12 @@ import { Memory } from '@/lib/types';
 const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: memories = [] } = useMemories();
+  const pendingCenter = useMapStore((s) => s.pendingCenter);
+  const setPendingCenter = useMapStore((s) => s.setPendingCenter);
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
-  const [zoomLevel, setZoomLevel] = useState(1.5);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
@@ -31,9 +38,19 @@ export default function HomeScreen() {
 
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
-    setZoomLevel(zoom);
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
+
+  useEffect(() => {
+    if (!pendingCenter) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: pendingCenter,
+      zoomLevel: 14,
+      animationDuration: 2000,
+      animationMode: 'flyTo',
+    });
+    setPendingCenter(null);
+  }, [pendingCenter, setPendingCenter]);
 
   return (
     <View style={styles.container}>
@@ -62,7 +79,7 @@ export default function HomeScreen() {
             id={memory.id}
             coordinate={[memory.longitude, memory.latitude]}
             title={memory.title}
-            showTitle={zoomLevel >= 4}
+            thumbnailUrl={memory.thumbnailUrl}
             onPress={handlePinPress}
           />
         ))}
@@ -84,6 +101,21 @@ export default function HomeScreen() {
       {selectedMemory && (
         <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
       )}
+      <TouchableOpacity
+        className="absolute right-margin w-14 h-14 rounded-full bg-primary items-center justify-center"
+        style={{
+          bottom: insets.bottom + 90,
+          shadowColor: '#b71422',
+          shadowOpacity: 0.55,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: 6,
+        }}
+        onPress={() => router.push('/memory')}
+        activeOpacity={0.85}
+      >
+        <MaterialIcons name="add" size={28} color="#ffffff" />
+      </TouchableOpacity>
     </View>
   );
 }

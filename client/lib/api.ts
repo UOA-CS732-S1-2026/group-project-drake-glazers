@@ -1,6 +1,21 @@
 import { useAuth } from '@clerk/expo';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+export async function uploadFile(
+  signedUrl: string,
+  fileUri: string,
+  mimeType: string
+): Promise<void> {
+  const fileRes = await fetch(fileUri);
+  const blob = await fileRes.blob();
+  const uploadRes = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': mimeType },
+    body: blob,
+  });
+  if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+}
 
 /*
 Usuage Example:
@@ -22,11 +37,22 @@ export function useApiClient() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true',
         ...options.headers,
       },
     });
 
-    if (!res.ok) throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+
+      if (res.status === 400 && body?.error?.details?.fieldErrors) {
+        const firstFieldError = Object.values(body.error.details.fieldErrors).flat()[0];
+        if (firstFieldError) throw new Error(firstFieldError as string);
+      }
+
+      const detail = body?.error?.message ?? body?.message ?? res.statusText;
+      throw new Error(`API request failed: ${res.status} ${detail}`);
+    }
 
     return res.json();
   };

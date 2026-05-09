@@ -91,8 +91,8 @@ friendRequestsRouter.post(
     try {
       const friendRequest = await prisma.friendRequest.create({
         data: {
-          fromUserId: authUserId,
-          toUserId,
+          fromUser: { connect: { id: authUserId } },
+          toUser: { connect: { id: toUserId } },
           status: 'pending',
         },
         select: friendRequestSelect,
@@ -110,6 +110,17 @@ friendRequestsRouter.post(
   }
 );
 
+const userProfileSelect = {
+  select: {
+    profile: {
+      select: {
+        displayName: true,
+        avatarUrl: true,
+      },
+    },
+  },
+};
+
 // GET /friend-requests - List incoming and outgoing pending requests
 friendRequestsRouter.get('/friend-requests', async (req: Request, res: Response) => {
   const authUserId = getAuthUserId(req);
@@ -117,12 +128,12 @@ friendRequestsRouter.get('/friend-requests', async (req: Request, res: Response)
   const [incoming, outgoing] = await Promise.all([
     prisma.friendRequest.findMany({
       where: { toUserId: authUserId, status: 'pending' },
-      select: friendRequestSelect,
+      select: { ...friendRequestSelect, fromUser: userProfileSelect, toUser: userProfileSelect },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.friendRequest.findMany({
       where: { fromUserId: authUserId, status: 'pending' },
-      select: friendRequestSelect,
+      select: { ...friendRequestSelect, fromUser: userProfileSelect, toUser: userProfileSelect },
       orderBy: { createdAt: 'desc' },
     }),
   ]);
@@ -163,7 +174,7 @@ friendRequestsRouter.put('/friend-requests/:id/accept', async (req: Request, res
   }
 
   try {
-    const [userA, userB] = [authUserId, friendRequest.fromUserId].sort();
+    const [userA, userB] = [authUserId, friendRequest.fromUserId].sort() as [string, string];
     const [updated] = await prisma.$transaction([
       prisma.friendRequest.update({
         where: { id },
@@ -171,7 +182,10 @@ friendRequestsRouter.put('/friend-requests/:id/accept', async (req: Request, res
         select: friendRequestSelect,
       }),
       prisma.friendship.create({
-        data: { userAId: userA, userBId: userB },
+        data: {
+          userA: { connect: { id: userA } },
+          userB: { connect: { id: userB } },
+        },
       }),
     ]);
 

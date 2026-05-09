@@ -53,12 +53,15 @@ blocksRouter.post(
       return errorResponse(res, 400, 'ALREADY_BLOCKED', 'You have already blocked this user');
     }
 
-    const [userAId, userBId] = [authUserId, blockedId].sort();
+    const [userAId, userBId] = [authUserId, blockedId].sort() as [string, string];
 
     try {
       const [block] = await prisma.$transaction([
         prisma.block.create({
-          data: { blockerId: authUserId, blockedId },
+          data: {
+            blocker: { connect: { id: authUserId } },
+            blocked: { connect: { id: blockedId } },
+          },
           select: { id: true, blockerId: true, blockedId: true, createdAt: true },
         }),
         // Remove friendship if one exists (deleteMany avoids errors when absent)

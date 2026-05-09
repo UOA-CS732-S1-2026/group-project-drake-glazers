@@ -234,7 +234,7 @@ usersRouter.get('/users/:userId/relationship', async (req: Request, res: Respons
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const [userAId, userBId] = [authUserId, userId].sort();
+  const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [blockedByMe, blockedByThem, friendship, pendingRequest] = await Promise.all([
     prisma.block.findUnique({
@@ -292,6 +292,38 @@ usersRouter.get('/users/me/profile', async (req: Request, res: Response) => {
   return res.status(200).json(profile);
 });
 
+// GET /users/:userId/profile - Public profile for any user (respects blocks)
+// Must be defined AFTER /users/me/profile so 'me' is not captured as :userId
+usersRouter.get('/users/:userId/profile', async (req: Request, res: Response) => {
+  const authUserId = getAuthUserId(req);
+  const userId = req.params['userId'] as string;
+
+  const block = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: authUserId, blockedId: userId },
+        { blockerId: userId, blockedId: authUserId },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (block) {
+    return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: userProfileSelect,
+  });
+
+  if (!profile) {
+    return errorResponse(res, 404, 'USER_PROFILE_NOT_FOUND', 'User profile not found');
+  }
+
+  return res.status(200).json(profile);
+});
+
 usersRouter.put(
   '/users/me/profile',
   validateBody(upsertUserProfileBodySchema),
@@ -301,18 +333,15 @@ usersRouter.put(
     const data = req.validatedBody as UpdateUserProfileBody;
 
     try {
-      const updatedProfile = await prisma.userProfile.update({
+      const profile = await prisma.userProfile.upsert({
         where: { userId: authUserId },
-        data,
+        create: { userId: authUserId, ...data },
+        update: data,
         select: userProfileSelect,
       });
 
-      return res.status(200).json(updatedProfile);
-    } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
-        return errorResponse(res, 404, 'USER_PROFILE_NOT_FOUND', 'User profile not found');
-      }
-
+      return res.status(200).json(profile);
+    } catch {
       return errorResponse(res, 400, 'USER_PROFILE_UPDATE_FAILED', 'Unable to update user profile');
     }
   }
