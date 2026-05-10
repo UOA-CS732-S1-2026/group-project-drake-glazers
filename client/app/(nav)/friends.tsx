@@ -1,5 +1,6 @@
 import { View, ScrollView, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -311,10 +312,12 @@ function FriendsSection() {
 // --- Screen ---
 
 export default function FriendsScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-gutter py-lg gap-xl"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 24 }}
+      contentContainerClassName="px-gutter gap-xl"
       keyboardShouldPersistTaps="handled"
     >
       <Text variant="headline-lg">Friends</Text>
