@@ -19,7 +19,11 @@ function CoverGrid({ images }: { images: string[] }) {
         return (
           <View key={i} style={{ width: '50%', height: 90 }}>
             {url ? (
-              <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              <Image
+                source={{ uri: url }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
             ) : (
               <View className="w-full h-full bg-surface-container" />
             )}
@@ -46,7 +50,13 @@ function ListCard({ list, onPress }: { list: List; onPress: () => void }) {
   } else if (coverImages.length >= 4) {
     cover = <CoverGrid images={coverImages} />;
   } else {
-    cover = <Image source={{ uri: coverImages[0] }} style={{ width: '100%', height: 180 }} resizeMode="cover" />;
+    cover = (
+      <Image
+        source={{ uri: coverImages[0] }}
+        style={{ width: '100%', height: 180 }}
+        resizeMode="cover"
+      />
+    );
   }
 
   return (
@@ -54,7 +64,9 @@ function ListCard({ list, onPress }: { list: List; onPress: () => void }) {
       <Card className="p-0 overflow-hidden">
         {cover}
         <View className="px-md py-sm">
-          <Text variant="body-lg" numberOfLines={1}>{list.name}</Text>
+          <Text variant="body-lg" numberOfLines={1}>
+            {list.name}
+          </Text>
           {list.description ? (
             <Text variant="body-sm" className="text-on-surface-variant" numberOfLines={1}>
               {list.description}
@@ -76,7 +88,7 @@ export default function ListsScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar barStyle="dark-content" />
 
-      <View className="flex-row items-center justify-between px-margin pt-md pb-sm">
+      <View className="flex-row items-center justify-between px-margin pt-xl pb-sm">
         <Text variant="headline-lg">My Lists</Text>
         <Pressable
           onPress={() => setSheetVisible(true)}
@@ -111,9 +123,7 @@ export default function ListsScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         loading={createList.isPending}
-        onSubmit={(data) =>
-          createList.mutate(data, { onSuccess: () => setSheetVisible(false) })
-        }
+        onSubmit={(data) => createList.mutate(data, { onSuccess: () => setSheetVisible(false) })}
       />
     </SafeAreaView>
   );
