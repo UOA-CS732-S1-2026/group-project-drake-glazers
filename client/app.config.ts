@@ -16,6 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.drakeglazers.app',
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSPhotoLibraryUsageDescription:
         'Memoriez needs access to your photo library to attach photos and videos to memories.',
       NSCameraUsageDescription:
