@@ -49,14 +49,23 @@ Run these commands from the **client** directory.
 3. Build
 
    ```bash
+   eas build --profile development --platform android|ios|all
    eas build --profile preview --platform android|ios|all
    eas build --profile production --platform android|ios|all
    ```
 
+Dev-client builds:
+
+- Build with the development profile, then run the dev server with:
+
+  ```bash
+  npx expo start --dev-client
+  ```
+
 Notes:
 
 - App identifiers are defined in app.config.ts (`ios.bundleIdentifier`, `android.package`). Keep app.json in sync if you change them.
-- For dev-client builds with native modules, add `expo-dev-client` and a `development` profile in eas.json.
+- The `development` profile targets physical devices (not iOS Simulator).
 
 ## Learn more
 
