@@ -35,6 +35,29 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## EAS build
+
+Run these commands from the **client** directory.
+
+1. Login to EAS
+
+   ```bash
+   eas login
+   ```
+
+2. Add required secrets to client env file.
+3. Build
+
+   ```bash
+   eas build --profile preview --platform android|ios|all
+   eas build --profile production --platform android|ios|all
+   ```
+
+Notes:
+
+- App identifiers are defined in app.config.ts (`ios.bundleIdentifier`, `android.package`). Keep app.json in sync if you change them.
+- For dev-client builds with native modules, add `expo-dev-client` and a `development` profile in eas.json.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

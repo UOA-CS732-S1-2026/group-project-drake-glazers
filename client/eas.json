@@ -3,6 +3,12 @@
     "version": ">= 16.0.0"
   },
   "build": {
+    "production": {
+      "distribution": "store",
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "android": {
