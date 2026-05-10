@@ -99,7 +99,12 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Memoriez</Text>
       </SafeAreaView>
       {selectedMemory && (
-        <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
+        <MemoryPreviewCard
+          key={selectedMemory.id}
+          memory={selectedMemory}
+          onClose={() => setSelectedMemory(null)}
+          bottomOffset={insets.bottom + 56}
+        />
       )}
       <TouchableOpacity
         className="absolute right-margin w-14 h-14 rounded-full bg-primary items-center justify-center"
