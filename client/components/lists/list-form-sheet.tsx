@@ -36,7 +36,7 @@ export function ListFormSheet({ visible, onClose, onSubmit, loading = false, exi
       <SafeAreaView className="flex-1 bg-background">
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           {/* Header */}
-          <View className="flex-row items-center px-gutter py-md border-b border-outline-variant">
+          <View className="flex-row items-center px-gutter pt-lg pb-md border-b border-outline-variant">
             <TouchableOpacity onPress={onClose} hitSlop={8} className="mr-md">
               <MaterialIcons name="close" size={24} color="#1c1b1b" />
             </TouchableOpacity>
