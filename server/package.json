@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretest": "node -e \"if (!process.env.CI) { const {execSync} = require('child_process'); try { execSync('docker start postgres-test', {stdio:'inherit'}) } catch { execSync('docker run -d --name postgres-test -e POSTGRES_PASSWORD=test -p 5433:5432 postgres', {stdio:'inherit'}) } }\"",
+    "test": "dotenv -e .env.test -- prisma migrate deploy && dotenv -e .env.test -- vitest run",
+    "test:watch": "dotenv -e .env.test -- vitest",
     "lint": "eslint src/**/*.ts",
     "dev": "tsx watch src/index.ts",
     "check-env": "tsx scripts/check-env.ts"
@@ -31,13 +33,17 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.2",
+    "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^10.2.1",
     "nodemon": "^3.1.14",
     "prisma": "^7.7.0",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.5"
   }
 }

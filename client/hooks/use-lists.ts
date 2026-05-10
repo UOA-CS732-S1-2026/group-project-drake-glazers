@@ -63,7 +63,10 @@ export function useDeleteList() {
 
   return useMutation({
     mutationFn: (id: string) => api.delete(`/api/lists/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists'] }),
+    onSuccess: (_data, id) => {
+      queryClient.removeQueries({ queryKey: ['lists', id] });
+      queryClient.invalidateQueries({ queryKey: ['lists'], exact: true });
+    },
   });
 }
 
