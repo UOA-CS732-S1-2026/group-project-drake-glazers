@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.drakeglazers.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Memoriez needs access to your photo library to attach photos and videos to your memories.",
         "NSCameraUsageDescription": "Memoriez needs camera access to capture photos and videos for your memories.",
