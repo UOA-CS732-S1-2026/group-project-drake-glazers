@@ -147,7 +147,7 @@ function SearchSection() {
           )}
           {!isLoading && !isError && filteredResults?.length === 0 && (
             <Text variant="body-sm" className="text-on-surface-variant text-center py-md">
-              {`No users found for "${query}"`}
+              {`No eligible users found for "${query}"`}
             </Text>
           )}
           {!isLoading &&
@@ -368,7 +368,7 @@ export default function FriendsScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
       contentContainerClassName="px-gutter gap-xl"
       keyboardShouldPersistTaps="handled"
     >
