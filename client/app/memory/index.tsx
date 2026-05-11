@@ -27,6 +27,7 @@ export default function CreateMemoryScreen() {
       longitude={location?.lng}
       locationName={location?.name}
       onPickLocation={() => setPickingLocation(true)}
+      onLocationAutoDetected={(lat, lng, name) => setLocation({ lat, lng, name })}
       onSaved={() => router.dismiss()}
       onBack={() => router.dismiss()}
     />

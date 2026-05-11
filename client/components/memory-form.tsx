@@ -1,4 +1,11 @@
-import { View, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from 'react-native';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -48,6 +55,7 @@ type Props = {
   longitude?: number;
   locationName?: string;
   onPickLocation: () => void;
+  onLocationAutoDetected?: (lat: number, lng: number, name?: string) => void;
   onSaved: () => void;
   onBack: () => void;
 };
@@ -63,6 +71,7 @@ export function MemoryForm({
   longitude,
   locationName,
   onPickLocation,
+  onLocationAutoDetected,
   onSaved,
   onBack,
 }: Props) {
@@ -227,7 +236,32 @@ export function MemoryForm({
           <Text variant="label-md" className="text-on-surface-variant">
             Media
           </Text>
-          <MediaPicker value={mediaItems} onChange={setMediaItems} />
+          <MediaPicker
+            value={mediaItems}
+            onChange={setMediaItems}
+            onLocationDetected={
+              onLocationAutoDetected
+                ? async (lat, lng) => {
+                    const apply = async () => {
+                      const name = await reverseGeocode(lat, lng);
+                      onLocationAutoDetected(lat, lng, name ?? undefined);
+                    };
+                    if (latitude === undefined) {
+                      await apply();
+                    } else {
+                      Alert.alert(
+                        'Use photo location?',
+                        'This photo has location metadata. Do you want to use it instead of the current location?',
+                        [
+                          { text: 'Keep current', style: 'cancel' },
+                          { text: 'Use photo location', onPress: apply },
+                        ]
+                      );
+                    }
+                  }
+                : undefined
+            }
+          />
         </View>
 
         {saveError ? (
