@@ -305,7 +305,7 @@ export default function CollectionDetailScreen() {
               <MaterialIcons name="delete-forever" size={32} color="#b71422" />
             </View>
             <Text variant="headline-md" style={styles.deleteModalTitle}>
-              Delete "{collection?.name}"?
+              Delete &quot;{collection?.name}&quot;?
             </Text>
             <Text variant="body-md" style={styles.deleteModalDesc}>
               This collection will be permanently removed. Are you sure you want to delete it?
