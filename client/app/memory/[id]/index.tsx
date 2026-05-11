@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+
 import { useAuth } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';

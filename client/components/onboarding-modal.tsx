@@ -6,7 +6,9 @@ import {
   ScrollView,
   Image,
   Pressable,
+  StyleSheet,
 } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Text } from '@/components/ui/text';
@@ -16,6 +18,15 @@ import { Card } from '@/components/ui/card';
 import { useUpsertUserProfile } from '@/hooks/use-user-profile';
 import { useUploadAvatar } from '@/hooks/use-upload-avatar';
 import type { UserProfile } from '@/lib/types';
+
+const styles = StyleSheet.create({
+  avatarOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    top: '60%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 type Props = {
   visible: boolean;
@@ -132,7 +143,12 @@ export function OnboardingModal({ visible, onComplete, profile, onClose }: Props
             {/* Avatar picker */}
             <Pressable onPress={handlePickImage} className="items-center">
               {avatarUri ? (
-                <Image source={{ uri: avatarUri }} className="w-24 h-24 rounded-full" />
+                <View className="w-24 h-24 rounded-full overflow-hidden">
+                  <Image source={{ uri: avatarUri }} className="w-24 h-24" />
+                  <View style={[StyleSheet.absoluteFill, styles.avatarOverlay]}>
+                    <MaterialIcons name="photo-camera" size={18} color="white" />
+                  </View>
+                </View>
               ) : (
                 <View className="w-24 h-24 rounded-full bg-surface-variant items-center justify-center">
                   <Text variant="body-sm" className="text-on-surface-variant">

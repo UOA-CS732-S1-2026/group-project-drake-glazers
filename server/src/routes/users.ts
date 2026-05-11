@@ -13,9 +13,9 @@ import {
 type CreateUserBody = { email: string };
 type UpdateUserBody = { email?: string };
 type UpdateUserProfileBody = {
-  displayName?: string;
-  bio?: string;
-  avatarUrl?: string;
+  displayName?: string | undefined;
+  bio?: string | undefined;
+  avatarUrl?: string | undefined;
 };
 
 const userSelect = {
@@ -335,8 +335,8 @@ usersRouter.put(
     try {
       const profile = await prisma.userProfile.upsert({
         where: { userId: authUserId },
-        create: { userId: authUserId, ...data },
-        update: data,
+        create: { userId: authUserId, ...data } as Prisma.UserProfileUncheckedCreateInput,
+        update: data as Prisma.UserProfileUncheckedUpdateInput,
         select: userProfileSelect,
       });
 

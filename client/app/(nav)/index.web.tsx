@@ -408,7 +408,7 @@ const styles = {
 
   fab: {
     position: 'absolute' as const,
-    bottom: 24,
+    bottom: 88,
     right: 20,
     width: 56,
     height: 56,
