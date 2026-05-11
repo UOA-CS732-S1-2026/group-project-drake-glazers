@@ -1,52 +1,7 @@
-import express from 'express';
-import type { Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { clerkMiddleware } from '@clerk/express';
-import { requireApiAuth } from './middleware/requireApiAuth.js';
-import { clerkWebhookRouter } from './routes/webhooks.js';
-import { usersRouter } from './routes/users.js';
-import { memoriesRouter } from './routes/memories.js';
-import { listsRouter } from './routes/lists.js';
-import { friendRequestsRouter } from './routes/friendRequests.js';
-import { friendsRouter } from './routes/friends.js';
-import { blocksRouter } from './routes/blocks.js';
-import { mediaRouter } from './routes/media.js';
-import { errorResponse } from './lib/api-response.js';
+import 'dotenv/config';
+import { app } from './app.js';
 
-dotenv.config();
-
-const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-
-app.use(cors());
-app.use('/api/webhooks/clerk', clerkWebhookRouter);
-app.use(express.json());
-// Clerk middleware parses auth context from incoming requests.
-app.use(clerkMiddleware());
-
-// Keep auth enforcement at the /api boundary so routes stay focused on business logic.
-app.use('/api', requireApiAuth);
-app.use('/api', usersRouter);
-app.use('/api', memoriesRouter);
-app.use('/api', listsRouter);
-app.use('/api', friendRequestsRouter);
-app.use('/api', friendsRouter);
-app.use('/api', blocksRouter);
-app.use('/api', mediaRouter);
-
-app.get('/health', (_req: Request, res: Response) => {
-  return res.status(200).json({ status: 'ok' });
-});
-
-app.get('/api/auth/me', (req: Request, res: Response) => {
-  // Simple auth probe endpoint used to verify token wiring quickly.
-  if (!req.authUserId) {
-    return errorResponse(res, 401, 'UNAUTHORIZED', 'Unauthorized');
-  }
-
-  return res.status(200).json({ userId: req.authUserId });
-});
 
 app.listen(PORT, () => {
   console.log(`Server listening at http://localhost:${PORT}`);

@@ -1,8 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Text } from '@/components/ui/text';
 import { OnboardingModal } from '@/components/onboarding-modal';
@@ -18,12 +20,12 @@ const TABS = [
 
 const TOKEN = {
   primary: '#b71422',
-  onSurfaceVariant: '#8c7c7b',
+  inactive: 'rgba(255,255,255,0.80)',
 } as const;
 
 function CustomTabBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const isMap = TABS[state.index]?.name === 'index';
+
   const tabItems = state.routes.map((route: any, index: number) => {
     const tab = TABS.find((t) => t.name === route.name);
     if (!tab) return null;
@@ -52,21 +54,10 @@ function CustomTabBar({ state, navigation }: any) {
           <IconSymbol
             name={tab.icon}
             size={22}
-            color={
-              isFocused ? TOKEN.primary : isMap ? 'rgba(255,255,255,0.75)' : TOKEN.onSurfaceVariant
-            }
+            color={isFocused ? TOKEN.primary : TOKEN.inactive}
           />
         </View>
-        <Text
-          variant="label-md"
-          style={{
-            color: isFocused
-              ? TOKEN.primary
-              : isMap
-                ? 'rgba(255,255,255,0.75)'
-                : TOKEN.onSurfaceVariant,
-          }}
-        >
+        <Text variant="label-md" style={{ color: isFocused ? TOKEN.primary : TOKEN.inactive }}>
           {tab.label}
         </Text>
       </TouchableOpacity>
@@ -75,20 +66,35 @@ function CustomTabBar({ state, navigation }: any) {
 
   return (
     <View style={styles.wrapper}>
-      {isMap ? (
-        <BlurView
-          intensity={Platform.OS === 'ios' ? 70 : 100}
-          tint="dark"
-          style={[styles.bar, { paddingBottom: insets.bottom || 12 }]}
-        >
-          <View style={styles.row}>{tabItems}</View>
-        </BlurView>
-      ) : (
-        <View style={[styles.bar, styles.solid, { paddingBottom: insets.bottom || 12 }]}>
-          <View style={styles.row}>{tabItems}</View>
-        </View>
-      )}
+      <BlurView
+        intensity={Platform.OS === 'ios' ? 70 : 100}
+        tint="dark"
+        style={[styles.bar, { paddingBottom: insets.bottom || 12 }]}
+      >
+        <View style={styles.row}>{tabItems}</View>
+      </BlurView>
     </View>
+  );
+}
+
+function CreateMemoryFAB() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Web has its own FAB in index.web.tsx
+  if (Platform.OS === 'web') return null;
+  // Only show on the home/map tab
+  if (pathname !== '/') return null;
+
+  return (
+    <TouchableOpacity
+      style={[styles.fab, { bottom: insets.bottom + 76 }]}
+      onPress={() => router.push('/memory')}
+      activeOpacity={0.85}
+    >
+      <MaterialIcons name="add" size={28} color="#ffffff" />
+    </TouchableOpacity>
   );
 }
 
@@ -104,10 +110,6 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.18)',
     paddingTop: 8,
     paddingHorizontal: 8,
-  },
-  solid: {
-    backgroundColor: '#ffffff',
-    borderTopColor: '#ede8e8',
   },
   row: {
     flexDirection: 'row',
@@ -133,6 +135,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 10,
   },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#b71422',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#b71422',
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
 });
 
 export default function TabLayout() {
@@ -150,6 +167,7 @@ export default function TabLayout() {
           <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.label }} />
         ))}
       </Tabs>
+      <CreateMemoryFAB />
       <OnboardingModal visible={showOnboarding} onComplete={() => setProfileConfirmed(true)} />
     </>
   );
