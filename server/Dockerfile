@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy dependency manifests first for layer caching
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
 # Install all deps (devDeps needed for tsc + prisma CLI for migrations)
 RUN npm ci
@@ -22,4 +23,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Run pending migrations then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["node", "dist/index.js"]
