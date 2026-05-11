@@ -6,7 +6,7 @@ type Props = TextInputProps & {
   error?: string;
 };
 
-export function Input({ label, error, className = '', ...props }: Props) {
+export function Input({ label, error, className = '', onFocus, onBlur, ...props }: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -25,8 +25,14 @@ export function Input({ label, error, className = '', ...props }: Props) {
           ${className}
         `}
         placeholderTextColor="#8f6f6d"
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
         {...props}
       />
       {!!error && <Text className="text-body-sm font-sans text-error">{error}</Text>}

@@ -10,15 +10,17 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.drakeglazers.client",
+      "bundleIdentifier": "com.drakeglazers.app",
+      "buildNumber": "1",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Memoriez needs access to your photo library to attach photos and videos to your memories.",
         "NSCameraUsageDescription": "Memoriez needs camera access to capture photos and videos for your memories.",
         "NSMicrophoneUsageDescription": "Memoriez needs microphone access to record voice notes for your memories."
       }
     },
     "android": {
-      "package": "com.drakeglazers.client",
+      "package": "com.drakeglazers.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

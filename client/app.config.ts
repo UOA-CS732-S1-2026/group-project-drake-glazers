@@ -16,6 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.drakeglazers.app',
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSPhotoLibraryUsageDescription:
         'Memoriez needs access to your photo library to attach photos and videos to memories.',
       NSCameraUsageDescription:
@@ -73,6 +74,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Memoriez needs access to your photo library to attach photos and videos to memories.',
         cameraPermission: 'Memoriez needs camera access to take photos for your memories.',
         microphonePermission: 'Memoriez needs microphone access to record voice memos.',
+      },
+    ],
+    [
+      'expo-build-properties',
+      {
+        android: {
+          packagingOptions: {
+            exclude: ['META-INF/versions/9/OSGI-INF/MANIFEST.MF'],
+          },
+        },
       },
     ],
   ],
