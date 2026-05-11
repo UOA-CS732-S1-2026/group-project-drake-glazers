@@ -20,9 +20,11 @@ type Props = {
   onClose: () => void;
   /** Pre-fetched image URL (e.g. from the explore feed). Shown when useMemoryMedia returns nothing. */
   imageUrl?: string | null;
+  /** Pixels from the bottom of the parent to keep the card above overlaying UI (e.g. tab bar). */
+  bottomOffset?: number;
 };
 
-export function MemoryPreviewCard({ memory, onClose, imageUrl }: Props) {
+export function MemoryPreviewCard({ memory, onClose, imageUrl, bottomOffset = 0 }: Props) {
   const { data: mediaItems = [] } = useMemoryMedia(memory.id);
 
   const firstImage = mediaItems.find(
@@ -64,7 +66,8 @@ export function MemoryPreviewCard({ memory, onClose, imageUrl }: Props) {
       if (cardHeightRef.current === h) return;
       cardHeightRef.current = h;
       translateY.setValue(h);
-      animateTo(h - PEEK_HEIGHT);
+      isExpandedRef.current = true;
+      animateTo(0);
     },
     [animateTo, translateY]
   );
@@ -104,7 +107,7 @@ export function MemoryPreviewCard({ memory, onClose, imageUrl }: Props) {
 
   return (
     <Animated.View
-      style={[styles.container, { transform: [{ translateY }] }]}
+      style={[styles.container, { bottom: bottomOffset, transform: [{ translateY }] }]}
       onLayout={handleLayout}
       {...panResponder.panHandlers}
     >

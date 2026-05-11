@@ -42,7 +42,11 @@ function MemoryCard({ memory, width }: { memory: MemoryWithCover; width: number 
           resizeMode="cover"
         />
       ) : (
-        <View className="absolute inset-0 bg-surface-container-high" />
+        <Image
+          source={require('@/assets/images/placeholder-flashback.png')}
+          style={{ position: 'absolute', width: '100%', height: '100%' }}
+          resizeMode="cover"
+        />
       )}
 
       <View className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.28)' }} />

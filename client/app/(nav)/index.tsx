@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapboxGL from '@rnmapbox/maps';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMapStore } from '@/stores/map-store';
@@ -10,6 +11,7 @@ import { Memory } from '@/lib/types';
 const GLOBE_TO_MAP_ZOOM = 2.5;
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { data: memories = [] } = useMemories();
   const pendingCenter = useMapStore((s) => s.pendingCenter);
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
@@ -94,7 +96,12 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Memoriez</Text>
       </SafeAreaView>
       {selectedMemory && (
-        <MemoryPreviewCard memory={selectedMemory} onClose={() => setSelectedMemory(null)} />
+        <MemoryPreviewCard
+          key={selectedMemory.id}
+          memory={selectedMemory}
+          onClose={() => setSelectedMemory(null)}
+          bottomOffset={(insets.bottom || 12) + 56}
+        />
       )}
     </View>
   );
