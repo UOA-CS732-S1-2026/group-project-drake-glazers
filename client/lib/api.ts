@@ -19,9 +19,9 @@ export async function uploadFile(
 
 /*
 Usuage Example:
-    const api = useApiClient();
-    const memories = await api.get('/memories');
-    await api.post('/memories', { title: 'My memory' });
+    const api = useApiClient()
+    const memories = await api.get('/memories')
+    await api.post('/memories', { title: 'My memory' })
 */
 
 export function useApiClient() {
