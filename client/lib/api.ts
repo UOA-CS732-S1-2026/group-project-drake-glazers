@@ -54,6 +54,7 @@ export function useApiClient() {
       throw new Error(`API request failed: ${res.status} ${detail}`);
     }
 
+    if (res.status === 204) return null;
     return res.json();
   };
 
