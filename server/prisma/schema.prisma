@@ -36,6 +36,7 @@ model User {
   profile          UserProfile?
   memories         Memory[]
   lists            List[]
+  savedCollections SavedCollection[]
   sentRequests     FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
   friendshipsAsA   Friendship[]    @relation("FriendshipUserA")
@@ -70,8 +71,9 @@ model Memory {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  user  User    @relation(fields: [userId], references: [id])
-  media Media[]
+  user    User          @relation(fields: [userId], references: [id])
+  media   Media[]
+  savedBy SavedMemory[]
 
   @@map("memories")
 }
@@ -154,4 +156,30 @@ model Block {
 
   @@unique([blockerId, blockedId])
   @@map("blocks")
+}
+
+model SavedCollection {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items SavedMemory[]
+
+  @@map("saved_collections")
+}
+
+model SavedMemory {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  memoryId     String   @map("memory_id")
+  savedAt      DateTime @default(now()) @map("saved_at")
+
+  collection SavedCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  memory     Memory          @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, memoryId])
+  @@map("saved_memories")
 }
