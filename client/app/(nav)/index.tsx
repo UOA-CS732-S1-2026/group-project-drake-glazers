@@ -100,7 +100,7 @@ export default function HomeScreen() {
           key={selectedMemory.id}
           memory={selectedMemory}
           onClose={() => setSelectedMemory(null)}
-          bottomOffset={insets.bottom + 56}
+          bottomOffset={(insets.bottom || 12) + 56}
         />
       )}
     </View>
