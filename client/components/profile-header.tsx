@@ -21,9 +21,14 @@ function uniquePlacesCount(memories: { relativeArea?: string | null }[]): number
 
 function StatItem({ value, label }: { value: number; label: string }) {
   return (
-    <View className="items-center gap-xs">
+    <View className="flex-1 items-center gap-xs">
       <Text variant="headline-md">{formatCount(value)}</Text>
-      <Text variant="label-md" className="text-on-surface-variant">
+      <Text
+        variant="label-md"
+        className="text-on-surface-variant"
+        style={{ fontSize: 10 }}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </View>
@@ -65,7 +70,7 @@ export function ProfileHeader({ userId }: Props) {
           <View className="flex-1 flex-row justify-around ml-md">
             <StatItem value={memories.length} label="MEMORIES" />
             <StatItem value={uniquePlacesCount(memories)} label="PLACES" />
-            {isOwnProfile && <StatItem value={friends.length} label="CONNECTIONS" />}
+            {isOwnProfile && <StatItem value={friends.length} label="FRIENDS" />}
           </View>
         </View>
 
