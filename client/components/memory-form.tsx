@@ -5,6 +5,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -140,138 +142,156 @@ export function MemoryForm({
       className="flex-1 bg-background"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
-        <TouchableOpacity onPress={onBack} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color="#1c1b1b" />
-        </TouchableOpacity>
-        <Text variant="headline-md" className="flex-1">
-          New Memory
-        </Text>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="px-gutter pb-xl gap-md"
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity
-          className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
-          onPress={onPickLocation}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons
-            name="place"
-            size={18}
-            color={latitude !== undefined ? '#b71422' : '#9c7873'}
-          />
-          <Text
-            variant="body-sm"
-            className={`flex-1 ${latitude !== undefined ? 'text-on-surface-variant' : 'text-on-surface-variant'}`}
-            numberOfLines={1}
-          >
-            {latitude !== undefined
-              ? (locationName ?? `${latitude.toFixed(5)}°, ${longitude!.toFixed(5)}°`)
-              : 'Tap to add location…'}
-          </Text>
-          <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
-        </TouchableOpacity>
-
-        <Input
-          label="Title"
-          placeholder="Name this memory..."
-          value={title}
-          onChangeText={(t) => {
-            setTitle(t);
-            if (t.trim()) setTitleError('');
-          }}
-          error={titleError}
-          maxLength={255}
-          returnKeyType="next"
-        />
-
-        <View className="gap-xs">
-          <Text variant="label-md" className="text-on-surface-variant">
-            Visibility
-          </Text>
-          <View className="flex-row gap-sm">
-            {VISIBILITY_OPTIONS.map((opt) => {
-              const active = visibility === opt.value;
-              return (
-                <TouchableOpacity
-                  key={opt.value}
-                  className={`flex-1 flex-row items-center justify-center gap-xs py-sm rounded-lg ${
-                    active ? 'bg-primary' : 'bg-surface-container-low'
-                  }`}
-                  onPress={() => setVisibility(opt.value)}
-                >
-                  <MaterialIcons
-                    name={opt.icon as any}
-                    size={15}
-                    color={active ? '#ffffff' : '#1c1b1b'}
-                  />
-                  <Text
-                    variant="label-md"
-                    className={active ? 'text-on-primary' : 'text-on-surface'}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View className="flex-1">
+          <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
+            <TouchableOpacity onPress={onBack} hitSlop={8}>
+              <MaterialIcons name="arrow-back" size={24} color="#1c1b1b" />
+            </TouchableOpacity>
+            <Text variant="headline-md" className="flex-1">
+              New Memory
+            </Text>
           </View>
+
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName="px-gutter pb-xl gap-md"
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* 1. Title */}
+            <Input
+              label="Title"
+              placeholder="Name this memory..."
+              value={title}
+              onChangeText={(t) => {
+                setTitle(t);
+                if (t.trim()) setTitleError('');
+              }}
+              error={titleError}
+              maxLength={255}
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
+            />
+
+            {/* 2. Media */}
+            <View className="gap-xs">
+              <Text variant="label-md" className="text-on-surface-variant">
+                Media
+              </Text>
+              <MediaPicker
+                value={mediaItems}
+                onChange={setMediaItems}
+                onLocationDetected={
+                  onLocationAutoDetected
+                    ? async (lat, lng) => {
+                        const apply = async () => {
+                          const name = await reverseGeocode(lat, lng);
+                          onLocationAutoDetected(lat, lng, name ?? undefined);
+                        };
+                        if (latitude === undefined) {
+                          await apply();
+                        } else {
+                          Alert.alert(
+                            'Use photo location?',
+                            'This photo has location metadata. Do you want to use it instead of the current location?',
+                            [
+                              { text: 'Keep current', style: 'cancel' },
+                              { text: 'Use photo location', onPress: apply },
+                            ]
+                          );
+                        }
+                      }
+                    : undefined
+                }
+              />
+            </View>
+
+            {/* 3. Description */}
+            <Input
+              label="Description (optional)"
+              placeholder="Write something about this memory..."
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="min-h-[96px]"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
+              blurOnSubmit
+            />
+
+            {/* 4. Location */}
+            <View className="gap-xs">
+              <Text variant="label-md" className="text-on-surface-variant">
+                Location
+              </Text>
+              <TouchableOpacity
+                className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
+                onPress={onPickLocation}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons
+                  name="place"
+                  size={18}
+                  color={latitude !== undefined ? '#b71422' : '#9c7873'}
+                />
+                <Text
+                  variant="body-sm"
+                  className="text-on-surface-variant flex-1"
+                  numberOfLines={1}
+                >
+                  {latitude !== undefined
+                    ? (locationName ?? `${latitude.toFixed(5)}°, ${longitude!.toFixed(5)}°`)
+                    : 'Tap to add location…'}
+                </Text>
+                <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
+              </TouchableOpacity>
+            </View>
+
+            {/* 5. Visibility */}
+            <View className="gap-xs">
+              <Text variant="label-md" className="text-on-surface-variant">
+                Visibility
+              </Text>
+              <View className="flex-row gap-sm">
+                {VISIBILITY_OPTIONS.map((opt) => {
+                  const active = visibility === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      className={`flex-1 flex-row items-center justify-center gap-xs py-sm rounded-lg ${
+                        active ? 'bg-primary' : 'bg-surface-container-low'
+                      }`}
+                      onPress={() => setVisibility(opt.value)}
+                    >
+                      <MaterialIcons
+                        name={opt.icon as any}
+                        size={15}
+                        color={active ? '#ffffff' : '#1c1b1b'}
+                      />
+                      <Text
+                        variant="label-md"
+                        className={active ? 'text-on-primary' : 'text-on-surface'}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {saveError ? (
+              <Text variant="body-sm" className="text-error text-center">
+                {saveError}
+              </Text>
+            ) : null}
+
+            <Button label="Save Memory" loading={saving} onPress={handleSave} className="mt-sm" />
+          </ScrollView>
         </View>
-
-        <Input
-          label="Description (optional)"
-          placeholder="Write something about this memory..."
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-          className="min-h-[96px]"
-        />
-
-        <View className="gap-xs">
-          <Text variant="label-md" className="text-on-surface-variant">
-            Media
-          </Text>
-          <MediaPicker
-            value={mediaItems}
-            onChange={setMediaItems}
-            onLocationDetected={
-              onLocationAutoDetected
-                ? async (lat, lng) => {
-                    const apply = async () => {
-                      const name = await reverseGeocode(lat, lng);
-                      onLocationAutoDetected(lat, lng, name ?? undefined);
-                    };
-                    if (latitude === undefined) {
-                      await apply();
-                    } else {
-                      Alert.alert(
-                        'Use photo location?',
-                        'This photo has location metadata. Do you want to use it instead of the current location?',
-                        [
-                          { text: 'Keep current', style: 'cancel' },
-                          { text: 'Use photo location', onPress: apply },
-                        ]
-                      );
-                    }
-                  }
-                : undefined
-            }
-          />
-        </View>
-
-        {saveError ? (
-          <Text variant="body-sm" className="text-error text-center">
-            {saveError}
-          </Text>
-        ) : null}
-
-        <Button label="Save Memory" loading={saving} onPress={handleSave} className="mt-sm" />
-      </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
