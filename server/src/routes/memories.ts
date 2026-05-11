@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from '../lib/supabase.js';
+import { buildSignedUrlMap } from '../lib/media-utils.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
 import { createMemoryBodySchema, updateMemoryBodySchema } from '../schemas/memories.js';
@@ -73,22 +74,8 @@ memoriesRouter.get('/explore', async (req: Request, res: Response) => {
     },
   });
 
-  // Generate signed URLs for the first media item of each memory
   const paths = memories.map((m) => m.media[0]?.mediaPath).filter(Boolean) as string[];
-
-  let signedUrlMap = new Map<string, string>();
-
-  if (paths.length > 0) {
-    const { data: signedUrls } = await supabase.storage
-      .from(MEDIA_BUCKET)
-      .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
-
-    signedUrlMap = new Map(
-      (signedUrls ?? [])
-        .filter((s) => s.path != null && s.signedUrl != null)
-        .map((s) => [s.path as string, s.signedUrl as string])
-    );
-  }
+  const signedUrlMap = await buildSignedUrlMap(paths);
 
   const result = memories.map((m) => {
     const firstMedia = m.media[0];

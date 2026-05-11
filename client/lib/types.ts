@@ -104,6 +104,36 @@ export type MemoryWithCover = Memory & {
   coverImage: string | null;
 };
 
+export type ExploreMemory = {
+  id: string;
+  userId: string;
+  title: string;
+  description: string | null;
+  relativeArea: string | null;
+  latitude: number;
+  longitude: number;
+  visibility: string;
+  createdAt: string;
+  author: string;
+  avatarUrl: string | null;
+  imageUrl: string | null;
+  mediaType: string | null;
+};
+
+export type SavedCollection = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  createdAt: string;
+  count: number;
+  coverImages: string[];
+};
+
+export type SavedPair = {
+  memoryId: string;
+  collectionId: string;
+};
+
 export type MediaType = 'image' | 'video' | 'voice_note';
 
 export type Media = {

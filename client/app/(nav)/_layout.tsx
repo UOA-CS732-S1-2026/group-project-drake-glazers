@@ -12,7 +12,7 @@ const TABS = [
   { name: 'index', label: 'Home', icon: 'house.fill' as const },
   { name: 'friends', label: 'Friends', icon: 'person.2.fill' as const },
   { name: 'explore', label: 'Explore', icon: 'magnifyingglass' as const },
-  { name: 'lists', label: 'Lists', icon: 'list.bullet' as const },
+  { name: 'lists', label: 'Saved', icon: 'bookmark.fill' as const },
   { name: 'profile', label: 'Profile', icon: 'person.crop.circle.fill' as const },
 ] as const;
 
