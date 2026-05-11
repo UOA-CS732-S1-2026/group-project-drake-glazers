@@ -335,8 +335,8 @@ usersRouter.put(
     try {
       const profile = await prisma.userProfile.upsert({
         where: { userId: authUserId },
-        create: { userId: authUserId, ...data },
-        update: data,
+        create: { userId: authUserId, ...data } as Prisma.UserProfileUncheckedCreateInput,
+        update: data as Prisma.UserProfileUncheckedUpdateInput,
         select: userProfileSelect,
       });
 
