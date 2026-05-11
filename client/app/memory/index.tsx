@@ -7,18 +7,28 @@ type Location = { lat: number; lng: number; name?: string };
 
 export default function CreateMemoryScreen() {
   const [location, setLocation] = useState<Location | null>(null);
+  const [pickingLocation, setPickingLocation] = useState(false);
 
-  if (!location) {
-    return <LocationPicker onConfirm={(lat, lng, name) => setLocation({ lat, lng, name })} />;
+  if (pickingLocation) {
+    return (
+      <LocationPicker
+        onConfirm={(lat, lng, name) => {
+          setLocation({ lat, lng, name });
+          setPickingLocation(false);
+        }}
+        onBack={() => setPickingLocation(false)}
+      />
+    );
   }
 
   return (
     <MemoryForm
-      latitude={location.lat}
-      longitude={location.lng}
-      locationName={location.name}
+      latitude={location?.lat}
+      longitude={location?.lng}
+      locationName={location?.name}
+      onPickLocation={() => setPickingLocation(true)}
       onSaved={() => router.dismiss()}
-      onBack={() => setLocation(null)}
+      onBack={() => router.dismiss()}
     />
   );
 }

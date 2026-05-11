@@ -25,6 +25,7 @@ type GeocodingResult = {
 
 type Props = {
   onConfirm: (lat: number, lng: number, name?: string) => void;
+  onBack?: () => void;
 };
 
 type MapCameraState = {
@@ -40,7 +41,7 @@ function toLngLat(coordinates?: GeoJSON.Position): [number, number] | null {
   return [lng, lat];
 }
 
-export function LocationPicker({ onConfirm }: Props) {
+export function LocationPicker({ onConfirm, onBack }: Props) {
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const pinCoordsRef = useRef<[number, number]>(DEFAULT_COORDS);
   const lastTappedCoordsRef = useRef<[number, number] | null>(null);
@@ -122,8 +123,8 @@ export function LocationPicker({ onConfirm }: Props) {
   return (
     <View className="flex-1 bg-background">
       <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
-        <TouchableOpacity onPress={() => router.dismiss()} hitSlop={8}>
-          <MaterialIcons name="close" size={24} color="#1c1b1b" />
+        <TouchableOpacity onPress={onBack ?? (() => router.dismiss())} hitSlop={8}>
+          <MaterialIcons name={onBack ? 'arrow-back' : 'close'} size={24} color="#1c1b1b" />
         </TouchableOpacity>
         <View>
           <Text variant="headline-md">Pick a location</Text>

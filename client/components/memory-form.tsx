@@ -44,9 +44,10 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
 }
 
 type Props = {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   locationName?: string;
+  onPickLocation: () => void;
   onSaved: () => void;
   onBack: () => void;
 };
@@ -57,7 +58,14 @@ const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: string }[] =
   { value: 'private', label: 'Private', icon: 'lock' },
 ];
 
-export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack }: Props) {
+export function MemoryForm({
+  latitude,
+  longitude,
+  locationName,
+  onPickLocation,
+  onSaved,
+  onBack,
+}: Props) {
   const api = useApiClient();
   const queryClient = useQueryClient();
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
@@ -73,6 +81,10 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
   const handleSave = async () => {
     if (!title.trim()) {
       setTitleError('Title is required');
+      return;
+    }
+    if (latitude === undefined || longitude === undefined) {
+      setSaveError('Please add a location before saving.');
       return;
     }
     setTitleError('');
@@ -105,7 +117,7 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
       }
 
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      setPendingCenter([longitude, latitude]);
+      setPendingCenter([longitude!, latitude!]);
       onSaved();
     } catch {
       setSaveError('Something went wrong. Please try again.');
@@ -133,12 +145,27 @@ export function MemoryForm({ latitude, longitude, locationName, onSaved, onBack 
         contentContainerClassName="px-gutter pb-xl gap-md"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg">
-          <MaterialIcons name="place" size={18} color="#b71422" />
-          <Text variant="body-sm" className="text-on-surface-variant flex-1" numberOfLines={1}>
-            {locationName ?? `${latitude.toFixed(5)}°, ${longitude.toFixed(5)}°`}
+        <TouchableOpacity
+          className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
+          onPress={onPickLocation}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons
+            name="place"
+            size={18}
+            color={latitude !== undefined ? '#b71422' : '#9c7873'}
+          />
+          <Text
+            variant="body-sm"
+            className={`flex-1 ${latitude !== undefined ? 'text-on-surface-variant' : 'text-on-surface-variant'}`}
+            numberOfLines={1}
+          >
+            {latitude !== undefined
+              ? (locationName ?? `${latitude.toFixed(5)}°, ${longitude!.toFixed(5)}°`)
+              : 'Tap to add location…'}
           </Text>
-        </View>
+          <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
+        </TouchableOpacity>
 
         <Input
           label="Title"
