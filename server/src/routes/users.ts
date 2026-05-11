@@ -13,9 +13,9 @@ import {
 type CreateUserBody = { email: string };
 type UpdateUserBody = { email?: string };
 type UpdateUserProfileBody = {
-  displayName?: string;
-  bio?: string;
-  avatarUrl?: string;
+  displayName?: string | undefined;
+  bio?: string | undefined;
+  avatarUrl?: string | undefined;
 };
 
 const userSelect = {
