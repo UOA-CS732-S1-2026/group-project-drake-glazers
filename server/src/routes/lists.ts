@@ -56,7 +56,11 @@ async function signItemImagePaths<T extends { imagePath: string | null }>(
     const { data } = await supabase.storage
       .from(MEDIA_BUCKET)
       .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
-    signedUrlMap = new Map((data ?? []).map((s) => [s.path, s.signedUrl]));
+    signedUrlMap = new Map(
+      (data ?? [])
+        .filter((s) => s.path != null && s.signedUrl != null)
+        .map((s) => [s.path as string, s.signedUrl as string])
+    );
   }
 
   return items.map(({ imagePath, ...rest }) => ({
@@ -88,7 +92,11 @@ listsRouter.get('/lists', async (req: Request, res: Response) => {
     const { data } = await supabase.storage
       .from(MEDIA_BUCKET)
       .createSignedUrls(allPaths, SIGNED_URL_EXPIRY_SECONDS);
-    signedUrlMap = new Map((data ?? []).map((s) => [s.path, s.signedUrl]));
+    signedUrlMap = new Map(
+      (data ?? [])
+        .filter((s) => s.path != null && s.signedUrl != null)
+        .map((s) => [s.path as string, s.signedUrl as string])
+    );
   }
 
   return res.status(200).json(
@@ -126,7 +134,11 @@ listsRouter.get('/lists/:id', async (req: Request, res: Response) => {
     const { data } = await supabase.storage
       .from(MEDIA_BUCKET)
       .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
-    signedUrlMap = new Map((data ?? []).map((s) => [s.path, s.signedUrl]));
+    signedUrlMap = new Map(
+      (data ?? [])
+        .filter((s) => s.path != null && s.signedUrl != null)
+        .map((s) => [s.path as string, s.signedUrl as string])
+    );
   }
 
   const { items, ...listData } = list;
