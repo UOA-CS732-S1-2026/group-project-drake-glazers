@@ -42,7 +42,7 @@ const corsOptions: CorsOptions = {
   optionsSuccessStatus: 204,
 };
 
-// Enable CORS with the defined options
+// Enable CORS with the defined options, see links above
 app.use(cors(corsOptions));
 app.use('/api/webhooks/clerk', clerkWebhookRouter);
 app.use(express.json());
