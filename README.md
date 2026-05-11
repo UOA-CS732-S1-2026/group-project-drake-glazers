@@ -16,3 +16,14 @@ You have complete control over how you run this repo. All your members will have
 Please use good version control practices, such as feature branching, both to make it easier for markers to see your group's history and to lower the chances of you tripping over each other during development
 
 ![](./Drake%20Glazers.png)
+
+## Running tests
+
+Make sure Docker Desktop is installed and running. From the root, install dependencies then run tests:
+
+```
+npm run install:all
+npm test
+```
+
+This will automatically start a local Postgres container, apply migrations, and run all tests.

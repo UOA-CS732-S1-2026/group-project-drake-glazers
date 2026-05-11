@@ -1,5 +1,13 @@
-import { View, ScrollView, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -21,7 +29,25 @@ import {
 
 // --- Shared sub-components ---
 
-function AvatarCircle({ name, size = 40 }: { name: string | null | undefined; size?: number }) {
+function AvatarCircle({
+  name,
+  avatarUrl,
+  size = 40,
+}: {
+  name: string | null | undefined;
+  avatarUrl?: string | null;
+  size?: number;
+}) {
+  if (avatarUrl) {
+    return (
+      <Image
+        source={{ uri: avatarUrl }}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        className="shrink-0"
+      />
+    );
+  }
+
   const initials = name
     ? name
         .trim()
@@ -81,8 +107,20 @@ function TabSwitcher<T extends string>({
 
 function SearchSection() {
   const [query, setQuery] = useState('');
+  const [sentIds, setSentIds] = useState(new Set<string>());
   const { data: results, isLoading, isError } = useUserSearch(query);
+  const { data: friends } = useFriends();
+  const { data: requests } = useFriendRequests();
   const sendRequest = useSendFriendRequest();
+
+  const excludedIds = new Set<string>([
+    ...(friends?.map((f) => f.friend.id) ?? []),
+    ...(requests?.outgoing.map((r) => r.toUserId) ?? []),
+    ...(requests?.incoming.map((r) => r.fromUserId) ?? []),
+  ]);
+
+  // sentIds keeps just-added users visible until the search bar loses focus
+  const filteredResults = results?.filter((u) => sentIds.has(u.id) || !excludedIds.has(u.id));
 
   return (
     <View className="gap-md">
@@ -91,6 +129,7 @@ function SearchSection() {
         placeholder="Search by name or email..."
         value={query}
         onChangeText={setQuery}
+        onBlur={() => setSentIds(new Set())}
         className="rounded-full"
       />
 
@@ -106,24 +145,32 @@ function SearchSection() {
               Search failed — please try again
             </Text>
           )}
-          {!isLoading && !isError && results?.length === 0 && (
+          {!isLoading && !isError && filteredResults?.length === 0 && (
             <Text variant="body-sm" className="text-on-surface-variant text-center py-md">
-              {`No users found for "${query}"`}
+              {`No eligible users found for "${query}"`}
             </Text>
           )}
           {!isLoading &&
             !isError &&
-            results?.map((user) => (
+            filteredResults?.map((user) => (
               <Card key={user.id} elevated={false} className="flex-row items-center gap-md">
-                <AvatarCircle name={user.profile?.displayName} />
+                <AvatarCircle
+                  name={user.profile?.displayName}
+                  avatarUrl={user.profile?.avatarUrl}
+                />
                 <Text variant="body-md" className="flex-1" numberOfLines={1}>
                   {user.profile?.displayName ?? 'Unknown User'}
                 </Text>
                 <Button
-                  label="Add Friend"
+                  label={sentIds.has(user.id) ? 'Sent' : 'Add Friend'}
                   variant="secondary"
+                  disabled={sentIds.has(user.id)}
                   loading={sendRequest.isPending && sendRequest.variables === user.id}
-                  onPress={() => sendRequest.mutate(user.id)}
+                  onPress={() =>
+                    sendRequest.mutate(user.id, {
+                      onSuccess: () => setSentIds((prev) => new Set(prev).add(user.id)),
+                    })
+                  }
                 />
               </Card>
             ))}
@@ -176,7 +223,7 @@ function RequestsSection() {
           const displayName = otherUser.profile?.displayName ?? 'Unknown User';
           return (
             <Card key={req.id} elevated={false} className="flex-row items-center gap-md">
-              <AvatarCircle name={displayName} />
+              <AvatarCircle name={displayName} avatarUrl={otherUser.profile?.avatarUrl} />
               <Text variant="body-md" className="flex-1" numberOfLines={1}>
                 {displayName}
               </Text>
@@ -257,7 +304,10 @@ function FriendsSection() {
                 onPress={() => router.push(`/friends/${friend.id}` as any)}
                 className="flex-row items-center gap-md flex-1 min-w-0"
               >
-                <AvatarCircle name={friend.profile?.displayName} />
+                <AvatarCircle
+                  name={friend.profile?.displayName}
+                  avatarUrl={friend.profile?.avatarUrl}
+                />
                 <Text variant="body-md" className="flex-1" numberOfLines={1}>
                   {friend.profile?.displayName ?? 'Unknown User'}
                 </Text>
@@ -290,7 +340,10 @@ function FriendsSection() {
           )}
           {blocked?.map((entry) => (
             <Card key={entry.id} elevated={false} className="flex-row items-center gap-md">
-              <AvatarCircle name={entry.blocked.profile?.displayName} />
+              <AvatarCircle
+                name={entry.blocked.profile?.displayName}
+                avatarUrl={entry.blocked.profile?.avatarUrl}
+              />
               <Text variant="body-md" className="flex-1" numberOfLines={1}>
                 {entry.blocked.profile?.displayName ?? 'Unknown User'}
               </Text>
@@ -311,10 +364,12 @@ function FriendsSection() {
 // --- Screen ---
 
 export default function FriendsScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-gutter py-lg gap-xl"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
+      contentContainerClassName="px-gutter gap-xl"
       keyboardShouldPersistTaps="handled"
     >
       <Text variant="headline-lg">Friends</Text>

@@ -138,7 +138,9 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
     const { data: signedUrls } = await supabase.storage
       .from(MEDIA_BUCKET)
       .createSignedUrls(thumbnailPaths, SIGNED_URL_EXPIRY_SECONDS);
-    signedUrlMap = new Map((signedUrls ?? []).map((s) => [s.path, s.signedUrl]));
+    signedUrlMap = new Map(
+      (signedUrls ?? []).map((s) => [s.path as string, s.signedUrl as string])
+    );
   }
 
   return res.status(200).json(
@@ -164,7 +166,7 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
 
   if (memory.userId !== authUserId) {
     const ownerId = memory.userId;
-    const [userAId, userBId] = [authUserId, ownerId].sort();
+    const [userAId, userBId] = [authUserId, ownerId].sort() as [string, string];
 
     const [block, friendship] = await Promise.all([
       prisma.block.findFirst({
@@ -361,7 +363,9 @@ async function attachCoverImages(memories: MemoryWithCoverRaw[]) {
     const { data: signedUrls } = await supabase.storage
       .from(MEDIA_BUCKET)
       .createSignedUrls(coverPaths, SIGNED_URL_EXPIRY_SECONDS);
-    signedUrlMap = new Map((signedUrls ?? []).map((s) => [s.path, s.signedUrl]));
+    signedUrlMap = new Map(
+      (signedUrls ?? []).map((s) => [s.path as string, s.signedUrl as string])
+    );
   }
 
   return memories.map(({ media, ...m }) => ({
@@ -392,7 +396,7 @@ memoriesRouter.get('/users/:userId/memories/with-covers', async (req: Request, r
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const [userAId, userBId] = [authUserId, userId].sort();
+  const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [block, friendship] = await Promise.all([
     prisma.block.findFirst({
@@ -414,9 +418,9 @@ memoriesRouter.get('/users/:userId/memories/with-covers', async (req: Request, r
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
-  const visibilityFilter = friendship
-    ? { in: ['public', 'friends_only'] as const }
-    : { equals: 'public' as const };
+  const visibilityFilter: Prisma.MemoryWhereInput['visibility'] = friendship
+    ? { in: ['public', 'friends_only'] }
+    : { equals: 'public' };
 
   const memories = await prisma.memory.findMany({
     where: { userId, visibility: visibilityFilter },

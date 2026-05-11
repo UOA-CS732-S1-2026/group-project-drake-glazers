@@ -217,7 +217,7 @@ mediaRouter.get('/memories/:memoryId/media', async (req: Request, res: Response)
 
   if (memory.userId !== authUserId) {
     const ownerId = memory.userId;
-    const [userAId, userBId] = [authUserId, ownerId].sort();
+    const [userAId, userBId] = [authUserId, ownerId].sort() as [string, string];
 
     const [block, friendship] = await Promise.all([
       prisma.block.findFirst({
