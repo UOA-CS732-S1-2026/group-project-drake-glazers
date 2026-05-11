@@ -1,6 +1,6 @@
 import express from 'express';
 import type { Request, Response } from 'express';
-import cors from 'cors';
+import cors, { type CorsOptions } from 'cors';
 import { clerkMiddleware } from '@clerk/express';
 import { requireApiAuth } from './middleware/requireApiAuth.js';
 import { clerkWebhookRouter } from './routes/webhooks.js';
@@ -15,7 +15,34 @@ import { errorResponse } from './lib/api-response.js';
 
 const app = express();
 
-app.use(cors());
+const defaultAllowedOrigins = [
+  'https://memoriezz.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+const envAllowedOrigins =
+  process.env.CORS_ORIGINS?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean) ?? [];
+
+const allowedOrigins = new Set([...defaultAllowedOrigins, ...envAllowedOrigins]);
+
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS origin not allowed: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Dev-User-Id'],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 app.use('/api/webhooks/clerk', clerkWebhookRouter);
 app.use(express.json());
 app.use(clerkMiddleware());
