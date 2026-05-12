@@ -4,12 +4,12 @@ const mapboxDownloadToken = process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'client',
+  name: 'Memoriez',
   slug: 'drake-glazers-client',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
-  scheme: 'client',
+  scheme: 'memoriez',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   ios: {

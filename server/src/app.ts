@@ -20,6 +20,7 @@ const defaultAllowedOrigins = [
   'https://memoriezz.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:8081',
 ];
 
 const envAllowedOrigins =
