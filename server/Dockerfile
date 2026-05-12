@@ -5,15 +5,17 @@ WORKDIR /app
 # Copy dependency manifests first for layer caching
 COPY package*.json ./
 COPY prisma ./prisma/
-COPY prisma.config.ts ./
 
-# Install all deps (devDeps needed for tsc + prisma CLI for migrations)
+# Install all deps. Dev dependencies are intentionally kept because Fly's
+# release_command runs `npx prisma migrate deploy` inside this image.
 RUN npm ci
 
-# Generate Prisma client
+# Generate Prisma client before copying prisma.config.ts. Fly secrets are only
+# available at runtime, and prisma.config.ts requires DATABASE_URL/DIRECT_URL.
 RUN npx prisma generate
 
-# Copy source and build config
+# Copy runtime Prisma config and application source
+COPY prisma.config.ts ./
 COPY tsconfig.json ./
 COPY src ./src/
 
@@ -22,5 +24,4 @@ RUN npm run build
 
 EXPOSE 3000
 
-# Run pending migrations then start the server
 CMD ["node", "dist/index.js"]

@@ -17,7 +17,9 @@ const defaultAllowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
 ];
-const envAllowedOrigins = process.env.CORS_ORIGINS?.split(',').map((origin) => origin.trim()).filter(Boolean) ?? [];
+const envAllowedOrigins = process.env.CORS_ORIGINS?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean) ?? [];
 const allowedOrigins = new Set([...defaultAllowedOrigins, ...envAllowedOrigins]);
 const corsOptions = {
     origin(origin, callback) {
