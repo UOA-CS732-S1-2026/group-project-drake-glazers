@@ -12,10 +12,8 @@ import {
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-
 import { useAuth } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
