@@ -12,6 +12,7 @@ import { friendsRouter } from './routes/friends.js';
 import { blocksRouter } from './routes/blocks.js';
 import { mediaRouter } from './routes/media.js';
 import { deviceTokensRouter } from './routes/deviceTokens.js';
+import { savedRouter } from './routes/saved.js';
 import { errorResponse } from './lib/api-response.js';
 
 const app = express();
@@ -20,6 +21,7 @@ const defaultAllowedOrigins = [
   'https://memoriezz.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:8081',
 ];
 
 const envAllowedOrigins =
@@ -43,6 +45,7 @@ const corsOptions: CorsOptions = {
   optionsSuccessStatus: 204,
 };
 
+// Enable CORS with the defined options, see links above
 app.use(cors(corsOptions));
 app.use('/api/webhooks/clerk', clerkWebhookRouter);
 app.use(express.json());
@@ -56,6 +59,7 @@ app.use('/api', friendsRouter);
 app.use('/api', blocksRouter);
 app.use('/api', mediaRouter);
 app.use('/api', deviceTokensRouter);
+app.use('/api', savedRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });

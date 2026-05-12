@@ -19,9 +19,9 @@ export async function uploadFile(
 
 /*
 Usuage Example:
-    const api = useApiClient();
-    const memories = await api.get('/memories');
-    await api.post('/memories', { title: 'My memory' });
+    const api = useApiClient()
+    const memories = await api.get('/memories')
+    await api.post('/memories', { title: 'My memory' })
 */
 
 export function useApiClient() {
@@ -37,7 +37,6 @@ export function useApiClient() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-        'ngrok-skip-browser-warning': 'true',
         ...options.headers,
       },
     });
@@ -54,6 +53,7 @@ export function useApiClient() {
       throw new Error(`API request failed: ${res.status} ${detail}`);
     }
 
+    if (res.status === 204) return null;
     return res.json();
   };
 

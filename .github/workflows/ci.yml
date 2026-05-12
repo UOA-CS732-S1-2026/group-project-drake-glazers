@@ -44,6 +44,7 @@ jobs:
       - run: cd server && npx prisma generate
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5433/postgres
+          DIRECT_URL: postgresql://postgres:test@localhost:5433/postgres
       - run: npm test
 
   build-server:
@@ -57,6 +58,7 @@ jobs:
       - run: cd server && npx prisma generate
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/postgres
+          DIRECT_URL: postgresql://postgres:test@localhost:5432/postgres
       - run: cd server && npm run build
 
   prisma:
@@ -76,7 +78,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
