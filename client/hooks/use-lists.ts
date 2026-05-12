@@ -49,7 +49,8 @@ export function useUpdateList(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name?: string; description?: string }) => api.put(`/api/lists/${id}`, body),
+    mutationFn: (body: { name?: string; description?: string }) =>
+      api.put(`/api/lists/${id}`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       queryClient.invalidateQueries({ queryKey: ['lists', id] });
@@ -76,8 +77,13 @@ export function useCreateListItem(listId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { latitude: number; longitude: number; placeName?: string; notes?: string; imagePath?: string }) =>
-      api.post(`/api/lists/${listId}/items`, body),
+    mutationFn: (body: {
+      latitude: number;
+      longitude: number;
+      placeName?: string;
+      notes?: string;
+      imagePath?: string;
+    }) => api.post(`/api/lists/${listId}/items`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists', listId, 'items'] }),
   });
 }
@@ -87,8 +93,13 @@ export function useUpdateListItem(listId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ itemId, body }: { itemId: string; body: { notes?: string; imagePath?: string } }) =>
-      api.put(`/api/lists/${listId}/items/${itemId}`, body),
+    mutationFn: ({
+      itemId,
+      body,
+    }: {
+      itemId: string;
+      body: { notes?: string; imagePath?: string };
+    }) => api.put(`/api/lists/${listId}/items/${itemId}`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists', listId, 'items'] }),
   });
 }

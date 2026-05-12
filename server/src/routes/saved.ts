@@ -152,10 +152,7 @@ savedRouter.post(
       });
       return res.status(201).json(saved);
     } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2002'
-      ) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         return errorResponse(res, 409, 'ALREADY_SAVED', 'Memory already saved to this collection');
       }
       throw err;
@@ -184,10 +181,7 @@ savedRouter.delete(
         },
       });
     } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2025'
-      ) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
         return errorResponse(res, 404, 'NOT_FOUND', 'Saved memory not found');
       }
       throw err;
@@ -224,7 +218,7 @@ savedRouter.get('/saved/collections/:id', async (req: Request, res: Response) =>
     };
   };
 
-  const savedItems: SavedItem[] = await prisma.savedMemory.findMany({
+  const savedItems: SavedItem[] = (await prisma.savedMemory.findMany({
     where: { collectionId },
     orderBy: { savedAt: 'desc' },
     select: {
@@ -252,7 +246,7 @@ savedRouter.get('/saved/collections/:id', async (req: Request, res: Response) =>
         },
       },
     },
-  }) as unknown as SavedItem[];
+  })) as unknown as SavedItem[];
 
   const paths = savedItems
     .map((i) => i.memory.media[0]?.mediaPath)
