@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
-  scheme: 'memoriez',
+  scheme: 'Memoriez',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   ios: {
@@ -52,13 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        image: './assets/images/splash-icon.png',
+        image: './assets/images/Memoriez-Logo.png',
         imageWidth: 200,
         resizeMode: 'contain',
-        backgroundColor: '#ffffff',
-        dark: {
-          backgroundColor: '#000000',
-        },
+        backgroundColor: '#FFFFFF',
       },
     ],
     [
@@ -101,5 +98,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: '72e669b6-fbe0-4669-8090-3801b4d3d487',
     },
   },
-  owner: 'drake-glazers',
+  owner: 'memoriez-trial',
 });
