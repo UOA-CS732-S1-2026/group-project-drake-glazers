@@ -11,6 +11,7 @@ import { friendRequestsRouter } from './routes/friendRequests.js';
 import { friendsRouter } from './routes/friends.js';
 import { blocksRouter } from './routes/blocks.js';
 import { mediaRouter } from './routes/media.js';
+import { savedRouter } from './routes/saved.js';
 import { errorResponse } from './lib/api-response.js';
 
 const app = express();
@@ -19,6 +20,7 @@ const defaultAllowedOrigins = [
   'https://memoriezz.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:8081',
 ];
 
 const envAllowedOrigins =
@@ -56,6 +58,7 @@ app.use('/api', friendRequestsRouter);
 app.use('/api', friendsRouter);
 app.use('/api', blocksRouter);
 app.use('/api', mediaRouter);
+app.use('/api', savedRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({ status: 'ok' });

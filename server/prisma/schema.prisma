@@ -123,7 +123,9 @@ model ListItem {
   listId    String   @map("list_id")
   latitude  Float
   longitude Float
+  placeName String?  @map("place_name")
   notes     String?
+  imagePath String?  @map("image_path")
   createdAt DateTime @default(now()) @map("created_at")
 
   list List @relation(fields: [listId], references: [id])
