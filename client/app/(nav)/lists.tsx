@@ -13,12 +13,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { CollectionCard } from '@/components/collection-card';
+import { CollectionCardSkeleton } from '@/components/collection-card-skeleton';
 import { Text } from '@/components/ui/text';
 import { useSavedCollections, useCreateCollection } from '@/hooks/use-saved';
+import type { SavedCollection } from '@/lib/types';
+
+type ListItem = SavedCollection | { _skeleton: true; id: string };
 
 export default function SavedScreen() {
   const router = useRouter();
-  const { data: collections = [], isLoading, refetch } = useSavedCollections();
+  const { data: collections = [], isLoading, isFetching, refetch } = useSavedCollections();
+
+  const listData: ListItem[] =
+    isLoading && collections.length === 0
+      ? Array.from({ length: 6 }, (_, i) => ({ _skeleton: true as const, id: `sk-${i}` }))
+      : collections;
   const createCollection = useCreateCollection();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -56,22 +65,26 @@ export default function SavedScreen() {
       </View>
 
       <FlatList
-        data={collections}
+        data={listData}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={<View style={{ height: 4 }} />}
-        renderItem={({ item }) => (
-          <CollectionCard
-            collection={item}
-            onPress={() => router.push(`/saved/${item.id}`)}
-          />
-        )}
+        renderItem={({ item }) =>
+          '_skeleton' in item ? (
+            <CollectionCardSkeleton />
+          ) : (
+            <CollectionCard
+              collection={item}
+              onPress={() => router.push(`/saved/${item.id}`)}
+            />
+          )
+        }
         refreshControl={
           <RefreshControl
-            refreshing={isLoading}
+            refreshing={isFetching && !isLoading}
             onRefresh={refetch}
             tintColor="#b71422"
             colors={['#b71422']}
