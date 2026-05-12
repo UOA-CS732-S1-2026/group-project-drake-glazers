@@ -9,7 +9,7 @@ export function useMemories() {
 
   return useQuery<Memory[]>({
     queryKey: ['memories'],
-    queryFn: () => api.get('api/memories'),
+    queryFn: () => api.get('/api/memories'),
     enabled: !!userId,
   });
 }
