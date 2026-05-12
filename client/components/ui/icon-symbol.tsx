@@ -24,6 +24,7 @@ const MAPPING = {
   'person.crop.circle.fill': 'account-circle',
   'square.grid.2x2.fill': 'apps',
   'rectangle.grid.1x2.fill': 'view-agenda',
+  'bookmark.fill': 'bookmark',
 } as IconMapping;
 
 /**

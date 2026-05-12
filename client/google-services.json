@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "734620856312",
+    "project_id": "memoriez-fa32e",
+    "storage_bucket": "memoriez-fa32e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:734620856312:android:a22b3e6ff562237510b00d",
+        "android_client_info": {
+          "package_name": "com.drakeglazers.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtRs48TXf5MTBWNMB2Cli1Qh1_6VKuE24"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

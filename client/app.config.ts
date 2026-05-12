@@ -4,12 +4,12 @@ const mapboxDownloadToken = process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'client',
+  name: 'Memoriez',
   slug: 'drake-glazers-client',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
-  scheme: 'client',
+  scheme: 'memoriez',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   ios: {
@@ -26,6 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.drakeglazers.app',
+    googleServicesFile: './google-services.json',
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './assets/images/android-icon-foreground.png',
@@ -66,6 +67,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         RNMapboxMapsDownloadToken: mapboxDownloadToken ?? '',
       },
     ],
+    '@clerk/expo',
+    'expo-secure-store',
+    'expo-notifications',
     'expo-font',
     [
       'expo-image-picker',
@@ -91,4 +95,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
     reactCompiler: true,
   },
+  extra: {
+    eas: {
+      projectId: '72e669b6-fbe0-4669-8090-3801b4d3d487',
+    },
+  },
+  owner: 'drake-glazers',
 });

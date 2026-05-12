@@ -13,11 +13,13 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '@/lib/notifications';
 import { useApiClient } from '@/lib/api';
 
 const tokenCache = {
@@ -48,6 +50,7 @@ function InitialLayout() {
   const { user } = useUser();
   const api = useApiClient();
   const colorScheme = useColorScheme();
+  const pushRegisteredRef = useRef(false);
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
     PlusJakartaSans_400Regular,
@@ -64,6 +67,31 @@ function InitialLayout() {
       router.replace('/(auth)/sign-in');
     }
   }, [isLoaded, isSignedIn, fontsLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || pushRegisteredRef.current) return;
+
+    registerForPushNotificationsAsync(api)
+      .then(() => {
+        pushRegisteredRef.current = true;
+      })
+      .catch((error) => {
+        console.error('Failed to register push notifications', error);
+      });
+  }, [api, isLoaded, isSignedIn]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { memoryId?: unknown };
+      const memoryId = typeof data?.memoryId === 'string' ? data.memoryId : null;
+
+      if (memoryId) {
+        router.push(`/memory/${memoryId}`);
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!isSignedIn || !user) return;
@@ -85,6 +113,8 @@ function InitialLayout() {
         <Stack.Screen name="memory/[id]/public" options={{ headerShown: false }} />
         <Stack.Screen name="friends/[id]" options={{ title: 'Friend' }} />
         <Stack.Screen name="memory/index" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="lists/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="saved/[id]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

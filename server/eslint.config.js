@@ -17,6 +17,7 @@ export default [
         process: 'readonly',
         TextDecoder: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
       },
     },
     plugins: {
