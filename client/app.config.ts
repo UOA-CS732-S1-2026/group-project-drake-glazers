@@ -26,6 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.drakeglazers.app',
+    googleServicesFile: './google-services.json',
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './assets/images/android-icon-foreground.png',
@@ -51,13 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        image: './assets/images/splash-icon.png',
+        image: './assets/images/Memoriez-Logo.png',
         imageWidth: 200,
         resizeMode: 'contain',
-        backgroundColor: '#ffffff',
-        dark: {
-          backgroundColor: '#000000',
-        },
+        backgroundColor: '#FFFFFF',
       },
     ],
     [
@@ -66,6 +64,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         RNMapboxMapsDownloadToken: mapboxDownloadToken ?? '',
       },
     ],
+    '@clerk/expo',
+    'expo-secure-store',
+    'expo-notifications',
     'expo-font',
     [
       'expo-image-picker',
@@ -91,4 +92,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
     reactCompiler: true,
   },
+  extra: {
+    eas: {
+      projectId: '72e669b6-fbe0-4669-8090-3801b4d3d487',
+    },
+  },
+  owner: 'drake-glazers',
 });

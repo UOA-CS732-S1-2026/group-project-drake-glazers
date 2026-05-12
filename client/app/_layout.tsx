@@ -13,13 +13,16 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '@/lib/notifications';
 import { useApiClient } from '@/lib/api';
 import CustomSplashScreen from '@/components/custom-splash-screen';
+import NotificationBanner from '@/components/notification-banner';
 
 const tokenCache = {
   getToken: (key: string) => SecureStore.getItemAsync(key),
@@ -49,7 +52,13 @@ function InitialLayout() {
   const { user } = useUser();
   const api = useApiClient();
   const colorScheme = useColorScheme();
+  const pushRegisteredRef = useRef(false);
   const [splashDone, setSplashDone] = useState(false);
+  const [incomingNotification, setIncomingNotification] = useState<{
+    title: string;
+    body: string;
+    memoryId?: string | null;
+  } | null>(null);
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
     PlusJakartaSans_400Regular,
@@ -71,6 +80,37 @@ function InitialLayout() {
   }, [splashDone, isLoaded, isSignedIn]);
 
   useEffect(() => {
+    if (!isLoaded || !isSignedIn || pushRegisteredRef.current) return;
+
+    registerForPushNotificationsAsync(api)
+      .then(() => {
+        pushRegisteredRef.current = true;
+      })
+      .catch((error) => {
+        console.error('Failed to register push notifications', error);
+      });
+  }, [api, isLoaded, isSignedIn]);
+
+  useEffect(() => {
+    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+      const { title, body, data } = notification.request.content;
+      const memoryId = typeof (data as any)?.memoryId === 'string' ? (data as any).memoryId : null;
+      setIncomingNotification({ title: title ?? 'Memoriez', body: body ?? '', memoryId });
+    });
+
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { memoryId?: unknown };
+      const memoryId = typeof data?.memoryId === 'string' ? data.memoryId : null;
+      if (memoryId) router.push(`/memory/${memoryId}`);
+    });
+
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isSignedIn || !user) return;
     const email = user.primaryEmailAddress?.emailAddress;
     if (!email) return;
@@ -78,11 +118,8 @@ function InitialLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn, user?.id]);
 
-  // Native splash covers this gap — return null while fonts aren't ready.
   if (!fontsLoaded) return null;
 
-  // Fonts loaded: hand off to the JS splash which plays the animation,
-  // waits for auth, then fades out and calls onComplete.
   if (!splashDone) {
     return <CustomSplashScreen isReady={isLoaded} onComplete={() => setSplashDone(true)} />;
   }
@@ -97,8 +134,18 @@ function InitialLayout() {
         <Stack.Screen name="memory/[id]/public" options={{ headerShown: false }} />
         <Stack.Screen name="friends/[id]" options={{ title: 'Friend' }} />
         <Stack.Screen name="memory/index" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="lists/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="saved/[id]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+      {incomingNotification && (
+        <NotificationBanner
+          title={incomingNotification.title}
+          body={incomingNotification.body}
+          memoryId={incomingNotification.memoryId}
+          onDismiss={() => setIncomingNotification(null)}
+        />
+      )}
     </ThemeProvider>
   );
 }

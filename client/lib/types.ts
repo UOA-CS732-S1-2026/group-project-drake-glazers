@@ -1,3 +1,23 @@
+export type List = {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  coverImages: string[];
+};
+
+export type ListItem = {
+  id: string;
+  listId: string;
+  latitude: number;
+  longitude: number;
+  placeName: string | null;
+  notes: string | null;
+  imageUrl: string | null;
+  createdAt: string;
+};
+
 export type User = {
   id: string; // same value as Clerk authUserId
   email: string;
@@ -82,6 +102,36 @@ export type Memory = {
 
 export type MemoryWithCover = Memory & {
   coverImage: string | null;
+};
+
+export type ExploreMemory = {
+  id: string;
+  userId: string;
+  title: string;
+  description: string | null;
+  relativeArea: string | null;
+  latitude: number;
+  longitude: number;
+  visibility: string;
+  createdAt: string;
+  author: string;
+  avatarUrl: string | null;
+  imageUrl: string | null;
+  mediaType: string | null;
+};
+
+export type SavedCollection = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  createdAt: string;
+  count: number;
+  coverImages: string[];
+};
+
+export type SavedPair = {
+  memoryId: string;
+  collectionId: string;
 };
 
 export type MediaType = 'image' | 'video' | 'voice_note';

@@ -10,7 +10,7 @@ type ApiErrorPayload = {
 
 export const errorResponse = (
   res: Response,
-  status: 400 | 401 | 404 | 500,
+  status: 400 | 401 | 403 | 404 | 409 | 500,
   code: string,
   message: string,
   details?: unknown
