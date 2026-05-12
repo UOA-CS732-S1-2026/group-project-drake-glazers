@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import { Platform, ToastAndroid } from 'react-native';
+import { Platform } from 'react-native';
 
 type ApiClient = {
   post: (path: string, body: unknown) => Promise<unknown>;
@@ -14,13 +14,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const debugPush = (message: string) => {
+const debugPush = (message: string, level: 'info' | 'error' | 'debug' = 'info') => {
   if (process.env.EXPO_PUBLIC_DEBUG_PUSH !== 'true') return;
-  if (Platform.OS === 'android') {
-    ToastAndroid.show(message, ToastAndroid.SHORT);
-    return;
-  }
-  console.log(`push: ${message}`);
+  const out = `push:${level} ${message}`;
+  if (level === 'error') console.error(out);
+  else if (level === 'debug') console.debug(out);
+  else console.log(out);
 };
 
 const formatErrorMessage = (error: unknown): string => {
@@ -76,7 +75,9 @@ export const registerForPushNotificationsAsync = async (api: ApiClient) => {
   try {
     token = await getExpoPushToken();
   } catch (error) {
-    debugPush(`token error ${formatErrorMessage(error).slice(0, 140)}`);
+    const msg = formatErrorMessage(error).slice(0, 140);
+    debugPush(`token error ${msg}`, 'error');
+    console.error('registerForPushNotificationsAsync: token error', error);
     throw error;
   }
 
@@ -90,8 +91,15 @@ export const registerForPushNotificationsAsync = async (api: ApiClient) => {
       timeZone,
     });
     debugPush('device token saved');
+    // also emit a non-toast console log with masked token for debugging
+    try {
+      const masked = `${token.slice(0, 10)}...${token.slice(-6)}`;
+      console.info('Push token saved', { token: masked, platform: Platform.OS, timeZone });
+    } catch {}
   } catch (error) {
-    debugPush(`save error ${formatErrorMessage(error).slice(0, 140)}`);
+    const msg = formatErrorMessage(error).slice(0, 140);
+    debugPush(`save error ${msg}`, 'error');
+    console.error('registerForPushNotificationsAsync: save error', error);
     throw error;
   }
 };
