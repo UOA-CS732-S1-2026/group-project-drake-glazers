@@ -97,6 +97,7 @@ export type Memory = {
   visibility: Visibility;
   memoryDate?: string | null;
   thumbnailUrl?: string | null;
+  thumbnailMediaType?: 'image' | 'video' | null;
   createdAt: string;
   updatedAt: string;
 };

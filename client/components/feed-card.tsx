@@ -3,8 +3,6 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
 import type { ExploreMemory } from '@/lib/types';
 
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400';
-
 type Props = {
   memory: ExploreMemory;
   onPress: () => void;
@@ -13,8 +11,8 @@ type Props = {
 };
 
 export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
-  const imageUri = memory.imageUrl ?? PLACEHOLDER_IMAGE;
   const isVideo = memory.mediaType === 'video';
+  const imageUri = !isVideo && memory.imageUrl ? memory.imageUrl : null;
 
   return (
     <TouchableOpacity style={styles.feedCard} onPress={onPress} activeOpacity={0.92}>
@@ -38,11 +36,12 @@ export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
       </View>
 
       <View style={{ position: 'relative' }}>
-        <Image source={{ uri: imageUri }} style={styles.feedImage} resizeMode="cover" />
-        {isVideo && (
-          <View style={styles.videoPlay}>
-            <MaterialIcons name="play-circle-outline" size={36} color="#fff" />
+        {isVideo ? (
+          <View style={styles.videoThumbnail}>
+            <MaterialIcons name="play-circle-filled" size={48} color="rgba(255,255,255,0.85)" />
           </View>
+        ) : (
+          <Image source={{ uri: imageUri ?? undefined }} style={styles.feedImage} resizeMode="cover" />
         )}
       </View>
 
@@ -103,6 +102,13 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
   },
+  videoThumbnail: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   feedFooter: {
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -114,11 +120,5 @@ const styles = StyleSheet.create({
   },
   bookmarkBtn: {
     marginTop: 2,
-  },
-  videoPlay: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
 });

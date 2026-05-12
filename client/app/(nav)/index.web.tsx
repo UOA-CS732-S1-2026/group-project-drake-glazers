@@ -103,7 +103,7 @@ function WebMapPin({
     <div style={styles.pinWrapper}>
       <div style={styles.pinBubble}>
         <div style={styles.pinImageClip}>
-          {memory.thumbnailUrl ? (
+          {memory.thumbnailUrl && memory.thumbnailMediaType !== 'video' ? (
             <img
               src={memory.thumbnailUrl}
               alt=""
@@ -111,6 +111,12 @@ function WebMapPin({
               draggable={false}
               style={styles.pinImage}
             />
+          ) : memory.thumbnailMediaType === 'video' ? (
+            <div style={styles.pinVideoPlaceholder}>
+              <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" fill="#ffffff" />
+              </svg>
+            </div>
           ) : (
             <span style={styles.pinInitial}>{initial}</span>
           )}
@@ -246,6 +252,14 @@ const styles = {
     fontSize: 28,
     lineHeight: '28px',
     fontWeight: 700,
+  },
+  pinVideoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#1a1a2e',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pinBadge: {
     position: 'absolute' as const,

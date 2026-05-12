@@ -77,6 +77,7 @@ export default function HomeScreen() {
             coordinate={[memory.longitude, memory.latitude]}
             title={memory.title}
             thumbnailUrl={memory.thumbnailUrl}
+            thumbnailMediaType={memory.thumbnailMediaType}
             onPress={handlePinPress}
           />
         ))}

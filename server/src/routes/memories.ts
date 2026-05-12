@@ -109,16 +109,21 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
     select: {
       ...memorySelect,
       media: {
-        select: { mediaPath: true },
-        where: { mediaType: 'image' },
+        select: { mediaPath: true, mediaType: true },
+        where: { mediaType: { in: ['image', 'video'] } },
         orderBy: { createdAt: 'asc' as const },
-        take: 1,
       },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  const thumbnailPaths = memories.map((m) => m.media[0]?.mediaPath).filter((p): p is string => !!p);
+  const thumbnailPaths = memories
+    .map((m) => {
+      const image = m.media.find((i) => i.mediaType === 'image');
+      const video = m.media.find((i) => i.mediaType === 'video');
+      return (image ?? video)?.mediaPath;
+    })
+    .filter((p): p is string => !!p);
 
   let signedUrlMap = new Map<string, string>();
   if (thumbnailPaths.length > 0) {
@@ -131,10 +136,15 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(
-    memories.map(({ media, ...memory }) => ({
-      ...memory,
-      thumbnailUrl: media[0] ? (signedUrlMap.get(media[0].mediaPath) ?? null) : null,
-    }))
+    memories.map(({ media, ...memory }) => {
+      const thumbnail =
+        media.find((i) => i.mediaType === 'image') ?? media.find((i) => i.mediaType === 'video') ?? null;
+      return {
+        ...memory,
+        thumbnailUrl: thumbnail ? (signedUrlMap.get(thumbnail.mediaPath) ?? null) : null,
+        thumbnailMediaType: thumbnail?.mediaType ?? null,
+      };
+    })
   );
 });
 
