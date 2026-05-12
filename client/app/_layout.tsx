@@ -76,7 +76,11 @@ function InitialLayout() {
   // Navigate only after both the splash animation and auth are done.
   useEffect(() => {
     if (!splashDone || !isLoaded) return;
-    if (!isSignedIn) router.replace('/(auth)/sign-in');
+    if (isSignedIn) {
+      router.replace('/(nav)/');
+    } else {
+      router.replace('/(auth)/sign-in');
+    }
   }, [splashDone, isLoaded, isSignedIn]);
 
   useEffect(() => {

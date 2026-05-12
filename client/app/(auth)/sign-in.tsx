@@ -1,5 +1,5 @@
 import { useSignIn } from '@clerk/expo';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,15 +13,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { Href } from 'expo-router';
 import { useApiClient } from '@/lib/api';
-import { OnboardingModal } from '@/components/onboarding-modal';
 
 type Step = 'credentials' | 'mfa';
 
 export default function SignInScreen() {
   const { signIn, fetchStatus } = useSignIn();
-  const router = useRouter();
   const api = useApiClient();
 
   const [email, setEmail] = useState('');
@@ -29,33 +26,19 @@ export default function SignInScreen() {
   const [code, setCode] = useState('');
   const [step, setStep] = useState<Step>('credentials');
   const [error, setError] = useState('');
-  const [checkingProfile, setCheckingProfile] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const clerkLoading = fetchStatus === 'fetching';
-  const loading = clerkLoading || checkingProfile;
+  const loading = clerkLoading;
 
-  const syncAndCheckProfile = async () => {
-    setCheckingProfile(true);
+  const syncUser = async () => {
     try {
-      try {
-        await api.post('/api/users', { email });
-      } catch {}
-
-      try {
-        await api.get('/api/users/me/profile');
-        router.replace('/(nav)/' as Href);
-      } catch {
-        setShowOnboarding(true);
-      }
-    } finally {
-      setCheckingProfile(false);
-    }
+      await api.post('/api/users', { email });
+    } catch {}
   };
 
   const finalize = async () => {
     await signIn.finalize({
-      navigate: syncAndCheckProfile,
+      navigate: syncUser,
     });
   };
 
@@ -180,11 +163,6 @@ export default function SignInScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-
-        <OnboardingModal
-          visible={showOnboarding}
-          onComplete={() => router.replace('/(nav)/' as Href)}
-        />
       </KeyboardAvoidingView>
     );
   }
@@ -254,11 +232,6 @@ export default function SignInScreen() {
           </Link>
         </View>
       </ScrollView>
-
-      <OnboardingModal
-        visible={showOnboarding}
-        onComplete={() => router.replace('/(nav)/' as Href)}
-      />
     </KeyboardAvoidingView>
   );
 }
