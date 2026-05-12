@@ -15,6 +15,7 @@ export default function HomeScreen() {
   const { data: memories = [] } = useMemories();
   const pendingCenter = useMapStore((s) => s.pendingCenter);
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
+  const setMemoryCardOpen = useMapStore((s) => s.setMemoryCardOpen);
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -23,6 +24,7 @@ export default function HomeScreen() {
     (id: string, coordinate: [number, number]) => {
       const memory = memories.find((m) => m.id === id) ?? null;
       setSelectedMemory(memory);
+      setMemoryCardOpen(!!memory);
       cameraRef.current?.setCamera({
         centerCoordinate: coordinate,
         zoomLevel: 14,
@@ -100,7 +102,10 @@ export default function HomeScreen() {
         <MemoryPreviewCard
           key={selectedMemory.id}
           memory={selectedMemory}
-          onClose={() => setSelectedMemory(null)}
+          onClose={() => {
+            setSelectedMemory(null);
+            setMemoryCardOpen(false);
+          }}
           bottomOffset={(insets.bottom || 12) + 56}
         />
       )}
