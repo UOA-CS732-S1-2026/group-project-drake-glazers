@@ -27,6 +27,7 @@ export default function CreateMemoryScreen() {
       {pickingLocation && (
         <View style={StyleSheet.absoluteFill}>
           <LocationPicker
+            allowDropPin={false}
             onConfirm={(lat, lng, name) => {
               setLocation({ lat, lng, name });
               setPickingLocation(false);
