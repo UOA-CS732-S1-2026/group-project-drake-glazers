@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Modal, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { List } from '@/lib/types';
@@ -34,7 +42,10 @@ export function ListFormSheet({ visible, onClose, onSubmit, loading = false, exi
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-background">
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           {/* Header */}
           <View className="flex-row items-center px-gutter pt-lg pb-md border-b border-outline-variant">
             <TouchableOpacity onPress={onClose} hitSlop={8} className="mr-md">
@@ -57,7 +68,9 @@ export function ListFormSheet({ visible, onClose, onSubmit, loading = false, exi
             keyboardShouldPersistTaps="handled"
           >
             <View>
-              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Name</Text>
+              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">
+                Name
+              </Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
@@ -72,14 +85,22 @@ export function ListFormSheet({ visible, onClose, onSubmit, loading = false, exi
             </View>
 
             <View>
-              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Description (optional)</Text>
+              <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">
+                Description (optional)
+              </Text>
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="What's this list for?"
                 placeholderTextColor="#9e9e9e"
                 className="bg-surface-container-low text-on-surface rounded-lg"
-                style={{ paddingHorizontal: 14, paddingVertical: 12, minHeight: 90, textAlignVertical: 'top', fontSize: 16 }}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  minHeight: 90,
+                  textAlignVertical: 'top',
+                  fontSize: 16,
+                }}
                 maxLength={1000}
                 multiline
                 numberOfLines={4}

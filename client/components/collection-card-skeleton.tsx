@@ -16,9 +16,9 @@ function Block({ style }: { style?: object }) {
     opacity.value = withRepeat(
       withSequence(
         withTiming(0.4, { duration: 700, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) })
       ),
-      -1,
+      -1
     );
   }, [opacity]);
 

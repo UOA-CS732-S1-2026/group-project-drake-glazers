@@ -58,11 +58,7 @@ function CustomTabBar({ state, navigation }: any) {
         style={styles.tabItem}
       >
         <View style={[styles.iconPill, isFocused && styles.iconPillFocused]}>
-          <IconSymbol
-            name={tab.icon}
-            size={22}
-            color={isFocused ? TOKEN.primary : inactiveColor}
-          />
+          <IconSymbol name={tab.icon} size={22} color={isFocused ? TOKEN.primary : inactiveColor} />
         </View>
         <Text variant="label-md" style={{ color: isFocused ? TOKEN.primary : inactiveColor }}>
           {tab.label}

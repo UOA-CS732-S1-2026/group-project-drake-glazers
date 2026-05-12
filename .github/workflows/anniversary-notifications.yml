@@ -1,0 +1,32 @@
+name: Anniversary notifications
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci --prefix server
+
+      - name: Generate Prisma client
+        run: cd server && npx prisma generate
+
+      - name: Run anniversary notification job
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANNIVERSARY_NOTIFICATION_HOUR: ${{ vars.ANNIVERSARY_NOTIFICATION_HOUR || '9' }}
+        run: cd server && npx tsx src/jobs/anniversaryNotifications.ts

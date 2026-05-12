@@ -136,11 +136,7 @@ export function SaveToCollectionSheet({ memory, savedPairs, onClose }: Props) {
   return (
     <View style={[StyleSheet.absoluteFillObject, { pointerEvents: 'box-none' }]}>
       {/* Backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={handleClose}
-      />
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
       {/* Sheet */}
       <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
@@ -225,9 +221,16 @@ export function SaveToCollectionSheet({ memory, savedPairs, onClose }: Props) {
                   {/* Thumbnail strip (up to 3) */}
                   <View style={styles.thumbStrip}>
                     {col.coverImages.length > 0 ? (
-                      col.coverImages.slice(0, 3).map((uri, idx) => (
-                        <Image key={idx} source={{ uri }} style={styles.thumb} resizeMode="cover" />
-                      ))
+                      col.coverImages
+                        .slice(0, 3)
+                        .map((uri, idx) => (
+                          <Image
+                            key={idx}
+                            source={{ uri }}
+                            style={styles.thumb}
+                            resizeMode="cover"
+                          />
+                        ))
                     ) : (
                       <View style={[styles.thumb, styles.thumbPlaceholder]}>
                         <MaterialIcons name="photo-library" size={18} color="#c8c3c2" />
@@ -246,9 +249,7 @@ export function SaveToCollectionSheet({ memory, savedPairs, onClose }: Props) {
                   </View>
 
                   {/* Checkmark */}
-                  {isSaved && (
-                    <MaterialIcons name="check-circle" size={22} color="#b71422" />
-                  )}
+                  {isSaved && <MaterialIcons name="check-circle" size={22} color="#b71422" />}
                 </TouchableOpacity>
               );
             })}

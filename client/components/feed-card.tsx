@@ -49,7 +49,11 @@ export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
       <View style={styles.feedFooter}>
         <View style={styles.footerRow}>
           <View style={{ flex: 1 }}>
-            <Text variant="body-md" style={{ color: '#1c1b1b', fontWeight: '600' }} numberOfLines={2}>
+            <Text
+              variant="body-md"
+              style={{ color: '#1c1b1b', fontWeight: '600' }}
+              numberOfLines={2}
+            >
               {memory.title}
             </Text>
             {memory.description && (
