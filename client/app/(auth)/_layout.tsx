@@ -8,5 +8,5 @@ export default function AuthRoutesLayout() {
     return null;
   }
 
-  return <Stack />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

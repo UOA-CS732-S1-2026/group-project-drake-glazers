@@ -228,8 +228,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logo: {
-    width: 220,
-    height: 80,
+    width: 280,
+    maxWidth: '100%',
+    height: 102,
     marginBottom: 14,
   },
   tagline: {
@@ -240,6 +241,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   card: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
@@ -260,15 +264,16 @@ const styles = StyleSheet.create({
     color: '#444444',
     marginBottom: 6,
     marginTop: 14,
+    marginHorizontal: 24,
   },
   input: {
     backgroundColor: '#F2F2F2',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     fontSize: 15,
     color: '#1A1A1A',
-    marginHorizontal: 12,
+    marginHorizontal: 24,
   },
   error: {
     color: '#D9534F',
@@ -283,6 +288,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 20,
+    marginHorizontal: 24,
   },
   buttonDisabled: {
     opacity: 0.55,

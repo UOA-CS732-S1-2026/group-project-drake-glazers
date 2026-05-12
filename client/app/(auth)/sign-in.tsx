@@ -119,8 +119,11 @@ export default function SignInScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.hero}>
-            <Image source={require('@/assets/images/icon.png')} style={styles.icon} />
-            <Text style={styles.title}>Memoriez</Text>
+            <Image
+              source={require('@/assets/images/Memoriez-Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.tagline}>
               Relive your journey through the spots that matter most.
             </Text>
@@ -193,8 +196,11 @@ export default function SignInScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
-          <Image source={require('@/assets/images/icon.png')} style={styles.icon} />
-          <Text style={styles.title}>Memoriez</Text>
+          <Image
+            source={require('@/assets/images/Memoriez-Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.tagline}>
             Relive your journey through the spots that matter most.
           </Text>
@@ -213,12 +219,7 @@ export default function SignInScreen() {
             autoComplete="email"
           />
 
-          <View style={styles.passwordHeader}>
-            <Text style={styles.label}>Password</Text>
-            <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot?</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
             placeholder="••••••••"
@@ -279,17 +280,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  icon: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+  logo: {
+    width: 280,
+    maxWidth: '100%',
+    height: 102,
     marginBottom: 14,
-  },
-  title: {
-    fontSize: 36,
-    fontFamily: 'PlaywriteNO',
-    color: PRIMARY,
-    marginBottom: 10,
   },
   tagline: {
     fontSize: 15,
@@ -299,6 +294,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   card: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
@@ -319,33 +317,23 @@ const styles = StyleSheet.create({
     color: '#888888',
     marginBottom: 20,
   },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   label: {
     fontSize: 13,
     fontWeight: '600',
     color: '#444444',
     marginBottom: 6,
     marginTop: 14,
+    marginHorizontal: 24,
   },
   input: {
     backgroundColor: '#F2F2F2',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     fontSize: 15,
     color: '#1A1A1A',
     marginBottom: 2,
-    marginHorizontal: 12,
-  },
-  forgotText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: PRIMARY,
-    marginTop: 14,
+    marginHorizontal: 24,
   },
   error: {
     color: '#D9534F',
@@ -360,6 +348,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 20,
+    marginHorizontal: 24,
   },
   buttonDisabled: {
     opacity: 0.55,
