@@ -16,7 +16,7 @@ type MapPinProps = {
   coordinate: [number, number];
   title?: string;
   thumbnailUrl?: string | null;
-  thumbnailMediaType?: string | null;
+  thumbnailMediaType?: 'image' | 'video' | null;
   /** Icon shown in the bottom-right badge. Defaults to 'heart'. */
   badgeIcon?: PinBadgeIcon;
   onPress?: (id: string, coordinate: [number, number]) => void;

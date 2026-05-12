@@ -476,7 +476,12 @@ function EmbeddedVideoPlayer({ item }: { item: Media }) {
       await videoRef.current?.presentFullscreenPlayer();
       await videoRef.current?.playAsync();
     } catch {
-      // falls back to the inline player if fullscreen is unavailable
+      // fullscreen unavailable — play inline instead
+      try {
+        await videoRef.current?.playAsync();
+      } catch {
+        setActive(false);
+      }
     }
   }, []);
 
