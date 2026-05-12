@@ -82,9 +82,7 @@ export function ListItemFormSheet({
   }, [visible, mode]);
 
   const isEditing = mode.type === 'edit';
-  const isValid = isEditing
-    ? notes.trim().length > 0
-    : location !== null && image !== null;
+  const isValid = isEditing ? notes.trim().length > 0 : location !== null && image !== null;
 
   async function pickFromLibrary() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -92,10 +90,17 @@ export function ListItemFormSheet({
       Alert.alert('Permission required', 'Please allow access to your photo library in Settings.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
     if (!result.canceled) {
       const asset = result.assets[0];
-      setImage({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg', ext: getExtension(asset.uri, asset.mimeType) });
+      setImage({
+        uri: asset.uri,
+        mimeType: asset.mimeType ?? 'image/jpeg',
+        ext: getExtension(asset.uri, asset.mimeType),
+      });
     }
   }
 
@@ -108,7 +113,11 @@ export function ListItemFormSheet({
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled) {
       const asset = result.assets[0];
-      setImage({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg', ext: getExtension(asset.uri, asset.mimeType) });
+      setImage({
+        uri: asset.uri,
+        mimeType: asset.mimeType ?? 'image/jpeg',
+        ext: getExtension(asset.uri, asset.mimeType),
+      });
     }
   }
 
@@ -119,7 +128,10 @@ export function ListItemFormSheet({
     if (image) {
       setUploading(true);
       try {
-        const { signedUrl, path } = await api.post('/api/media/upload-url', { fileExtension: image.ext, mediaType: 'image' });
+        const { signedUrl, path } = await api.post('/api/media/upload-url', {
+          fileExtension: image.ext,
+          mediaType: 'image',
+        });
         await uploadFile(signedUrl, image.uri, image.mimeType);
         imagePath = path;
       } catch {
@@ -137,7 +149,13 @@ export function ListItemFormSheet({
         notes: notes.trim() || undefined,
       });
     } else {
-      onSubmit({ latitude: location!.lat, longitude: location!.lng, placeName: location!.name, notes: notes.trim() || undefined, imagePath });
+      onSubmit({
+        latitude: location!.lat,
+        longitude: location!.lng,
+        placeName: location!.name,
+        notes: notes.trim() || undefined,
+        imagePath,
+      });
     }
   }
 
@@ -147,7 +165,10 @@ export function ListItemFormSheet({
     <>
       <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
         <SafeAreaView className="flex-1 bg-background">
-          <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
             {/* Header */}
             <View className="flex-row items-center px-gutter pt-lg pb-md border-b border-outline-variant">
               <TouchableOpacity onPress={onClose} hitSlop={8} className="mr-md">
@@ -172,7 +193,9 @@ export function ListItemFormSheet({
               {/* Location (create only) */}
               {!isEditing && (
                 <View>
-                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Location</Text>
+                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">
+                    Location
+                  </Text>
                   {location ? (
                     <View className="flex-row items-center gap-sm">
                       <TouchableOpacity
@@ -181,7 +204,9 @@ export function ListItemFormSheet({
                         style={{ paddingHorizontal: 12, paddingVertical: 12 }}
                       >
                         <MaterialIcons name="place" size={16} color="#b71422" />
-                        <Text variant="body-sm" className="flex-1" numberOfLines={2}>{location.name}</Text>
+                        <Text variant="body-sm" className="flex-1" numberOfLines={2}>
+                          {location.name}
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => setLocation(null)} className="p-sm">
                         <MaterialIcons name="close" size={20} color="#9e9e9e" />
@@ -194,7 +219,9 @@ export function ListItemFormSheet({
                       style={{ paddingHorizontal: 14, paddingVertical: 14 }}
                     >
                       <MaterialIcons name="search" size={20} color="#9e9e9e" />
-                      <Text variant="body-md" className="text-on-surface-variant">Search for a place...</Text>
+                      <Text variant="body-md" className="text-on-surface-variant">
+                        Search for a place...
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -203,13 +230,26 @@ export function ListItemFormSheet({
               {/* Photo (create only) */}
               {!isEditing && (
                 <View>
-                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">Photo</Text>
+                  <Text variant="label-md" className="text-on-surface-variant uppercase mb-xs">
+                    Photo
+                  </Text>
                   {image ? (
                     <View>
-                      <Image source={{ uri: image.uri }} style={{ width: '100%', height: 220, borderRadius: 16 }} resizeMode="cover" />
+                      <Image
+                        source={{ uri: image.uri }}
+                        style={{ width: '100%', height: 220, borderRadius: 16 }}
+                        resizeMode="cover"
+                      />
                       <TouchableOpacity
                         onPress={() => setImage(null)}
-                        style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 6 }}
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          backgroundColor: 'rgba(0,0,0,0.6)',
+                          borderRadius: 16,
+                          padding: 6,
+                        }}
                       >
                         <MaterialIcons name="close" size={18} color="#fff" />
                       </TouchableOpacity>
@@ -222,7 +262,9 @@ export function ListItemFormSheet({
                         style={{ height: 110 }}
                       >
                         <MaterialIcons name="photo-library" size={28} color="#9e9e9e" />
-                        <Text variant="label-md" className="text-on-surface-variant">Library</Text>
+                        <Text variant="label-md" className="text-on-surface-variant">
+                          Library
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={takePhoto}
@@ -230,7 +272,9 @@ export function ListItemFormSheet({
                         style={{ height: 110 }}
                       >
                         <MaterialIcons name="camera-alt" size={28} color="#9e9e9e" />
-                        <Text variant="label-md" className="text-on-surface-variant">Camera</Text>
+                        <Text variant="label-md" className="text-on-surface-variant">
+                          Camera
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -254,10 +298,18 @@ export function ListItemFormSheet({
                 <TextInput
                   value={notes}
                   onChangeText={setNotes}
-                  placeholder={isEditing ? 'Update your note…' : 'e.g. Closed Mondays, try the matcha latte'}
+                  placeholder={
+                    isEditing ? 'Update your note…' : 'e.g. Closed Mondays, try the matcha latte'
+                  }
                   placeholderTextColor="#9e9e9e"
                   className="bg-surface-container-low text-on-surface rounded-lg"
-                  style={{ paddingHorizontal: 14, paddingVertical: 12, minHeight: 90, textAlignVertical: 'top', fontSize: 16 }}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    minHeight: 90,
+                    textAlignVertical: 'top',
+                    fontSize: 16,
+                  }}
                   maxLength={1000}
                   multiline
                   numberOfLines={4}

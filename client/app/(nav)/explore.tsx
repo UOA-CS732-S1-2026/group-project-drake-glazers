@@ -1,10 +1,5 @@
 import { useState, useCallback } from 'react';
-import {
-  ScrollView,
-  RefreshControl,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { ScrollView, RefreshControl, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';

@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 
-
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -66,7 +65,9 @@ export default function ListDetailScreen() {
   if (!list) {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center">
-        <Text variant="body-md" className="text-on-surface-variant">List not found.</Text>
+        <Text variant="body-md" className="text-on-surface-variant">
+          List not found.
+        </Text>
       </SafeAreaView>
     );
   }
@@ -119,14 +120,16 @@ export default function ListDetailScreen() {
                 {item.placeName ? (
                   <View className="flex-row items-center mb-xs" style={{ gap: 4 }}>
                     <MaterialIcons name="location-on" size={14} color="#b71422" />
-                    <Text variant="label-md" className="text-on-surface-variant flex-1" numberOfLines={1}>
+                    <Text
+                      variant="label-md"
+                      className="text-on-surface-variant flex-1"
+                      numberOfLines={1}
+                    >
                       {item.placeName}
                     </Text>
                   </View>
                 ) : null}
-                {item.notes ? (
-                  <Text variant="body-sm">{item.notes}</Text>
-                ) : null}
+                {item.notes ? <Text variant="body-sm">{item.notes}</Text> : null}
               </View>
               <View className="flex-row" style={{ gap: 4, marginLeft: 8 }}>
                 <Pressable onPress={() => setEditingItem(item)} className="p-xs">

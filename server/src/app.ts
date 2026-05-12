@@ -11,6 +11,7 @@ import { friendRequestsRouter } from './routes/friendRequests.js';
 import { friendsRouter } from './routes/friends.js';
 import { blocksRouter } from './routes/blocks.js';
 import { mediaRouter } from './routes/media.js';
+import { deviceTokensRouter } from './routes/deviceTokens.js';
 import { savedRouter } from './routes/saved.js';
 import { errorResponse } from './lib/api-response.js';
 
@@ -49,7 +50,6 @@ app.use(cors(corsOptions));
 app.use('/api/webhooks/clerk', clerkWebhookRouter);
 app.use(express.json());
 app.use(clerkMiddleware());
-
 app.use('/api', requireApiAuth);
 app.use('/api', usersRouter);
 app.use('/api', memoriesRouter);
@@ -58,6 +58,7 @@ app.use('/api', friendRequestsRouter);
 app.use('/api', friendsRouter);
 app.use('/api', blocksRouter);
 app.use('/api', mediaRouter);
+app.use('/api', deviceTokensRouter);
 app.use('/api', savedRouter);
 
 app.get('/health', (_req: Request, res: Response) => {

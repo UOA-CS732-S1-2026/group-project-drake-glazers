@@ -1,9 +1,9 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { Webhook } from 'svix';
-import { z } from 'zod';
 import { errorResponse } from '../lib/api-response.js';
 import { prisma } from '../lib/prisma.js';
+import { clerkWebhookEventSchema, type ClerkWebhookEvent } from '../schemas/webhooks.js';
 
 export const clerkWebhookRouter = express.Router();
 
@@ -18,24 +18,6 @@ const getRawBodyText = (body: Request['body']): string => {
 
   return '';
 };
-
-const clerkWebhookEventSchema = z.looseObject({
-  type: z.enum(['user.created', 'user.updated', 'user.deleted']),
-  data: z.looseObject({
-    id: z.string(),
-    email_addresses: z
-      .array(
-        z.looseObject({
-          id: z.string().optional(),
-          email_address: z.email().optional(),
-        })
-      )
-      .optional(),
-    primary_email_address_id: z.string().optional(),
-  }),
-});
-
-type ClerkWebhookEvent = z.infer<typeof clerkWebhookEventSchema>;
 
 clerkWebhookRouter.post(
   '/',

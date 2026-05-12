@@ -76,10 +76,7 @@ export default function SavedScreen() {
           '_skeleton' in item ? (
             <CollectionCardSkeleton />
           ) : (
-            <CollectionCard
-              collection={item}
-              onPress={() => router.push(`/saved/${item.id}`)}
-            />
+            <CollectionCard collection={item} onPress={() => router.push(`/saved/${item.id}`)} />
           )
         }
         refreshControl={
@@ -103,12 +100,7 @@ export default function SavedScreen() {
       />
 
       {/* Create collection modal */}
-      <Modal
-        visible={showCreate}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancel}
-      >
+      <Modal visible={showCreate} transparent animationType="fade" onRequestClose={handleCancel}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleCancel}>
           <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
             <Text variant="body-lg" style={styles.modalTitle}>
@@ -132,10 +124,7 @@ export default function SavedScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleCreate}
-                style={[
-                  styles.modalCreateBtn,
-                  !newName.trim() && styles.modalCreateBtnDisabled,
-                ]}
+                style={[styles.modalCreateBtn, !newName.trim() && styles.modalCreateBtnDisabled]}
                 disabled={!newName.trim() || createCollection.isPending}
               >
                 <Text variant="body-md" style={{ color: '#fff', fontWeight: '700' }}>
