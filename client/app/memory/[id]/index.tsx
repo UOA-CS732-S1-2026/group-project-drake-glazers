@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useState, useRef, useCallback } from 'react';
 import { Video, ResizeMode, VideoFullscreenUpdate } from 'expo-av';
+import { useVideoThumbnail } from '@/hooks/use-video-thumbnail';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
@@ -468,6 +469,7 @@ function MediaCollage({ items }: { items: Media[] }) {
 function EmbeddedVideoPlayer({ item }: { item: Media }) {
   const videoRef = useRef<Video>(null);
   const [active, setActive] = useState(false);
+  const thumbnail = useVideoThumbnail(item.signedUrl);
 
   const handleReadyForDisplay = useCallback(async () => {
     try {
@@ -494,7 +496,12 @@ function EmbeddedVideoPlayer({ item }: { item: Media }) {
         onPress={() => setActive(true)}
         activeOpacity={0.8}
       >
-        <MaterialIcons name="play-circle-filled" size={56} color="rgba(255,255,255,0.9)" />
+        {thumbnail && (
+          <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+        )}
+        <View style={videoStyles.playOverlay}>
+          <MaterialIcons name="play-circle-filled" size={56} color="rgba(255,255,255,0.9)" />
+        </View>
       </TouchableOpacity>
     );
   }
@@ -520,6 +527,11 @@ const videoStyles = StyleSheet.create({
     width: '100%',
     aspectRatio: 16 / 9,
     backgroundColor: '#111',
+    overflow: 'hidden',
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

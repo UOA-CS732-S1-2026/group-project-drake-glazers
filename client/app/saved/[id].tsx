@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
+import { useVideoThumbnail } from '@/hooks/use-video-thumbnail';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -104,41 +105,16 @@ export default function CollectionDetailScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ExploreMemory }) => {
-      const isSelected = selectedIds.has(item.id);
-      return (
-        <TouchableOpacity
-          style={styles.cell}
-          onPress={() =>
-            selectMode ? toggleSelect(item.id) : router.push(`/memory/${item.id}/public`)
-          }
-          activeOpacity={selectMode ? 0.7 : 0.85}
-        >
-          {item.imageUrl ? (
-            <Image source={{ uri: item.imageUrl }} style={styles.cellImage} resizeMode="cover" />
-          ) : (
-            <View style={[styles.cellImage, styles.cellPlaceholder]}>
-              <MaterialIcons name="photo" size={28} color="#ccc" />
-            </View>
-          )}
-          {item.mediaType === 'video' && !selectMode && (
-            <MaterialIcons
-              name="play-circle-outline"
-              size={20}
-              color="#fff"
-              style={styles.videoIcon}
-            />
-          )}
-          {selectMode && (
-            <View style={[styles.selectOverlay, isSelected && styles.selectOverlayActive]}>
-              <View style={[styles.selectCircle, isSelected && styles.selectCircleActive]}>
-                {isSelected && <MaterialIcons name="check" size={13} color="#fff" />}
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
-      );
-    },
+    ({ item }: { item: ExploreMemory }) => (
+      <GridCell
+        item={item}
+        selectMode={selectMode}
+        isSelected={selectedIds.has(item.id)}
+        onPress={() =>
+          selectMode ? toggleSelect(item.id) : router.push(`/memory/${item.id}/public`)
+        }
+      />
+    ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectMode, selectedIds, id]
   );
@@ -337,6 +313,49 @@ export default function CollectionDetailScreen() {
   );
 }
 
+function GridCell({
+  item,
+  selectMode,
+  isSelected,
+  onPress,
+}: {
+  item: ExploreMemory;
+  selectMode: boolean;
+  isSelected: boolean;
+  onPress: () => void;
+}) {
+  const isVideo = item.mediaType === 'video';
+  const videoThumbnail = useVideoThumbnail(isVideo ? item.imageUrl : null);
+
+  return (
+    <TouchableOpacity style={styles.cell} onPress={onPress} activeOpacity={selectMode ? 0.7 : 0.85}>
+      {isVideo ? (
+        <View style={[styles.cellImage, styles.cellVideoPlaceholder]}>
+          {videoThumbnail && (
+            <Image source={{ uri: videoThumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+          )}
+        </View>
+      ) : item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.cellImage} resizeMode="cover" />
+      ) : (
+        <View style={[styles.cellImage, styles.cellPlaceholder]}>
+          <MaterialIcons name="photo" size={28} color="#ccc" />
+        </View>
+      )}
+      {isVideo && !selectMode && (
+        <MaterialIcons name="play-circle-filled" size={20} color="#fff" style={styles.videoIcon} />
+      )}
+      {selectMode && (
+        <View style={[styles.selectOverlay, isSelected && styles.selectOverlayActive]}>
+          <View style={[styles.selectCircle, isSelected && styles.selectCircleActive]}>
+            {isSelected && <MaterialIcons name="check" size={13} color="#fff" />}
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -390,6 +409,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f0ef',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cellVideoPlaceholder: {
+    backgroundColor: '#111',
+    overflow: 'hidden',
   },
   videoIcon: {
     position: 'absolute',
