@@ -13,12 +13,13 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
 import { useApiClient } from '@/lib/api';
+import CustomSplashScreen from '@/components/custom-splash-screen';
 
 const tokenCache = {
   getToken: (key: string) => SecureStore.getItemAsync(key),
@@ -48,6 +49,7 @@ function InitialLayout() {
   const { user } = useUser();
   const api = useApiClient();
   const colorScheme = useColorScheme();
+  const [splashDone, setSplashDone] = useState(false);
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
     PlusJakartaSans_400Regular,
@@ -57,13 +59,16 @@ function InitialLayout() {
     PlusJakartaSans_800ExtraBold,
   });
 
+  // Hide the native splash as soon as fonts are ready, then let JS splash take over.
   useEffect(() => {
-    if (!isLoaded) return;
     if (fontsLoaded) SplashScreen.hideAsync();
-    if (!isSignedIn) {
-      router.replace('/(auth)/sign-in');
-    }
-  }, [isLoaded, isSignedIn, fontsLoaded]);
+  }, [fontsLoaded]);
+
+  // Navigate only after both the splash animation and auth are done.
+  useEffect(() => {
+    if (!splashDone || !isLoaded) return;
+    if (!isSignedIn) router.replace('/(auth)/sign-in');
+  }, [splashDone, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!isSignedIn || !user) return;
@@ -73,7 +78,14 @@ function InitialLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn, user?.id]);
 
-  if (!isLoaded || !fontsLoaded) return null;
+  // Native splash covers this gap — return null while fonts aren't ready.
+  if (!fontsLoaded) return null;
+
+  // Fonts loaded: hand off to the JS splash which plays the animation,
+  // waits for auth, then fades out and calls onComplete.
+  if (!splashDone) {
+    return <CustomSplashScreen isReady={isLoaded} onComplete={() => setSplashDone(true)} />;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
