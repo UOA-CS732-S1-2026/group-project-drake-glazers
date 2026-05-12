@@ -23,17 +23,27 @@ const debugPush = (message: string) => {
   console.log(`push: ${message}`);
 };
 
+const formatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
 const getExpoPushToken = async (): Promise<string> => {
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId ?? undefined;
 
+  debugPush(projectId ? `projectId ok (${projectId.slice(0, 8)}...)` : 'missing EAS projectId');
+
   if (!projectId) {
-    debugPush('missing EAS projectId');
+    throw new Error('Missing EAS projectId in app config');
   }
 
-  const response = projectId
-    ? await Notifications.getExpoPushTokenAsync({ projectId })
-    : await Notifications.getExpoPushTokenAsync();
+  const response = await Notifications.getExpoPushTokenAsync({ projectId });
 
   return response.data;
 };
@@ -66,7 +76,7 @@ export const registerForPushNotificationsAsync = async (api: ApiClient) => {
   try {
     token = await getExpoPushToken();
   } catch (error) {
-    debugPush(`token error ${String(error)}`);
+    debugPush(`token error ${formatErrorMessage(error).slice(0, 140)}`);
     throw error;
   }
 
@@ -81,7 +91,7 @@ export const registerForPushNotificationsAsync = async (api: ApiClient) => {
     });
     debugPush('device token saved');
   } catch (error) {
-    debugPush(`save error ${String(error)}`);
+    debugPush(`save error ${formatErrorMessage(error).slice(0, 140)}`);
     throw error;
   }
 };
