@@ -53,9 +53,6 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/webp': 'webp',
   'video/mp4': 'mp4',
   'video/quicktime': 'mov',
-  'audio/m4a': 'm4a',
-  'audio/mpeg': 'mp3',
-  'audio/wav': 'wav',
 };
 
 function getExtension(uri: string, mimeType?: string | null, fallback: string = 'jpg'): string {
@@ -143,36 +140,6 @@ export function MediaPicker({ value, onChange, onLocationDetected, onDateDetecte
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission required', 'Please allow microphone access in Settings.');
-        return;
-      }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording: rec } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      setRecording(rec);
-      setIsRecording(true);
-    } catch {
-      Alert.alert('Error', 'Could not start recording. Please try again.');
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recording) return;
-    setIsRecording(false);
-    await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-    const uri = recording.getURI();
-    setRecording(null);
-    if (uri) {
-      onChange([...value, { uri, type: 'VOICE_NOTE', mimeType: 'audio/m4a', ext: 'm4a' }]);
-    }
-  };
-
   const remove = (index: number) => {
     onChange(value.filter((_, i) => i !== index));
   };
@@ -195,22 +162,6 @@ export function MediaPicker({ value, onChange, onLocationDetected, onDateDetecte
           <MaterialIcons name="camera-alt" size={18} color="#1c1b1b" />
           <Text variant="label-md">Camera</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          className={`flex-row items-center gap-xs px-md py-sm rounded-lg ${
-            isRecording ? 'bg-error' : 'bg-surface-container-low'
-          }`}
-          onPress={isRecording ? stopRecording : startRecording}
-        >
-          <MaterialIcons
-            name={isRecording ? 'stop' : 'mic'}
-            size={18}
-            color={isRecording ? '#ffffff' : '#1c1b1b'}
-          />
-          <Text variant="label-md" className={isRecording ? 'text-on-error' : ''}>
-            {isRecording ? 'Stop' : 'Voice Memo'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {value.map((item, index) => (
@@ -222,15 +173,11 @@ export function MediaPicker({ value, onChange, onLocationDetected, onDateDetecte
             <Image source={{ uri: item.uri }} style={{ width: 40, height: 40, borderRadius: 6 }} />
           ) : (
             <View className="w-10 h-10 rounded bg-surface-container-high items-center justify-center">
-              <MaterialIcons
-                name={item.type === 'VIDEO' ? 'videocam' : 'mic'}
-                size={20}
-                color="#5b403e"
-              />
+              <MaterialIcons name="videocam" size={20} color="#5b403e" />
             </View>
           )}
           <Text variant="body-sm" className="flex-1 text-on-surface-variant" numberOfLines={1}>
-            {item.type === 'IMAGE' ? 'Photo' : item.type === 'VIDEO' ? 'Video' : 'Voice memo'}
+            {item.type === 'IMAGE' ? 'Photo' : 'Video'}
           </Text>
           <TouchableOpacity onPress={() => remove(index)} hitSlop={8}>
             <MaterialIcons name="close" size={18} color="#5b403e" />
