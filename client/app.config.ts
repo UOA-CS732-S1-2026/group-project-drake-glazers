@@ -97,5 +97,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: '72e669b6-fbe0-4669-8090-3801b4d3d487',
     },
   },
-  owner: 'drake-glazers',
+  owner: 'memoriez-trial',
 });
