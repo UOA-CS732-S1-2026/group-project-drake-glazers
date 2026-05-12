@@ -65,6 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         RNMapboxMapsDownloadToken: mapboxDownloadToken ?? '',
       },
     ],
+    '@react-native-community/datetimepicker',
     'expo-font',
     [
       'expo-image-picker',

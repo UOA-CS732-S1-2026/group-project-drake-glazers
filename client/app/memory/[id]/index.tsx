@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -229,11 +230,10 @@ export default function MemoryDetailScreen() {
     );
   }
 
-  const createdDate = new Date(memory.createdAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const displayDate = new Date(memory.memoryDate ?? memory.createdAt).toLocaleDateString(
+    undefined,
+    { year: 'numeric', month: 'long', day: 'numeric' }
+  );
 
   return (
     <ScrollView
@@ -370,7 +370,7 @@ export default function MemoryDetailScreen() {
               <View className="flex-1" />
             )}
             <Text variant="body-sm" className="text-on-surface-variant">
-              {createdDate}
+              {displayDate}
             </Text>
           </View>
 

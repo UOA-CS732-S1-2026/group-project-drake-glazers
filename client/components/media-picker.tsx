@@ -16,7 +16,19 @@ type Props = {
   value: PendingMedia[];
   onChange: (items: PendingMedia[]) => void;
   onLocationDetected?: (lat: number, lng: number) => void;
+  onDateDetected?: (date: Date) => void;
 };
+
+function extractDate(exif: Record<string, unknown> | null | undefined): Date | null {
+  if (!exif) return null;
+  const raw = (exif.DateTimeOriginal ?? exif.DateTime) as string | undefined;
+  if (!raw || typeof raw !== 'string') return null;
+  // EXIF format is "YYYY:MM:DD HH:MM:SS" — colons in the date part must become dashes
+  const normalized = raw.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+  const date = new Date(normalized);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date;
+}
 
 function extractGPS(
   exif: Record<string, unknown> | null | undefined
@@ -53,7 +65,7 @@ function getExtension(uri: string, mimeType?: string | null, fallback: string = 
   return fallback;
 }
 
-export function MediaPicker({ value, onChange, onLocationDetected }: Props) {
+export function MediaPicker({ value, onChange, onLocationDetected, onDateDetected }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -90,6 +102,15 @@ export function MediaPicker({ value, onChange, onLocationDetected }: Props) {
           }
         }
       }
+      if (onDateDetected) {
+        for (const asset of result.assets) {
+          const date = extractDate(asset.exif as Record<string, unknown> | null);
+          if (date) {
+            onDateDetected(date);
+            break;
+          }
+        }
+      }
     }
   };
 
@@ -114,6 +135,10 @@ export function MediaPicker({ value, onChange, onLocationDetected }: Props) {
       if (onLocationDetected) {
         const gps = extractGPS(asset.exif as Record<string, unknown> | null);
         if (gps) onLocationDetected(gps.lat, gps.lng);
+      }
+      if (onDateDetected) {
+        const date = extractDate(asset.exif as Record<string, unknown> | null);
+        if (date) onDateDetected(date);
       }
     }
   };

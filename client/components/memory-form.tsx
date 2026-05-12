@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useState } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
@@ -83,6 +84,9 @@ export function MemoryForm({
 
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
+  const [memoryDate, setMemoryDate] = useState<Date>(new Date());
+  const [dateFromExif, setDateFromExif] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [description, setDescription] = useState('');
   const [mediaItems, setMediaItems] = useState<PendingMedia[]>([]);
@@ -112,6 +116,7 @@ export function MemoryForm({
         latitude,
         longitude,
         visibility,
+        memoryDate: memoryDate.toISOString(),
       });
 
       for (const item of mediaItems) {
@@ -173,7 +178,53 @@ export function MemoryForm({
               onSubmitEditing={Keyboard.dismiss}
             />
 
-            {/* 2. Media */}
+            {/* 2. Date */}
+            <View className="gap-xs">
+              <Text variant="label-md" className="text-on-surface-variant">
+                Date
+              </Text>
+              <TouchableOpacity
+                className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="event" size={18} color="#9c7873" />
+                <Text variant="body-sm" className="text-on-surface flex-1">
+                  {memoryDate.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </Text>
+                <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={memoryDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                  themeVariant="light"
+                  maximumDate={new Date()}
+                  onChange={(_, date) => {
+                    if (Platform.OS === 'android') setShowDatePicker(false);
+                    if (date) {
+                      setMemoryDate(date);
+                      setDateFromExif(true);
+                    }
+                  }}
+                />
+              )}
+              {Platform.OS === 'ios' && showDatePicker && (
+                <Button
+                  label="Done"
+                  variant="secondary"
+                  onPress={() => setShowDatePicker(false)}
+                  className="self-end"
+                />
+              )}
+            </View>
+
+            {/* 3. Media */}
             <View className="gap-xs">
               <Text variant="label-md" className="text-on-surface-variant">
                 Media
@@ -203,6 +254,24 @@ export function MemoryForm({
                       }
                     : undefined
                 }
+                onDateDetected={(date) => {
+                  const apply = () => {
+                    setMemoryDate(date);
+                    setDateFromExif(true);
+                  };
+                  if (!dateFromExif) {
+                    apply();
+                  } else {
+                    Alert.alert(
+                      'Use photo date?',
+                      'This photo has date metadata. Do you want to use it instead of the current date?',
+                      [
+                        { text: 'Keep current', style: 'cancel' },
+                        { text: 'Use photo date', onPress: apply },
+                      ]
+                    );
+                  }
+                }}
               />
             </View>
 
