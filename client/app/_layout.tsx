@@ -13,7 +13,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
@@ -21,6 +21,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Notifications from 'expo-notifications';
 import { registerForPushNotificationsAsync } from '@/lib/notifications';
 import { useApiClient } from '@/lib/api';
+import NotificationBanner from '@/components/notification-banner';
 
 const tokenCache = {
   getToken: (key: string) => SecureStore.getItemAsync(key),
@@ -51,6 +52,11 @@ function InitialLayout() {
   const api = useApiClient();
   const colorScheme = useColorScheme();
   const pushRegisteredRef = useRef(false);
+  const [incomingNotification, setIncomingNotification] = useState<{
+    title: string;
+    body: string;
+    memoryId?: string | null;
+  } | null>(null);
   const [fontsLoaded] = useFonts({
     PlaywriteNO: require('../assets/fonts/PlaywriteNO-VariableFont_wght.ttf'),
     PlusJakartaSans_400Regular,
@@ -81,16 +87,22 @@ function InitialLayout() {
   }, [api, isLoaded, isSignedIn]);
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as { memoryId?: unknown };
-      const memoryId = typeof data?.memoryId === 'string' ? data.memoryId : null;
-
-      if (memoryId) {
-        router.push(`/memory/${memoryId}`);
-      }
+    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+      const { title, body, data } = notification.request.content;
+      const memoryId = typeof (data as any)?.memoryId === 'string' ? (data as any).memoryId : null;
+      setIncomingNotification({ title: title ?? 'Memoriez', body: body ?? '', memoryId });
     });
 
-    return () => subscription.remove();
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { memoryId?: unknown };
+      const memoryId = typeof data?.memoryId === 'string' ? data.memoryId : null;
+      if (memoryId) router.push(`/memory/${memoryId}`);
+    });
+
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -117,6 +129,14 @@ function InitialLayout() {
         <Stack.Screen name="saved/[id]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+      {incomingNotification && (
+        <NotificationBanner
+          title={incomingNotification.title}
+          body={incomingNotification.body}
+          memoryId={incomingNotification.memoryId}
+          onDismiss={() => setIncomingNotification(null)}
+        />
+      )}
     </ThemeProvider>
   );
 }
