@@ -8,7 +8,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -186,44 +186,73 @@ export function MemoryForm({
               <Text variant="label-md" className="text-on-surface-variant">
                 Date
               </Text>
-              <TouchableOpacity
-                className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
-                onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="event" size={18} color="#9c7873" />
-                <Text variant="body-sm" className="text-on-surface flex-1">
-                  {memoryDate.toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+              {Platform.OS === 'web' ? (
+                <View className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg">
+                  <MaterialIcons name="event" size={18} color="#9c7873" />
+                  {React.createElement('input', {
+                    type: 'date',
+                    value: memoryDate.toISOString().split('T')[0],
+                    max: new Date().toISOString().split('T')[0],
+                    onChange: (e: any) => {
+                      const d = new Date(e.target.value);
+                      if (!isNaN(d.getTime())) {
+                        setMemoryDate(d);
+                        setDateFromExif(true);
+                      }
+                    },
+                    style: {
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: 14,
+                      color: '#1c1b1b',
+                      outline: 'none',
+                      flex: 1,
+                      cursor: 'pointer',
+                    },
                   })}
-                </Text>
-                <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={memoryDate}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                  themeVariant="light"
-                  maximumDate={new Date()}
-                  onChange={(_, date) => {
-                    if (Platform.OS === 'android') setShowDatePicker(false);
-                    if (date) {
-                      setMemoryDate(date);
-                      setDateFromExif(true);
-                    }
-                  }}
-                />
-              )}
-              {Platform.OS === 'ios' && showDatePicker && (
-                <Button
-                  label="Done"
-                  variant="secondary"
-                  onPress={() => setShowDatePicker(false)}
-                  className="self-end"
-                />
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    className="flex-row items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg"
+                    onPress={() => setShowDatePicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="event" size={18} color="#9c7873" />
+                    <Text variant="body-sm" className="text-on-surface flex-1">
+                      {memoryDate.toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                    <MaterialIcons name="chevron-right" size={18} color="#9c7873" />
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={memoryDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                      themeVariant="light"
+                      maximumDate={new Date()}
+                      onChange={(_, date) => {
+                        if (Platform.OS === 'android') setShowDatePicker(false);
+                        if (date) {
+                          setMemoryDate(date);
+                          setDateFromExif(true);
+                        }
+                      }}
+                    />
+                  )}
+                  {Platform.OS === 'ios' && showDatePicker && (
+                    <Button
+                      label="Done"
+                      variant="secondary"
+                      onPress={() => setShowDatePicker(false)}
+                      className="self-end"
+                    />
+                  )}
+                </>
               )}
             </View>
 
