@@ -5,10 +5,10 @@ const mapboxDownloadToken = process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN;
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Memoriez',
-  slug: 'drake-glazers-client',
+  slug: 'memoriez',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './assets/images/icon.png',
+  icon: './assets/images/Memoriez-Logo.png',
   scheme: 'Memoriez',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
