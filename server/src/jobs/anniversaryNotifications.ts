@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { prisma } from '../lib/prisma.js';
 import { Prisma } from '@prisma/client';
 
@@ -80,11 +81,11 @@ const fetchMemoriesForUsers = async (
   if (userIds.length === 0) return [];
 
   return prisma.$queryRaw<MemorySummary[]>`
-    SELECT id, "userId", title, "createdAt"
-    FROM "Memory"
-    WHERE "userId" IN (${Prisma.join(userIds)})
-      AND EXTRACT(MONTH FROM "createdAt") = ${month}
-      AND EXTRACT(DAY FROM "createdAt") = ${day}
+    SELECT id, "user_id" as "userId", title, "created_at" as "createdAt"
+    FROM "memories"
+    WHERE "user_id" IN (${Prisma.join(userIds)})
+      AND EXTRACT(MONTH FROM "created_at") = ${month}
+      AND EXTRACT(DAY FROM "created_at") = ${day}
   `;
 };
 
