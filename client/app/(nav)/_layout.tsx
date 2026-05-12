@@ -20,11 +20,18 @@ const TABS = [
 
 const TOKEN = {
   primary: '#b71422',
-  inactive: 'rgba(255,255,255,0.80)',
+  inactiveDark: 'rgba(255,255,255,0.75)',
+  inactiveLight: 'rgba(80,65,65,0.55)',
 } as const;
 
 function CustomTabBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const isMap = pathname === '/';
+
+  const inactiveColor = isMap ? TOKEN.inactiveDark : TOKEN.inactiveLight;
+  const blurTint = isMap ? 'dark' : 'light';
+  const borderColor = isMap ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)';
 
   const tabItems = state.routes.map((route: any, index: number) => {
     const tab = TABS.find((t) => t.name === route.name);
@@ -54,10 +61,10 @@ function CustomTabBar({ state, navigation }: any) {
           <IconSymbol
             name={tab.icon}
             size={22}
-            color={isFocused ? TOKEN.primary : TOKEN.inactive}
+            color={isFocused ? TOKEN.primary : inactiveColor}
           />
         </View>
-        <Text variant="label-md" style={{ color: isFocused ? TOKEN.primary : TOKEN.inactive }}>
+        <Text variant="label-md" style={{ color: isFocused ? TOKEN.primary : inactiveColor }}>
           {tab.label}
         </Text>
       </TouchableOpacity>
@@ -68,8 +75,8 @@ function CustomTabBar({ state, navigation }: any) {
     <View style={styles.wrapper}>
       <BlurView
         intensity={Platform.OS === 'ios' ? 70 : 100}
-        tint="dark"
-        style={[styles.bar, { paddingBottom: insets.bottom || 12 }]}
+        tint={blurTint}
+        style={[styles.bar, { paddingBottom: insets.bottom || 12, borderTopColor: borderColor }]}
       >
         <View style={styles.row}>{tabItems}</View>
       </BlurView>
@@ -107,7 +114,6 @@ const styles = StyleSheet.create({
   },
   bar: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.18)',
     paddingTop: 8,
     paddingHorizontal: 8,
   },
