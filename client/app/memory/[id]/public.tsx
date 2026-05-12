@@ -65,11 +65,10 @@ export default function PublicMemoryScreen() {
     );
   }
 
-  const createdDate = new Date(memory.createdAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const displayDate = new Date(memory.memoryDate ?? memory.createdAt).toLocaleDateString(
+    undefined,
+    { year: 'numeric', month: 'long', day: 'numeric' }
+  );
 
   return (
     <ScrollView
@@ -102,7 +101,7 @@ export default function PublicMemoryScreen() {
             <View className="flex-1" />
           )}
           <Text variant="body-sm" className="text-on-surface-variant">
-            {createdDate}
+            {displayDate}
           </Text>
         </View>
 

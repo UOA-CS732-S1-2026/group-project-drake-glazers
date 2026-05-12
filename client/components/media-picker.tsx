@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Audio } from 'expo-av';
 import { useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
@@ -14,7 +15,34 @@ export type PendingMedia = {
 type Props = {
   value: PendingMedia[];
   onChange: (items: PendingMedia[]) => void;
+  onLocationDetected?: (lat: number, lng: number) => void;
+  onDateDetected?: (date: Date) => void;
 };
+
+function extractDate(exif: Record<string, unknown> | null | undefined): Date | null {
+  if (!exif) return null;
+  const raw = (exif.DateTimeOriginal ?? exif.DateTime) as string | undefined;
+  if (!raw || typeof raw !== 'string') return null;
+  // EXIF format is "YYYY:MM:DD HH:MM:SS" — colons in the date part must become dashes
+  const normalized = raw.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+  const date = new Date(normalized);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date;
+}
+
+function extractGPS(
+  exif: Record<string, unknown> | null | undefined
+): { lat: number; lng: number } | null {
+  if (!exif) return null;
+  const lat = exif.GPSLatitude;
+  const lng = exif.GPSLongitude;
+  if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+  // iOS gives unsigned values + a Ref field ('N'/'S', 'E'/'W')
+  const signedLat = exif.GPSLatitudeRef === 'S' ? -Math.abs(lat) : Math.abs(lat);
+  const signedLng = exif.GPSLongitudeRef === 'W' ? -Math.abs(lng) : Math.abs(lng);
+  if (!Number.isFinite(signedLat) || !Number.isFinite(signedLng)) return null;
+  return { lat: signedLat, lng: signedLng };
+}
 
 const MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -34,7 +62,10 @@ function getExtension(uri: string, mimeType?: string | null, fallback: string = 
   return fallback;
 }
 
-export function MediaPicker({ value, onChange }: Props) {
+export function MediaPicker({ value, onChange, onLocationDetected, onDateDetected }: Props) {
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
   const pickFromLibrary = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -51,12 +82,6 @@ export function MediaPicker({ value, onChange }: Props) {
       const newItems: PendingMedia[] = result.assets.map((asset) => {
         const isVideo = asset.mimeType?.startsWith('video') ?? false;
         const ext = getExtension(asset.uri, asset.mimeType, isVideo ? 'mp4' : 'jpg');
-        console.log('[MediaPicker] EXIF data:', JSON.stringify(asset.exif, null, 2));
-        console.log('[MediaPicker] GPS:', {
-          latitude: asset.exif?.GPSLatitude,
-          longitude: asset.exif?.GPSLongitude,
-          altitude: asset.exif?.GPSAltitude,
-        });
         return {
           uri: asset.uri,
           type: isVideo ? 'VIDEO' : 'IMAGE',
@@ -65,6 +90,24 @@ export function MediaPicker({ value, onChange }: Props) {
         };
       });
       onChange([...value, ...newItems]);
+      if (onLocationDetected) {
+        for (const asset of result.assets) {
+          const gps = extractGPS(asset.exif as Record<string, unknown> | null);
+          if (gps) {
+            onLocationDetected(gps.lat, gps.lng);
+            break;
+          }
+        }
+      }
+      if (onDateDetected) {
+        for (const asset of result.assets) {
+          const date = extractDate(asset.exif as Record<string, unknown> | null);
+          if (date) {
+            onDateDetected(date);
+            break;
+          }
+        }
+      }
     }
   };
 
@@ -82,21 +125,18 @@ export function MediaPicker({ value, onChange }: Props) {
     if (!result.canceled) {
       const asset = result.assets[0];
       const ext = getExtension(asset.uri, asset.mimeType, 'jpg');
-      console.log('[MediaPicker] EXIF data:', JSON.stringify(asset.exif, null, 2));
-      console.log('[MediaPicker] GPS:', {
-        latitude: asset.exif?.GPSLatitude,
-        longitude: asset.exif?.GPSLongitude,
-        altitude: asset.exif?.GPSAltitude,
-      });
       onChange([
         ...value,
-        {
-          uri: asset.uri,
-          type: 'IMAGE',
-          mimeType: asset.mimeType ?? 'image/jpeg',
-          ext,
-        },
+        { uri: asset.uri, type: 'IMAGE', mimeType: asset.mimeType ?? 'image/jpeg', ext },
       ]);
+      if (onLocationDetected) {
+        const gps = extractGPS(asset.exif as Record<string, unknown> | null);
+        if (gps) onLocationDetected(gps.lat, gps.lng);
+      }
+      if (onDateDetected) {
+        const date = extractDate(asset.exif as Record<string, unknown> | null);
+        if (date) onDateDetected(date);
+      }
     }
   };
 
