@@ -2,6 +2,7 @@ import express from 'express';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from '../lib/supabase.js';
 import { errorResponse } from '../lib/api-response.js';
 import { validateBody } from '../middleware/validateBody.js';
 import { createListBodySchema, createListItemBodySchema, updateListBodySchema, updateListItemBodySchema, } from '../schemas/lists.js';
@@ -10,7 +11,9 @@ const listItemSelect = {
     listId: true,
     latitude: true,
     longitude: true,
+    placeName: true,
     notes: true,
+    imagePath: true,
     createdAt: true,
 };
 const listSelect = {
@@ -21,35 +24,91 @@ const listSelect = {
     createdAt: true,
 };
 export const listsRouter = express.Router();
-const getAuthUserId = (req) => {
-    return req.authUserId;
-};
+const getAuthUserId = (req) => req.authUserId;
 const getPrismaErrorCode = (error) => {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError)
         return error.code;
-    }
     return null;
 };
+async function signItemImagePaths(items) {
+    const paths = items.map((i) => i.imagePath).filter((p) => p !== null);
+    let signedUrlMap = new Map();
+    if (paths.length > 0) {
+        const { data } = await supabase.storage
+            .from(MEDIA_BUCKET)
+            .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+        signedUrlMap = new Map((data ?? [])
+            .filter((s) => s.path != null && s.signedUrl != null)
+            .map((s) => [s.path, s.signedUrl]));
+    }
+    return items.map(({ imagePath, ...rest }) => ({
+        ...rest,
+        imageUrl: imagePath ? (signedUrlMap.get(imagePath) ?? null) : null,
+    }));
+}
 listsRouter.get('/lists', async (req, res) => {
     const authUserId = getAuthUserId(req);
     const lists = await prisma.list.findMany({
         where: { userId: authUserId },
-        select: listSelect,
+        select: {
+            ...listSelect,
+            items: {
+                where: { imagePath: { not: null } },
+                select: { imagePath: true },
+                orderBy: { createdAt: 'desc' },
+                take: 4,
+            },
+        },
         orderBy: { createdAt: 'desc' },
     });
-    return res.status(200).json(lists);
+    const allPaths = lists.flatMap((l) => l.items.map((i) => i.imagePath));
+    let signedUrlMap = new Map();
+    if (allPaths.length > 0) {
+        const { data } = await supabase.storage
+            .from(MEDIA_BUCKET)
+            .createSignedUrls(allPaths, SIGNED_URL_EXPIRY_SECONDS);
+        signedUrlMap = new Map((data ?? [])
+            .filter((s) => s.path != null && s.signedUrl != null)
+            .map((s) => [s.path, s.signedUrl]));
+    }
+    return res.status(200).json(lists.map(({ items, ...list }) => ({
+        ...list,
+        coverImages: items.map((i) => signedUrlMap.get(i.imagePath) ?? null).filter(Boolean),
+    })));
 });
 listsRouter.get('/lists/:id', async (req, res) => {
     const authUserId = getAuthUserId(req);
     const id = req.params.id;
     const list = await prisma.list.findUnique({
         where: { id },
-        select: listSelect,
+        select: {
+            ...listSelect,
+            items: {
+                where: { imagePath: { not: null } },
+                select: { imagePath: true },
+                orderBy: { createdAt: 'desc' },
+                take: 4,
+            },
+        },
     });
     if (!list || list.userId !== authUserId) {
         return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
     }
-    return res.status(200).json(list);
+    const paths = list.items.map((i) => i.imagePath);
+    let signedUrlMap = new Map();
+    if (paths.length > 0) {
+        const { data } = await supabase.storage
+            .from(MEDIA_BUCKET)
+            .createSignedUrls(paths, SIGNED_URL_EXPIRY_SECONDS);
+        signedUrlMap = new Map((data ?? [])
+            .filter((s) => s.path != null && s.signedUrl != null)
+            .map((s) => [s.path, s.signedUrl]));
+    }
+    const { items, ...listData } = list;
+    return res.status(200).json({
+        ...listData,
+        coverImages: items.map((i) => signedUrlMap.get(i.imagePath) ?? null).filter(Boolean),
+    });
 });
 listsRouter.put('/lists/:id', validateBody(updateListBodySchema), async (req, res) => {
     const authUserId = getAuthUserId(req);
@@ -66,7 +125,7 @@ listsRouter.put('/lists/:id', validateBody(updateListBodySchema), async (req, re
             data,
             select: listSelect,
         });
-        return res.status(200).json(list);
+        return res.status(200).json({ ...list, coverImages: [] });
     }
     catch (error) {
         if (getPrismaErrorCode(error) === 'P2025') {
@@ -107,7 +166,37 @@ listsRouter.get('/lists/:id/items', async (req, res) => {
         select: listItemSelect,
         orderBy: { createdAt: 'asc' },
     });
-    return res.status(200).json(items);
+    return res.status(200).json(await signItemImagePaths(items));
+});
+listsRouter.post('/lists/:id/items', validateBody(createListItemBodySchema), async (req, res) => {
+    const authUserId = getAuthUserId(req);
+    const id = req.params.id;
+    const body = req.validatedBody;
+    const list = await prisma.list.findUnique({
+        where: { id, userId: authUserId },
+        select: { id: true },
+    });
+    if (!list) {
+        return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
+    }
+    try {
+        const item = await prisma.listItem.create({
+            data: {
+                list: { connect: { id } },
+                latitude: body.latitude,
+                longitude: body.longitude,
+                placeName: body.placeName ?? null,
+                notes: body.notes ?? null,
+                imagePath: body.imagePath ?? null,
+            },
+            select: listItemSelect,
+        });
+        const [signed] = await signItemImagePaths([item]);
+        return res.status(201).json(signed);
+    }
+    catch {
+        return errorResponse(res, 400, 'LIST_ITEM_CREATE_FAILED', 'Unable to create list item');
+    }
 });
 listsRouter.put('/lists/:id/items/:itemId', validateBody(updateListItemBodySchema), async (req, res) => {
     const authUserId = getAuthUserId(req);
@@ -119,8 +208,12 @@ listsRouter.put('/lists/:id/items/:itemId', validateBody(updateListItemBodySchem
         data.latitude = body.latitude;
     if (body.longitude !== undefined)
         data.longitude = body.longitude;
+    if (body.placeName !== undefined)
+        data.placeName = body.placeName;
     if (body.notes !== undefined)
         data.notes = body.notes;
+    if (body.imagePath !== undefined)
+        data.imagePath = body.imagePath;
     const list = await prisma.list.findUnique({
         where: { id, userId: authUserId },
         select: { id: true },
@@ -134,7 +227,8 @@ listsRouter.put('/lists/:id/items/:itemId', validateBody(updateListItemBodySchem
             data,
             select: listItemSelect,
         });
-        return res.status(200).json(item);
+        const [signed] = await signItemImagePaths([item]);
+        return res.status(200).json(signed);
     }
     catch (error) {
         if (getPrismaErrorCode(error) === 'P2025') {
@@ -168,33 +262,6 @@ listsRouter.delete('/lists/:id/items/:itemId', async (req, res) => {
         return errorResponse(res, 400, 'LIST_ITEM_DELETE_FAILED', 'Unable to delete list item');
     }
 });
-listsRouter.post('/lists/:id/items', validateBody(createListItemBodySchema), async (req, res) => {
-    const authUserId = getAuthUserId(req);
-    const id = req.params.id;
-    const body = req.validatedBody;
-    const list = await prisma.list.findUnique({
-        where: { id, userId: authUserId },
-        select: { id: true },
-    });
-    if (!list) {
-        return errorResponse(res, 404, 'LIST_NOT_FOUND', 'List not found');
-    }
-    try {
-        const item = await prisma.listItem.create({
-            data: {
-                list: { connect: { id } },
-                latitude: body.latitude,
-                longitude: body.longitude,
-                notes: body.notes ?? null,
-            },
-            select: listItemSelect,
-        });
-        return res.status(201).json(item);
-    }
-    catch {
-        return errorResponse(res, 400, 'LIST_ITEM_CREATE_FAILED', 'Unable to create list item');
-    }
-});
 listsRouter.post('/lists', validateBody(createListBodySchema), async (req, res) => {
     const authUserId = getAuthUserId(req);
     const body = req.validatedBody;
@@ -207,7 +274,7 @@ listsRouter.post('/lists', validateBody(createListBodySchema), async (req, res) 
             },
             select: listSelect,
         });
-        return res.status(201).json(list);
+        return res.status(201).json({ ...list, coverImages: [] });
     }
     catch (error) {
         const code = getPrismaErrorCode(error);

@@ -56,7 +56,9 @@ export declare function seedListItem(listId: string): Promise<{
     createdAt: Date;
     latitude: number;
     longitude: number;
+    placeName: string | null;
     notes: string | null;
+    imagePath: string | null;
     listId: string;
 }>;
 export declare function seedUserProfile(userId: string, displayName: string): Promise<{
