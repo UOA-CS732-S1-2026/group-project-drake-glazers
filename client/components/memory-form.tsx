@@ -147,7 +147,10 @@ export function MemoryForm({
       className="flex-1 bg-background"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <TouchableWithoutFeedback
+        onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}
+        accessible={false}
+      >
         <View className="flex-1">
           <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
             <TouchableOpacity onPress={onBack} hitSlop={8}>
