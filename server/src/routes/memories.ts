@@ -435,6 +435,7 @@ memoriesRouter.post(
           latitude: body.latitude,
           longitude: body.longitude,
           visibility: body.visibility,
+          ...(body.memoryDate ? { createdAt: body.memoryDate } : {}),
         },
         select: memorySelect,
       });

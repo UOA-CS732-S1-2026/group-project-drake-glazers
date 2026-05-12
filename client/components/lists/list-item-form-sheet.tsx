@@ -331,7 +331,7 @@ export function ListItemFormSheet({
             setLocation({ lat, lng, name: name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
             setLocationPickerVisible(false);
           }}
-          onClose={() => setLocationPickerVisible(false)}
+          onBack={() => setLocationPickerVisible(false)}
         />
       </Modal>
     </>

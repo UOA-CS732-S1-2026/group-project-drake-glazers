@@ -6,6 +6,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
     "types": [
       "node"
@@ -30,5 +31,5 @@
   "exclude": [
     "node_modules",
     "prisma.config.ts"
-  ],
+  ]
 }

@@ -25,7 +25,8 @@ type GeocodingResult = {
 
 type Props = {
   onConfirm: (lat: number, lng: number, name?: string) => void;
-  onClose?: () => void;
+  onBack?: () => void;
+  allowDropPin?: boolean;
 };
 
 type MapCameraState = {
@@ -41,7 +42,7 @@ function toLngLat(coordinates?: GeoJSON.Position): [number, number] | null {
   return [lng, lat];
 }
 
-export function LocationPicker({ onConfirm, onClose }: Props) {
+export function LocationPicker({ onConfirm, onBack, allowDropPin = true }: Props) {
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const pinCoordsRef = useRef<[number, number]>(DEFAULT_COORDS);
   const lastTappedCoordsRef = useRef<[number, number] | null>(null);
@@ -123,37 +124,42 @@ export function LocationPicker({ onConfirm, onClose }: Props) {
   return (
     <View className="flex-1 bg-background">
       <View className="flex-row items-center px-gutter pt-xl pb-md gap-sm">
-        <TouchableOpacity onPress={onClose ?? (() => router.dismiss())} hitSlop={8}>
-          <MaterialIcons name="close" size={24} color="#1c1b1b" />
+        <TouchableOpacity onPress={onBack ?? (() => router.dismiss())} hitSlop={8}>
+          <MaterialIcons name={onBack ? 'arrow-back' : 'close'} size={24} color="#1c1b1b" />
         </TouchableOpacity>
         <View>
           <Text variant="headline-md">Pick a location</Text>
           <Text variant="body-sm" className="text-on-surface-variant">
-            Search or drop a pin on the map
+            {allowDropPin ? 'Search or drop a pin on the map' : 'Search for a place'}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row mx-gutter mb-md gap-sm">
-        {(['search', 'pin'] as const).map((m) => (
-          <TouchableOpacity
-            key={m}
-            className={`flex-1 py-sm rounded-lg items-center flex-row justify-center gap-xs ${
-              mode === m ? 'bg-primary' : 'bg-surface-container'
-            }`}
-            onPress={() => setMode(m)}
-          >
-            <MaterialIcons
-              name={m === 'search' ? 'search' : 'place'}
-              size={16}
-              color={mode === m ? '#ffffff' : '#1c1b1b'}
-            />
-            <Text variant="label-md" className={mode === m ? 'text-on-primary' : 'text-on-surface'}>
-              {m === 'search' ? 'Search Address' : 'Drop Pin'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {allowDropPin ? (
+        <View className="flex-row mx-gutter mb-md gap-sm">
+          {(['search', 'pin'] as const).map((m) => (
+            <TouchableOpacity
+              key={m}
+              className={`flex-1 py-sm rounded-lg items-center flex-row justify-center gap-xs ${
+                mode === m ? 'bg-primary' : 'bg-surface-container'
+              }`}
+              onPress={() => setMode(m)}
+            >
+              <MaterialIcons
+                name={m === 'search' ? 'search' : 'place'}
+                size={16}
+                color={mode === m ? '#ffffff' : '#1c1b1b'}
+              />
+              <Text
+                variant="label-md"
+                className={mode === m ? 'text-on-primary' : 'text-on-surface'}
+              >
+                {m === 'search' ? 'Search Address' : 'Drop Pin'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
 
       {mode === 'search' ? (
         <View className="flex-1 px-gutter">

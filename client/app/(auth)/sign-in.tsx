@@ -3,8 +3,10 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -115,55 +117,69 @@ export default function SignInScreen() {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.inner}>
-          <Text style={styles.title}>Memoriez</Text>
-          <Text style={styles.subtitle}>We sent a verification code to {email}</Text>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.hero}>
+            <Image
+              source={require('@/assets/images/Memoriez-Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.tagline}>
+              Relive your journey through the spots that matter most.
+            </Text>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter code"
-            placeholderTextColor="#888"
-            value={code}
-            onChangeText={setCode}
-            keyboardType="number-pad"
-            maxLength={6}
-            autoComplete="one-time-code"
-            autoFocus
-          />
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Check your email</Text>
+            <Text style={styles.hint}>We sent a verification code to {email}</Text>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+            <Text style={styles.label}>Verification Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="000000"
+              placeholderTextColor="#BBBBBB"
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              autoComplete="one-time-code"
+              autoFocus
+            />
 
-          <TouchableOpacity
-            style={[styles.button, (loading || !code) && styles.buttonDisabled]}
-            onPress={onVerifyPress}
-            disabled={loading || !code}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Verify</Text>
-            )}
-          </TouchableOpacity>
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline, loading && styles.buttonDisabled]}
-            onPress={onResendPress}
-            disabled={loading}
-          >
-            <Text style={[styles.buttonText, styles.buttonOutlineText]}>Resend code</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, (loading || !code) && styles.buttonDisabled]}
+              onPress={onVerifyPress}
+              disabled={loading || !code}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Verify</Text>
+              )}
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              setStep('credentials');
-              setCode('');
-              setError('');
-            }}
-            style={styles.footer}
-          >
-            <Text style={styles.link}>← Back to sign in</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.outlineButton, loading && styles.buttonDisabled]}
+              onPress={onResendPress}
+              disabled={loading}
+            >
+              <Text style={styles.outlineButtonText}>Resend code</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setStep('credentials');
+                setCode('');
+                setError('');
+              }}
+              style={styles.footer}
+            >
+              <Text style={styles.link}>← Back to sign in</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
         <OnboardingModal
           visible={showOnboarding}
@@ -178,53 +194,66 @@ export default function SignInScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.inner}>
-        <Text style={styles.title}>Memoriez</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <Image
+            source={require('@/assets/images/Memoriez-Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.tagline}>
+            Relive your journey through the spots that matter most.
+          </Text>
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email address"
-          placeholderTextColor="#888"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#888"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
-        />
+        <View style={styles.card}>
+          <Text style={styles.label}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="name@example.com"
+            placeholderTextColor="#BBBBBB"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="••••••••"
+            placeholderTextColor="#BBBBBB"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoComplete="password"
+          />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={onSignInPress}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
-          )}
-        </TouchableOpacity>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={onSignInPress}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don&apos;t have an account? </Text>
           <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity>
-              <Text style={styles.link}>Sign Up</Text>
+              <Text style={styles.link}>Join the community</Text>
             </TouchableOpacity>
           </Link>
         </View>
-      </View>
+      </ScrollView>
 
       <OnboardingModal
         visible={showOnboarding}
@@ -234,82 +263,127 @@ export default function SignInScreen() {
   );
 }
 
+const PRIMARY = '#B92B27';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#FBF0EE',
   },
-  inner: {
-    flex: 1,
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 48,
   },
-  title: {
-    fontSize: 36,
-    fontFamily: 'PlaywriteNO',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 8,
+  hero: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  subtitle: {
-    fontSize: 15,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 36,
-  },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#ffffff',
+  logo: {
+    width: 280,
+    maxWidth: '100%',
+    height: 102,
     marginBottom: 14,
   },
-  error: {
-    color: '#ff4444',
+  tagline: {
+    fontSize: 15,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 16,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 6,
+  },
+  hint: {
     fontSize: 13,
-    marginBottom: 12,
+    color: '#888888',
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#444444',
+    marginBottom: 6,
+    marginTop: 14,
+    marginHorizontal: 24,
+  },
+  input: {
+    backgroundColor: '#F2F2F2',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    fontSize: 15,
+    color: '#1A1A1A',
+    marginBottom: 2,
+    marginHorizontal: 24,
+  },
+  error: {
+    color: '#D9534F',
+    fontSize: 13,
+    marginTop: 10,
+    marginBottom: 4,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#1a3c5e',
+    backgroundColor: PRIMARY,
     borderRadius: 30,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 20,
+    marginHorizontal: 24,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  outlineButton: {
+    borderRadius: 30,
+    borderWidth: 1.5,
+    borderColor: '#DDDDDD',
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  outlineButtonText: {
+    color: '#555555',
+    fontSize: 15,
     fontWeight: '600',
-  },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    marginTop: 10,
-  },
-  buttonOutlineText: {
-    color: '#4a90d9',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 28,
   },
   footerText: {
-    color: '#888',
+    color: '#666666',
     fontSize: 14,
   },
   link: {
-    color: '#4a90d9',
+    color: PRIMARY,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

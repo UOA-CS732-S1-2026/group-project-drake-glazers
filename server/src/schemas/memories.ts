@@ -7,6 +7,7 @@ export const createMemoryBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
   visibility: z.enum(['public', 'friends_only', 'private']),
+  memoryDate: z.coerce.date().optional(),
 });
 
 export const updateMemoryBodySchema = z

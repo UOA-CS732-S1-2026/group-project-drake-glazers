@@ -95,6 +95,7 @@ export type Memory = {
   latitude: number;
   longitude: number;
   visibility: Visibility;
+  memoryDate?: string | null;
   thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
