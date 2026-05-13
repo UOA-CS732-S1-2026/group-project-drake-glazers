@@ -27,6 +27,8 @@ import {
   useUnblockUser,
 } from '@/hooks/use-friends';
 
+// Friends screen combines search, requests, and connection management.
+
 // --- Shared sub-components ---
 
 function AvatarCircle({

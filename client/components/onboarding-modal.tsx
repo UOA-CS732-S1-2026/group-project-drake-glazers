@@ -36,6 +36,7 @@ type Props = {
 };
 
 export function OnboardingModal({ visible, onComplete, profile, onClose }: Props) {
+  // When onClose is provided, the modal acts as an edit screen.
   const isEditMode = !!onClose;
 
   const [displayName, setDisplayName] = useState('');
@@ -47,6 +48,7 @@ export function OnboardingModal({ visible, onComplete, profile, onClose }: Props
   const upsert = useUpsertUserProfile();
   const uploadAvatar = useUploadAvatar();
 
+  // Keep avatar uploads small to reduce upload time and failures on mobile.
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   useEffect(() => {

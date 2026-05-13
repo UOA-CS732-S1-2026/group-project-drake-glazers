@@ -66,6 +66,7 @@ export function PastCapturesSection({ userId }: Props) {
   const { width } = useWindowDimensions();
   const { data: memories = [] } = useUserMemoriesWithCovers(userId);
 
+  // Shuffle to surface variety on each render, then cap to a small grid.
   const shuffled = useMemo(() => {
     const copy = memories.filter((m) => m.coverImage !== null);
     for (let i = copy.length - 1; i > 0; i--) {

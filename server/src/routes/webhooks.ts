@@ -23,6 +23,7 @@ clerkWebhookRouter.post(
   '/',
   express.raw({ type: 'application/json' }),
   async (req: Request, res: Response) => {
+    // Clerk signature verification requires the raw request body.
     const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
     if (!signingSecret) {

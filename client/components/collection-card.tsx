@@ -27,6 +27,7 @@ export function CollectionCard({ collection, onPress, onLongPress }: Props) {
             <MaterialIcons name="photo-library" size={32} color="#c8c3c2" />
           </View>
         )}
+        {/* Default collection gets a badge for quick recognition. */}
         {collection.isDefault && (
           <View style={styles.defaultBadge}>
             <MaterialIcons name="bookmark" size={12} color="#fff" />

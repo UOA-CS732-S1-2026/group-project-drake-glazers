@@ -18,7 +18,7 @@ export async function uploadFile(
 }
 
 /*
-Usuage Example:
+Usage Example:
     const api = useApiClient()
     const memories = await api.get('/memories')
     await api.post('/memories', { title: 'My memory' })
@@ -27,6 +27,7 @@ Usuage Example:
 export function useApiClient() {
   const { getToken } = useAuth();
 
+  // Centralized request wrapper injects auth and normalizes API errors for the UI.
   const request = async (path: string, options: RequestInit = {}) => {
     const token = await getToken();
 
@@ -44,6 +45,7 @@ export function useApiClient() {
     if (!res.ok) {
       const body = await res.json().catch(() => null);
 
+      // Prefer field-level validation errors when available to keep messaging specific.
       if (res.status === 400 && body?.error?.details?.fieldErrors) {
         const firstFieldError = Object.values(body.error.details.fieldErrors).flat()[0];
         if (firstFieldError) throw new Error(firstFieldError as string);
@@ -53,6 +55,7 @@ export function useApiClient() {
       throw new Error(`API request failed: ${res.status} ${detail}`);
     }
 
+    // 204 No Content should resolve to null for callers.
     if (res.status === 204) return null;
     return res.json();
   };

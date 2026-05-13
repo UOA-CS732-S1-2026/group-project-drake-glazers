@@ -23,8 +23,10 @@ type ExpoMessage = {
 };
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+// Local hour (per time zone) when anniversary notifications are sent.
 const ANNIVERSARY_NOTIFICATION_HOUR = Number(process.env.ANNIVERSARY_NOTIFICATION_HOUR ?? '9');
 
+// Expo push API accepts up to 100 messages per request.
 const chunkArray = <T>(items: T[], size: number): T[][] => {
   const chunks: T[][] = [];
   for (let i = 0; i < items.length; i += size) {
@@ -119,6 +121,7 @@ const sendExpoNotifications = async (messages: ExpoMessage[]) => {
     });
   }
 
+  // Clean up tokens that Expo reports as unregistered.
   if (invalidTokens.length > 0) {
     await prisma.deviceToken.deleteMany({
       where: { token: { in: invalidTokens } },
@@ -134,6 +137,7 @@ const run = async () => {
     return;
   }
 
+  // Group tokens by time zone to send at local time.
   const tokensByZone = new Map<string, DeviceToken[]>();
 
   for (const token of deviceTokens) {

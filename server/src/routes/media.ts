@@ -41,6 +41,7 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+// Rate-limit signed upload URL issuance to prevent abuse.
 const uploadUrlRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -126,6 +127,7 @@ mediaRouter.post(
     const memoryId = req.params.memoryId as string;
     const { mediaPath, mediaType } = req.validatedBody as ConfirmUploadBody;
 
+    // Ensure the client can only attach media within their own storage prefix.
     if (!mediaPath.startsWith(`memories/${authUserId}/`)) {
       return errorResponse(
         res,

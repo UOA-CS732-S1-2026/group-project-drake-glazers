@@ -76,6 +76,7 @@ export function MemoryPreviewCard({ memory, onClose, imageUrl, bottomOffset = 0 
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, { dy }) => Math.abs(dy) > 8,
       onPanResponderGrant: () => {
+        // Animated.Value has no public sync getter; _value seeds drag start.
         dragStartY.current = (translateY as unknown as { _value: number })._value ?? 0;
       },
       onPanResponderMove: (_, { dy }) => {

@@ -14,6 +14,7 @@ type Props = {
 export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
   const isImage = memory.mediaType === 'image';
   const isVideo = memory.mediaType === 'video';
+  // Lazily derive a thumbnail for videos to keep the feed lightweight.
   const videoThumbnail = useVideoThumbnail(isVideo ? memory.imageUrl : null);
 
   return (
@@ -43,7 +44,11 @@ export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
         ) : isVideo ? (
           <View style={styles.videoThumbnail}>
             {videoThumbnail && (
-              <Image source={{ uri: videoThumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Image
+                source={{ uri: videoThumbnail }}
+                style={StyleSheet.absoluteFillObject}
+                resizeMode="cover"
+              />
             )}
             <View style={styles.videoPlayOverlay}>
               <MaterialIcons name="play-circle-filled" size={48} color="rgba(255,255,255,0.85)" />

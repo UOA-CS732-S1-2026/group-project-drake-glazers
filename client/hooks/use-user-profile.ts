@@ -16,6 +16,7 @@ export function useUserProfile(userId?: string) {
   const targetId = isOwn ? myId : userId;
 
   return useQuery<UserProfile | null>({
+    // Separate cache keys for the current user vs other profiles.
     queryKey: ['userProfile', isOwn ? 'me' : targetId],
     enabled: isOwn ? !!isSignedIn : !!targetId,
     queryFn: async () => {
@@ -23,6 +24,7 @@ export function useUserProfile(userId?: string) {
         const path = isOwn ? '/api/users/me/profile' : `/api/users/${targetId}/profile`;
         return await api.get(path);
       } catch (error) {
+        // Treat missing profiles as empty state rather than a hard error.
         if (error instanceof Error && error.message.includes('404')) {
           return null;
         }

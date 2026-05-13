@@ -24,6 +24,7 @@ export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
+  // Fetch list metadata and items separately for more granular updates.
   const { data: list, isLoading: listLoading } = useList(id);
   const { data: items = [], isLoading: itemsLoading } = useListItems(id);
   const updateList = useUpdateList(id);
@@ -158,7 +159,7 @@ export default function ListDetailScreen() {
         <Button label="Add Place" onPress={() => setAddItemVisible(true)} />
       </View>
 
-      {/* Modals */}
+      {/* Modals keep edits focused without navigating away from the list. */}
       <ListFormSheet
         visible={editListVisible}
         onClose={() => setEditListVisible(false)}

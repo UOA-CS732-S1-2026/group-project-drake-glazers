@@ -17,6 +17,7 @@ import { errorResponse } from './lib/api-response.js';
 
 const app = express();
 
+// Default dev + prod origins; extend via CORS_ORIGINS.
 const defaultAllowedOrigins = [
   'https://memoriezz.vercel.app',
   'http://localhost:5173',
@@ -46,10 +47,12 @@ const corsOptions: CorsOptions = {
 };
 
 // Enable CORS with the defined options, see links above
+// Central CORS config shared by all routes.
 app.use(cors(corsOptions));
 app.use('/api/webhooks/clerk', clerkWebhookRouter);
 app.use(express.json());
 app.use(clerkMiddleware());
+// All /api routes require auth (webhooks + health are public).
 app.use('/api', requireApiAuth);
 app.use('/api', usersRouter);
 app.use('/api', memoriesRouter);
@@ -66,6 +69,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.get('/api/auth/me', (req: Request, res: Response) => {
+  // Simple auth check for clients to confirm the current user.
   if (!req.authUserId) {
     return errorResponse(res, 401, 'UNAUTHORIZED', 'Unauthorized');
   }

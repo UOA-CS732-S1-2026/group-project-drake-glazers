@@ -54,6 +54,7 @@ export function LocationPicker({ onConfirm, onBack, allowDropPin = true }: Props
   const [pinCoords, setPinCoords] = useState<[number, number]>(DEFAULT_COORDS);
 
   useEffect(() => {
+    // Debounce Mapbox queries and ignore very short inputs to reduce noise.
     if (query.length < 2) {
       setResults([]);
       return;
@@ -113,6 +114,7 @@ export function LocationPicker({ onConfirm, onBack, allowDropPin = true }: Props
   );
 
   const confirmPinLocation = useCallback(() => {
+    // Prefer the most recent tap to avoid confirming a drifting camera center.
     const recentTappedCoords =
       Date.now() - lastTappedAtRef.current < 750 ? lastTappedCoordsRef.current : null;
     const coords = recentTappedCoords ?? pinCoordsRef.current;

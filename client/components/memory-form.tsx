@@ -22,6 +22,7 @@ import type { Visibility } from '@/lib/types';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
 
+// Mapbox returns rich context; reduce to a compact, UI-friendly label.
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
     const res = await fetch(
