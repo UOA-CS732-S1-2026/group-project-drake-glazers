@@ -9,6 +9,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "jest --watchAll=false --forceExit",
+    "test:watch": "jest --watch",
     "eas:build:android": "eas build --platform android",
     "eas:build:ios": "eas build --platform ios",
     "eas:build:development": "eas build --profile development --platform all",
@@ -64,10 +66,16 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.2.5",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "jest": "^29.7.0",
+    "jest-expo": "^55.0.17",
     "prettier-plugin-tailwindcss": "^0.5.14",
+    "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
   "private": true
