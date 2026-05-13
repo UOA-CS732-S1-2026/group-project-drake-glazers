@@ -46,7 +46,7 @@ Memoriez implements the core user stories for recording, revisiting, and sharing
 - **Maps:** Mapbox
 - **Data fetching:** TanStack Query
 - **State management:** Zustand
-- **Testing:** Vitest, Supertest
+- **Testing:** Vitest, Supertest, Jest
 - **CI:** GitHub Actions
 - **Deployment:** Fly.io for the server
 
@@ -266,13 +266,15 @@ npm run anniversary:run
 
 Server tests use a local PostgreSQL container. Make sure Docker Desktop is running.
 
-From the repository root:
+From the repository root run the following command to run server and client tests:
 
 ```bash
 npm test
 ```
 
-The test script starts or reuses a local Postgres container, applies migrations, and runs Vitest.
+The server test script starts or reuses a local Postgres container, applies migrations, and runs Vitest.
+
+The client tests are done using Jest.
 
 ## Environment Variables
 
