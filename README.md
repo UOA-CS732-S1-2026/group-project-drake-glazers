@@ -28,11 +28,13 @@ Memoriez implements the core user stories for recording, revisiting, and sharing
 - Dhruv Sawant
 - Milan Ahuja
 
-## Project Links
+## Project Resources
 
-- Repository: https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers
-- Project board: https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/projects
-- Wiki: https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/wiki
+- **Repository:** https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers
+- **GitHub Project board:** https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/projects
+  Used to track sprint work, task ownership, and PR status.
+- **Wiki:** https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/wiki
+  Contains project documentation, design notes, decisions, marker-facing context, development workflow, contribution guidelines, and PR expectations.
 
 ## Tech Stack
 
@@ -212,18 +214,6 @@ Guidelines:
 - Use Mapbox dashboard values for Mapbox tokens.
 - In production, `DATABASE_URL` may be a pooled connection and `DIRECT_URL` should be the direct database connection for Prisma migrations.
 - In CI, local Postgres URLs can be used for both `DATABASE_URL` and `DIRECT_URL`.
-
-## GitHub Project and Wiki
-
-Use the GitHub Project board to track sprint work, task ownership, and PR status:
-
-https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/projects
-
-Use the wiki for project documentation, design notes, decisions, and marker-facing context:
-
-https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/wiki
-
-For development workflow, contribution guidelines, PR expectations, and additional project details, refer to the wiki.
 
 ## Deployment Notes
 
