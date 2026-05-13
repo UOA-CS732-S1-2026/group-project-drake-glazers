@@ -50,6 +50,81 @@ Memoriez implements the core user stories for recording, revisiting, and sharing
 - **CI:** GitHub Actions
 - **Deployment:** Fly.io for the server
 
+## Architecture
+
+For further architecture notes, design decisions, and project documentation, see the [project wiki](https://github.com/UOA-CS732-S1-2026/group-project-drake-glazers/wiki).
+
+Memoriez uses a mobile-first client/server architecture. The iOS and Android apps are built from the same Expo React Native codebase and communicate with a central Express API. The backend owns application data, database access, media signing, notification jobs, and authorization checks.
+
+Authentication is handled by Clerk. The mobile apps sign users in with Clerk and send Clerk JWTs to the backend on API requests. The backend verifies those tokens, then uses the authenticated Clerk user ID as the application user ID. A matching `users` row is kept in PostgreSQL so app-specific records such as memories, profiles, friends, lists, saved collections, and device tokens can be linked to the authenticated user. Clerk webhooks keep the database user table synced when Clerk user records are created or changed.
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT                               │
+│          React Native / Expo (iOS + Android)                │
+│          Web build served via Vercel                        │
+│                                                             │
+│  ┌──────────────┐  ┌─────────────────┐  ┌───────────────┐   │
+│  │ expo-router  │  │ TanStack Query  │  │    Zustand    │   │
+│  │  (routing)   │  │ (server state)  │  │  (UI state)   │   │
+│  └──────────────┘  └────────┬────────┘  └───────────────┘   │
+│                             │                               │
+│          useApiClient (fetch + JWT)                         │
+└─────────────────────────────┼───────────────────────────────┘
+                              │ HTTPS (EXPO_PUBLIC_API_URL)
+                              ▼
+┌────────────────────────────────────────────────────────────┐
+│                        SERVER                              │
+│         Node.js + Express — deployed on Fly.io (syd)       │
+│                                                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ Clerk JWT    │  │     Zod      │  │   Prisma ORM     │  │
+│  │ middleware   │  │  validation  │  │ (query builder)  │  │
+│  └──────────────┘  └──────────────┘  └────────┬─────────┘  │
+└───────────────────────────────────────────────┼────────────┘
+                                                │
+                    ┌───────────────────────────┴───────────┐
+                    ▼                                       ▼
+┌───────────────────────────┐   ┌─────────────────────────────┐
+│       SUPABASE DB         │   │      SUPABASE STORAGE       │
+│   PostgreSQL (managed)    │   │   Object storage (S3-like)  │
+│                           │   │                             │
+│  Users, Memories, Media,  │   │  Photos, videos, avatars    │
+│  Lists, Friends, Saved,   │   │  Accessed via signed URLs   │
+│  DeviceTokens             │   │  (time-limited, per-file)   │
+└───────────────────────────┘   └─────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                    CLERK (Identity)                         │
+│  Issues JWTs consumed by both client and server.            │
+│  Client: ClerkProvider + useAuth()                          │
+│  Server: verifyToken() in requireApiAuth middleware         │
+│  Webhooks: sync Clerk users into the database users table   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                    MAPBOX (Maps)                            │
+│  Used directly by the client for map rendering, location    │
+│  picking, and geocoding through EXPO_PUBLIC_MAPBOX_TOKEN.   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│               GITHUB ACTIONS (Background Jobs)              │
+│  Anniversary notification job runs hourly via cron,         │
+│  queries DeviceTokens + Memories, sends Expo push           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Architecture Decisions
+
+- **Single shared mobile frontend:** iOS and Android use the same Expo codebase to keep features, routing, and UI behavior consistent across platforms.
+- **API-centered data access:** the mobile app does not talk directly to the database. All application data flows through the Express API, where validation, authorization, and visibility rules are enforced.
+- **Clerk for authentication, PostgreSQL for app data:** Clerk manages sign-in and identity, while the database stores app-specific user records and relationships. The Clerk user ID is used as the database `User.id`.
+- **Webhook-based user sync:** Clerk webhooks create or update user rows in the database so authenticated users always have a corresponding application record.
+- **Client-side Mapbox integration:** map rendering and geocoding calls run from the Expo app using the public Mapbox token. The backend stores memory coordinates and relative area labels, but it does not call Mapbox directly.
+- **Prisma as the database boundary:** Prisma models and migrations define the database schema and keep backend data access typed and consistent.
+- **Signed media access:** media files are stored in Supabase Storage. The backend issues upload/read URLs instead of exposing storage credentials to the client.
+
 ## Repository Structure
 
 ```text
