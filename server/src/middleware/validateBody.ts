@@ -8,6 +8,7 @@ export const validateBody = (schema: ZodType) => {
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
+      // Flatten errors to a predictable client-facing shape.
       return errorResponse(
         res,
         400,
@@ -17,6 +18,7 @@ export const validateBody = (schema: ZodType) => {
       );
     }
 
+    // Attach the parsed payload for route handlers.
     req.validatedBody = result.data;
     return next();
   };

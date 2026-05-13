@@ -9,6 +9,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Text } from '@/components/ui/text';
 import { OnboardingModal } from '@/components/onboarding-modal';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { useMapStore } from '@/stores/map-store';
 
 const TABS = [
   { name: 'index', label: 'Home', icon: 'house.fill' as const },
@@ -27,6 +28,7 @@ const TOKEN = {
 function CustomTabBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
+  // Map screen uses higher-contrast tab styling for readability over imagery.
   const isMap = pathname === '/';
 
   const inactiveColor = isMap ? TOKEN.inactiveDark : TOKEN.inactiveLight;
@@ -84,11 +86,14 @@ function CreateMemoryFAB() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
+  const memoryCardOpen = useMapStore((s) => s.memoryCardOpen);
 
   // Web has its own FAB in index.web.tsx
   if (Platform.OS === 'web') return null;
   // Only show on the home/map tab
   if (pathname !== '/') return null;
+  // Hide when a memory card is open
+  if (memoryCardOpen) return null;
 
   return (
     <TouchableOpacity

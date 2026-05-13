@@ -51,6 +51,7 @@ const getPrismaErrorCode = (error: unknown): string | null => {
 // ─── Explore feed: recent public memories from all users ──────────────────────
 
 memoriesRouter.get('/explore', async (req: Request, res: Response) => {
+  // Cap limit to protect the feed query from oversized requests.
   const limit = Math.min(Number(req.query.limit) || 20, 50);
 
   const memories = await prisma.memory.findMany({
@@ -109,9 +110,11 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
     select: {
       ...memorySelect,
       media: {
-        select: { mediaPath: true },
-        where: { mediaType: 'image' },
-        orderBy: { createdAt: 'asc' as const },
+        select: { mediaPath: true, mediaType: true },
+        where: { mediaType: { in: ['image', 'video'] } },
+        // 'image' < 'video' alphabetically, so images are preferred over videos.
+        // take: 1 keeps this to a single row per memory.
+        orderBy: [{ mediaType: 'asc' as const }, { createdAt: 'asc' as const }],
         take: 1,
       },
     },
@@ -131,10 +134,14 @@ memoriesRouter.get('/memories', async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(
-    memories.map(({ media, ...memory }) => ({
-      ...memory,
-      thumbnailUrl: media[0] ? (signedUrlMap.get(media[0].mediaPath) ?? null) : null,
-    }))
+    memories.map(({ media, ...memory }) => {
+      const thumbnail = media[0] ?? null;
+      return {
+        ...memory,
+        thumbnailUrl: thumbnail ? (signedUrlMap.get(thumbnail.mediaPath) ?? null) : null,
+        thumbnailMediaType: thumbnail?.mediaType ?? null,
+      };
+    })
   );
 });
 
@@ -151,6 +158,7 @@ memoriesRouter.get('/memories/:id', async (req: Request, res: Response) => {
     return errorResponse(res, 404, 'MEMORY_NOT_FOUND', 'Memory not found');
   }
 
+  // Non-owners must pass block + visibility checks.
   if (memory.userId !== authUserId) {
     const ownerId = memory.userId;
     const [userAId, userBId] = [authUserId, ownerId].sort() as [string, string];
@@ -345,6 +353,7 @@ type MemoryWithCoverRaw = Prisma.MemoryGetPayload<{ select: typeof memoryWithCov
 async function attachCoverImages(memories: MemoryWithCoverRaw[]) {
   const coverPaths = memories.map((m) => m.media[0]?.mediaPath).filter((p): p is string => !!p);
 
+  // Batch-sign cover images in one storage call.
   let signedUrlMap = new Map<string, string>();
   if (coverPaths.length > 0) {
     const { data: signedUrls } = await supabase.storage

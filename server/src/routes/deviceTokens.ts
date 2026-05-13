@@ -36,6 +36,7 @@ deviceTokensRouter.post(
     const body = req.validatedBody as UpsertDeviceTokenBody;
 
     try {
+      // Upsert keeps a single token per device and refreshes lastSeenAt.
       const deviceToken = await prisma.deviceToken.upsert({
         where: { token: body.token },
         create: {

@@ -15,6 +15,7 @@ export default function HomeScreen() {
   const { data: memories = [] } = useMemories();
   const pendingCenter = useMapStore((s) => s.pendingCenter);
   const setPendingCenter = useMapStore((s) => s.setPendingCenter);
+  const setMemoryCardOpen = useMapStore((s) => s.setMemoryCardOpen);
   const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -23,6 +24,7 @@ export default function HomeScreen() {
     (id: string, coordinate: [number, number]) => {
       const memory = memories.find((m) => m.id === id) ?? null;
       setSelectedMemory(memory);
+      setMemoryCardOpen(!!memory);
       cameraRef.current?.setCamera({
         centerCoordinate: coordinate,
         zoomLevel: 14,
@@ -33,12 +35,14 @@ export default function HomeScreen() {
     [memories]
   );
 
+  // Swap projections based on zoom for better globe-to-map transitions.
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
 
   useEffect(() => {
+    // One-shot recenter requested by other screens (e.g., after saving a memory).
     if (!pendingCenter) return;
     cameraRef.current?.setCamera({
       centerCoordinate: pendingCenter,
@@ -77,6 +81,7 @@ export default function HomeScreen() {
             coordinate={[memory.longitude, memory.latitude]}
             title={memory.title}
             thumbnailUrl={memory.thumbnailUrl}
+            thumbnailMediaType={memory.thumbnailMediaType}
             onPress={handlePinPress}
           />
         ))}
@@ -99,7 +104,10 @@ export default function HomeScreen() {
         <MemoryPreviewCard
           key={selectedMemory.id}
           memory={selectedMemory}
-          onClose={() => setSelectedMemory(null)}
+          onClose={() => {
+            setSelectedMemory(null);
+            setMemoryCardOpen(false);
+          }}
           bottomOffset={(insets.bottom || 12) + 56}
         />
       )}

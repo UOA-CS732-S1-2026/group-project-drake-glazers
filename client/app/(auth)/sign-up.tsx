@@ -3,8 +3,10 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -93,97 +95,112 @@ export default function SignUpScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.inner}>
-        <Text style={styles.title}>Memoriez</Text>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <Image
+            source={require('@/assets/images/Memoriez-Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.tagline}>
+            {step === 'details'
+              ? 'Capture the moments that define your journey.'
+              : 'One last step to join the community.'}
+          </Text>
+        </View>
 
-        {step === 'details' ? (
-          <>
-            <Text style={styles.subtitle}>Create an account</Text>
+        <View style={styles.card}>
+          {step === 'details' ? (
+            <>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="name@example.com"
+                placeholderTextColor="#BBBBBB"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Email address"
-              placeholderTextColor="#888"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#888"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="new-password"
-            />
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#BBBBBB"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="new-password"
+              />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+              {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={onSignUpPress}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
-              )}
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={onSignUpPress}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Create Account</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.hint}>We sent a verification code to {email}</Text>
+
+              <Text style={styles.label}>Verification Code</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="000000"
+                placeholderTextColor="#BBBBBB"
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                autoComplete="one-time-code"
+                autoFocus
+              />
+
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={onVerifyPress}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Verify Email</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.outlineButton}
+                onPress={() => {
+                  setStep('details');
+                  setError('');
+                }}
+              >
+                <Text style={styles.outlineButtonText}>← Back</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <Link href="/(auth)/sign-in" asChild>
+            <TouchableOpacity>
+              <Text style={styles.link}>Sign In</Text>
             </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Link href="/(auth)/sign-in" asChild>
-                <TouchableOpacity>
-                  <Text style={styles.link}>Sign In</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.subtitle}>Check your email</Text>
-            <Text style={styles.hint}>We sent a verification code to {email}</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Verification code"
-              placeholderTextColor="#888"
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-            />
-
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={onVerifyPress}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Verify Email</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => {
-                setStep('details');
-                setError('');
-              }}
-            >
-              <Text style={styles.link}>Back</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+          </Link>
+        </View>
+      </ScrollView>
 
       <OnboardingModal
         visible={showOnboarding}
@@ -193,84 +210,120 @@ export default function SignUpScreen() {
   );
 }
 
+const PRIMARY = '#B92B27';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#FBF0EE',
   },
-  inner: {
-    flex: 1,
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 48,
   },
-  title: {
-    fontSize: 36,
-    fontFamily: 'PlaywriteNO',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 8,
+  hero: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  subtitle: {
+  logo: {
+    width: 280,
+    maxWidth: '100%',
+    height: 102,
+    marginBottom: 14,
+  },
+  tagline: {
     fontSize: 15,
-    color: '#888',
+    color: '#666666',
     textAlign: 'center',
-    marginBottom: 36,
+    lineHeight: 22,
+    paddingHorizontal: 16,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 4,
   },
   hint: {
     fontSize: 13,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
-    marginTop: -24,
+    color: '#888888',
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#444444',
+    marginBottom: 6,
+    marginTop: 14,
+    marginHorizontal: 24,
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
+    backgroundColor: '#F2F2F2',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     fontSize: 15,
-    color: '#ffffff',
-    marginBottom: 14,
+    color: '#1A1A1A',
+    marginHorizontal: 24,
   },
   error: {
-    color: '#ff4444',
+    color: '#D9534F',
     fontSize: 13,
-    marginBottom: 12,
+    marginTop: 10,
+    marginBottom: 4,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#1a3c5e',
+    backgroundColor: PRIMARY,
     borderRadius: 30,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 20,
+    marginHorizontal: 24,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  outlineButton: {
+    borderRadius: 30,
+    borderWidth: 1.5,
+    borderColor: '#DDDDDD',
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  outlineButtonText: {
+    color: '#555555',
+    fontSize: 15,
     fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 28,
   },
   footerText: {
-    color: '#888',
+    color: '#666666',
     fontSize: 14,
   },
   link: {
-    color: '#4a90d9',
+    color: PRIMARY,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  backButton: {
-    alignItems: 'center',
-    marginTop: 20,
+    fontWeight: '700',
   },
 });

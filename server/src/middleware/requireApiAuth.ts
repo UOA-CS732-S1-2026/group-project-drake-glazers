@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { errorResponse } from '../lib/api-response.js';
 
 export const requireApiAuth = (req: Request, res: Response, next: NextFunction) => {
+  // DEV_BYPASS_AUTH allows local testing with a fixed user id.
   const allowDevBypass = process.env.DEV_BYPASS_AUTH === 'true';
 
   if (allowDevBypass) {

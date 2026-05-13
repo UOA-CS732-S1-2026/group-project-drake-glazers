@@ -1,1 +1,0 @@
-{"version":3,"file":"friendRequests.js","sourceRoot":"","sources":["../../src/schemas/friendRequests.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAExB,MAAM,2BAA2B,GAAG,CAAC,CAAC,MAAM,CAAC;IAC3C,QAAQ,EAAE,CAAC,CAAC,MAAM,EAAE,CAAC,GAAG,CAAC,CAAC,CAAC;CAC5B,CAAC,CAAC;AAEH,OAAO,EAAE,2BAA2B,EAAE,CAAC"}

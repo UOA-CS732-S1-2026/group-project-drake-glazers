@@ -1,9 +1,8 @@
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
+import { useVideoThumbnail } from '@/hooks/use-video-thumbnail';
 import type { ExploreMemory } from '@/lib/types';
-
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400';
 
 type Props = {
   memory: ExploreMemory;
@@ -13,8 +12,10 @@ type Props = {
 };
 
 export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
-  const imageUri = memory.imageUrl ?? PLACEHOLDER_IMAGE;
+  const isImage = memory.mediaType === 'image';
   const isVideo = memory.mediaType === 'video';
+  // Lazily derive a thumbnail for videos to keep the feed lightweight.
+  const videoThumbnail = useVideoThumbnail(isVideo ? memory.imageUrl : null);
 
   return (
     <TouchableOpacity style={styles.feedCard} onPress={onPress} activeOpacity={0.92}>
@@ -38,10 +39,24 @@ export function FeedCard({ memory, onPress, isSaved, onBookmarkPress }: Props) {
       </View>
 
       <View style={{ position: 'relative' }}>
-        <Image source={{ uri: imageUri }} style={styles.feedImage} resizeMode="cover" />
-        {isVideo && (
-          <View style={styles.videoPlay}>
-            <MaterialIcons name="play-circle-outline" size={36} color="#fff" />
+        {isImage && memory.imageUrl ? (
+          <Image source={{ uri: memory.imageUrl }} style={styles.feedImage} resizeMode="cover" />
+        ) : isVideo ? (
+          <View style={styles.videoThumbnail}>
+            {videoThumbnail && (
+              <Image
+                source={{ uri: videoThumbnail }}
+                style={StyleSheet.absoluteFillObject}
+                resizeMode="cover"
+              />
+            )}
+            <View style={styles.videoPlayOverlay}>
+              <MaterialIcons name="play-circle-filled" size={48} color="rgba(255,255,255,0.85)" />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.mediaPlaceholder}>
+            <MaterialIcons name="photo" size={40} color="#c9a9a6" />
           </View>
         )}
       </View>
@@ -103,6 +118,24 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
   },
+  videoThumbnail: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#111',
+    overflow: 'hidden',
+  },
+  videoPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mediaPlaceholder: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#f5eded',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   feedFooter: {
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -114,11 +147,5 @@ const styles = StyleSheet.create({
   },
   bookmarkBtn: {
     marginTop: 2,
-  },
-  videoPlay: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
 });

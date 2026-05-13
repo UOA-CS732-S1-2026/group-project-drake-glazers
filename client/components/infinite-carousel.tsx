@@ -24,7 +24,7 @@ export function InfiniteCarousel({ items, onPress, autoScrollInterval = 3000 }: 
   const scrollXRef = useRef(0);
   const isResetting = useRef(false);
 
-  // Triple the data so we can scroll in either direction without hitting an end
+  // Triple the data so we can scroll in either direction without hitting an end.
   const tripled = [...items, ...items, ...items];
   const singleWidth = items.length * ITEM_STRIDE;
 
@@ -50,7 +50,7 @@ export function InfiniteCarousel({ items, onPress, autoScrollInterval = 3000 }: 
       const x = e.nativeEvent.contentOffset.x;
       scrollXRef.current = x;
 
-      // When we drift into the last or first copy, silently jump to the middle copy
+      // When we drift into the last or first copy, silently jump to the middle copy.
       if (!isResetting.current && x >= 2 * singleWidth) {
         isResetting.current = true;
         listRef.current?.scrollToOffset({ offset: x - singleWidth, animated: false });

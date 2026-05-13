@@ -16,6 +16,7 @@ type MapPinProps = {
   coordinate: [number, number];
   title?: string;
   thumbnailUrl?: string | null;
+  thumbnailMediaType?: 'image' | 'video' | null;
   /** Icon shown in the bottom-right badge. Defaults to 'heart'. */
   badgeIcon?: PinBadgeIcon;
   onPress?: (id: string, coordinate: [number, number]) => void;
@@ -41,6 +42,7 @@ export function MapPin({
   coordinate,
   title,
   thumbnailUrl,
+  thumbnailMediaType,
   badgeIcon = 'heart',
   onPress,
 }: MapPinProps) {
@@ -59,13 +61,17 @@ export function MapPin({
         <View style={styles.bubble}>
           {/* Separate inner clip so the image/initial is rounded without clipping the badge */}
           <View style={styles.imageClip}>
-            {thumbnailUrl ? (
+            {thumbnailUrl && thumbnailMediaType !== 'video' ? (
               <Image
                 source={{ uri: thumbnailUrl }}
                 style={StyleSheet.absoluteFillObject}
                 contentFit="cover"
                 cachePolicy="memory-disk"
               />
+            ) : thumbnailMediaType === 'video' ? (
+              <View style={[StyleSheet.absoluteFillObject, styles.videoPlaceholder]}>
+                <MaterialIcons name="play-circle-filled" size={30} color="#ffffff" />
+              </View>
             ) : (
               <Text style={styles.initial}>{initial}</Text>
             )}
@@ -115,6 +121,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1c1b1b',
+  },
+  videoPlaceholder: {
+    backgroundColor: '#1a1a2e',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badge: {
     position: 'absolute',

@@ -7,6 +7,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
 }
 
+// Service-role client is required for server-side storage operations.
 export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export const MEDIA_BUCKET = 'memories-media';

@@ -27,11 +27,13 @@ export default function ExploreScreen() {
   } = useQuery<ExploreMemory[]>({
     queryKey: ['explore'],
     queryFn: () => api.get('/api/explore'),
+    // Keep explore feed warm without refetching on every focus.
     staleTime: 60_000,
   });
 
   const { data: savedPairs = [] } = useSavedPairs();
 
+  // Used to render saved state in the feed cards.
   const savedMemoryIds = new Set(savedPairs.map((p) => p.memoryId));
 
   const onRefresh = useCallback(async () => {

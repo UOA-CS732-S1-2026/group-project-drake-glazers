@@ -56,6 +56,7 @@ blocksRouter.post(
     const [userAId, userBId] = [authUserId, blockedId].sort() as [string, string];
 
     try {
+      // Block + friendship/request cleanup happens atomically.
       const [block] = await prisma.$transaction([
         prisma.block.create({
           data: {

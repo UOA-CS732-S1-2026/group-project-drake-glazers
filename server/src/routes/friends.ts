@@ -54,6 +54,7 @@ friendsRouter.delete('/friends/:userId', async (req: Request, res: Response) => 
     return errorResponse(res, 400, 'CANNOT_UNFRIEND_SELF', 'Cannot unfriend yourself');
   }
 
+  // Friendship key is stored as sorted user ids for uniqueness.
   const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   try {

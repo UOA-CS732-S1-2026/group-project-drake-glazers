@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useState, useRef, useCallback } from 'react';
+import { Video, ResizeMode, VideoFullscreenUpdate } from 'expo-av';
+import { useVideoThumbnail } from '@/hooks/use-video-thumbnail';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -128,11 +131,19 @@ export default function PublicMemoryScreen() {
 
 function MediaCollage({ items }: { items: Media[] }) {
   const images = items.filter((m) => m.mediaType === 'image' && typeof m.signedUrl === 'string');
-  const others = items.filter((m) => !(m.mediaType === 'image' && typeof m.signedUrl === 'string'));
+  const videos = items.filter((m) => m.mediaType === 'video' && typeof m.signedUrl === 'string');
+  const others = items.filter(
+    (m) =>
+      !(m.mediaType === 'image' && typeof m.signedUrl === 'string') &&
+      !(m.mediaType === 'video' && typeof m.signedUrl === 'string')
+  );
 
   return (
     <View className="gap-sm">
       {images.length > 0 && <ImageGrid images={images} />}
+      {videos.map((video) => (
+        <EmbeddedVideoPlayer key={video.id} item={video} />
+      ))}
       {others.length > 0 && (
         <View className="flex-row flex-wrap gap-sm">
           {others.map((item) => (
@@ -143,6 +154,82 @@ function MediaCollage({ items }: { items: Media[] }) {
     </View>
   );
 }
+
+function EmbeddedVideoPlayer({ item }: { item: Media }) {
+  const videoRef = useRef<Video>(null);
+  const [active, setActive] = useState(false);
+  const thumbnail = useVideoThumbnail(item.signedUrl);
+
+  const handleReadyForDisplay = useCallback(async () => {
+    try {
+      await videoRef.current?.presentFullscreenPlayer();
+      await videoRef.current?.playAsync();
+    } catch {
+      // fullscreen unavailable — play inline instead
+      try {
+        await videoRef.current?.playAsync();
+      } catch {
+        setActive(false);
+      }
+    }
+  }, []);
+
+  const handleFullscreenUpdate = useCallback(
+    ({ fullscreenUpdate }: { fullscreenUpdate: number }) => {
+      if (fullscreenUpdate === VideoFullscreenUpdate.PLAYER_DID_DISMISS) {
+        setActive(false);
+      }
+    },
+    []
+  );
+
+  if (!active) {
+    return (
+      <TouchableOpacity
+        style={[grid.clip, videoStyles.poster]}
+        onPress={() => setActive(true)}
+        activeOpacity={0.8}
+      >
+        {thumbnail && (
+          <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+        )}
+        <View style={videoStyles.playOverlay}>
+          <MaterialIcons name="play-circle-filled" size={56} color="rgba(255,255,255,0.9)" />
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={[grid.clip, { backgroundColor: '#000' }]}>
+      <Video
+        ref={videoRef}
+        source={{ uri: item.signedUrl! }}
+        style={{ width: '100%', aspectRatio: 16 / 9 }}
+        resizeMode={ResizeMode.CONTAIN}
+        shouldPlay={false}
+        isLooping={false}
+        onReadyForDisplay={handleReadyForDisplay}
+        onFullscreenUpdate={handleFullscreenUpdate}
+      />
+    </View>
+  );
+}
+
+const videoStyles = StyleSheet.create({
+  poster: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#111',
+    overflow: 'hidden',
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 function ImageGrid({ images }: { images: Media[] }) {
   const count = images.length;

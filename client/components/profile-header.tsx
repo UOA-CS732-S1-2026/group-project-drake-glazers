@@ -14,6 +14,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
+// Count distinct locations based on the human-readable relative area label.
 function uniquePlacesCount(memories: { relativeArea?: string | null }[]): number {
   const seen = new Set(memories.map((m) => m.relativeArea).filter((r): r is string => !!r));
   return seen.size;
@@ -39,6 +40,7 @@ type Props = {
   userId: string;
 };
 
+// Profile header shows avatar, stats, and edit actions for the current user.
 export function ProfileHeader({ userId }: Props) {
   const { userId: myId, signOut } = useAuth();
   const router = useRouter();

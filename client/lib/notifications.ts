@@ -6,6 +6,7 @@ type ApiClient = {
   post: (path: string, body: unknown) => Promise<unknown>;
 };
 
+// Configure how notifications behave while the app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -16,6 +17,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Debug logging is gated by EXPO_PUBLIC_DEBUG_PUSH to avoid noisy production logs.
 const debugPush = (message: string, level: 'info' | 'error' | 'debug' = 'info') => {
   if (process.env.EXPO_PUBLIC_DEBUG_PUSH !== 'true') return;
   const out = `push:${level} ${message}`;
@@ -34,6 +36,7 @@ const formatErrorMessage = (error: unknown): string => {
   }
 };
 
+// EAS projectId is required to fetch an Expo push token in EAS builds.
 const getExpoPushToken = async (): Promise<string> => {
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId ?? undefined;
@@ -52,6 +55,7 @@ const getExpoPushToken = async (): Promise<string> => {
 export const registerForPushNotificationsAsync = async (api: ApiClient) => {
   debugPush('register start');
   if (Platform.OS === 'android') {
+    // Android requires a notification channel for display configuration.
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
       importance: Notifications.AndroidImportance.DEFAULT,
@@ -61,6 +65,7 @@ export const registerForPushNotificationsAsync = async (api: ApiClient) => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
+  // Request permission only when not yet granted.
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;

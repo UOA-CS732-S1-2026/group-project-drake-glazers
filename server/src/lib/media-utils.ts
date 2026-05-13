@@ -1,5 +1,6 @@
 import { supabase, MEDIA_BUCKET, SIGNED_URL_EXPIRY_SECONDS } from './supabase.js';
 
+// Batch-sign media paths to reduce round-trips to storage.
 export async function buildSignedUrlMap(paths: string[]): Promise<Map<string, string>> {
   if (paths.length === 0) return new Map();
 

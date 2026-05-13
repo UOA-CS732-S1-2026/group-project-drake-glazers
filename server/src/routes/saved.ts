@@ -13,6 +13,7 @@ const getAuthUserId = (req: Request): string => req.authUserId as string;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Guard to prevent cross-user access to saved collections.
 async function ensureUserOwnsCollection(collectionId: string, userId: string) {
   const collection = await prisma.savedCollection.findUnique({
     where: { id: collectionId },
