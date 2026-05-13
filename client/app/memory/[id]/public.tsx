@@ -287,33 +287,24 @@ function ImageGrid({ images }: { images: Media[] }) {
     );
   }
 
-  const shown = images.slice(0, 4);
-  const overflow = count - 4;
-  const rows = [shown.slice(0, 2), shown.slice(2, 4)];
+  const rows: Media[][] = [];
+  for (let i = 0; i < images.length; i += 2) {
+    rows.push(images.slice(i, i + 2));
+  }
 
   return (
     <View style={[grid.clip, grid.col]}>
       {rows.map((row, rowIndex) => (
         <View key={rowIndex} style={grid.row}>
-          {row.map((img, colIndex) => {
-            const showOverlay = overflow > 0 && rowIndex === 1 && colIndex === row.length - 1;
-            return (
-              <View key={img.id} style={{ flex: 1, aspectRatio: 4 / 3, overflow: 'hidden' }}>
-                <Image
-                  source={{ uri: img.signedUrl ?? undefined }}
-                  style={{ flex: 1 }}
-                  resizeMode="cover"
-                />
-                {showOverlay && (
-                  <View style={[StyleSheet.absoluteFill, grid.overlay]}>
-                    <Text variant="headline-md" className="text-white">
-                      +{overflow}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+          {row.map((img) => (
+            <View key={img.id} style={{ flex: 1, aspectRatio: 4 / 3, overflow: 'hidden' }}>
+              <Image
+                source={{ uri: img.signedUrl ?? undefined }}
+                style={{ flex: 1 }}
+                resizeMode="cover"
+              />
+            </View>
+          ))}
         </View>
       ))}
     </View>
@@ -326,7 +317,6 @@ const grid = StyleSheet.create({
   clip: { borderRadius: 12, overflow: 'hidden' },
   row: { flexDirection: 'row', gap: GAP },
   col: { gap: GAP },
-  overlay: { backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
 });
 
 function MediaIconTile({ item }: { item: Media }) {
