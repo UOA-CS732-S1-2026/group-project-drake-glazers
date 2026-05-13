@@ -5,7 +5,7 @@
   "scripts": {
     "prepare": "husky",
     "install:all": "npm install && npm install --prefix client && npm install --prefix server",
-    "test": "npm test --prefix server",
+    "test": "npm test --prefix server && npm test --prefix client",
     "test:watch": "npm run test:watch --prefix server"
   },
   "devDependencies": {
