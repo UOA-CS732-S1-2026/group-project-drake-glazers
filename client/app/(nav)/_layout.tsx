@@ -1,6 +1,7 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -171,9 +172,12 @@ export default function TabLayout() {
   const { data: profile, isLoading } = useUserProfile();
   const [profileConfirmed, setProfileConfirmed] = useState(false);
   const showOnboarding = !isLoading && profile === null && !profileConfirmed;
+  const pathname = usePathname();
+  const isMap = pathname === '/';
 
   return (
     <>
+      <StatusBar style={isMap ? 'light' : 'dark'} />
       <Tabs
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}

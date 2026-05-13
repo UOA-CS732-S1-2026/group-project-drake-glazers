@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ScrollView, RefreshControl, View, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
@@ -46,7 +46,7 @@ export default function ExploreScreen() {
   const feedMemories = memories ?? [];
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fcf9f8' }} edges={['top']}>
       <ScrollView
         style={{ flex: 1, backgroundColor: '#fcf9f8' }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
@@ -57,12 +57,11 @@ export default function ExploreScreen() {
             onRefresh={onRefresh}
             tintColor="#b71422"
             colors={['#b71422']}
-            progressViewOffset={insets.top - 8}
           />
         }
       >
         {/* Page header */}
-        <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 16, paddingBottom: 12 }}>
+        <View style={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: 12 }}>
           <Text variant="headline-lg" style={{ color: '#1c1b1b' }}>
             Explore memories
           </Text>
@@ -125,6 +124,6 @@ export default function ExploreScreen() {
         savedPairs={savedPairs}
         onClose={() => setActiveMemory(null)}
       />
-    </View>
+    </SafeAreaView>
   );
 }

@@ -362,16 +362,18 @@ function FriendsSection() {
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
-      contentContainerClassName="px-gutter gap-xl"
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text variant="headline-lg">Friends</Text>
-      <SearchSection />
-      <RequestsSection />
-      <FriendsSection />
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: '#fcf9f8' }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
+        contentContainerClassName="px-gutter gap-xl"
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text variant="headline-lg">Friends</Text>
+        <SearchSection />
+        <RequestsSection />
+        <FriendsSection />
+      </ScrollView>
+    </View>
   );
 }
