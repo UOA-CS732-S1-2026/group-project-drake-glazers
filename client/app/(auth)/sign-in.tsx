@@ -3,7 +3,6 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useApiClient } from '@/lib/api';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 // Local sign-in step flow (credentials -> optional MFA).
 type Step = 'credentials' | 'mfa';

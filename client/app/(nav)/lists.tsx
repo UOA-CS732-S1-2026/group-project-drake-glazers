@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   RefreshControl,
-  StatusBar,
   TouchableOpacity,
   StyleSheet,
   TextInput,
@@ -53,8 +52,6 @@ export default function SavedScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <StatusBar barStyle="dark-content" />
-
       {/* Header */}
       <View style={styles.header}>
         <Text variant="headline-lg" style={styles.headerTitle}>

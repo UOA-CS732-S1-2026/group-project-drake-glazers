@@ -141,7 +141,7 @@ function InitialLayout() {
         <Stack.Screen name="lists/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="saved/[id]" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
       {incomingNotification && (
         <NotificationBanner
           title={incomingNotification.title}

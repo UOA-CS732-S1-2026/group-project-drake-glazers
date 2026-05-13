@@ -1,8 +1,10 @@
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Text } from '@/components/ui/text';
 import { useUserMemoriesWithCovers } from '@/hooks/use-user-memories-with-covers';
+import { LoadableImage as Image } from '@/components/loadable-image';
+import { FeedCardSkeleton } from '@/components/feed-card-skeleton';
 import { MemoryWithCover } from '@/lib/types';
 
 const GUTTER = 16;
@@ -64,9 +66,14 @@ type Props = { userId: string };
 
 export function PastCapturesSection({ userId }: Props) {
   const { width } = useWindowDimensions();
-  const { data: memories = [] } = useUserMemoriesWithCovers(userId);
+  const { data: memories = [], isLoading } = useUserMemoriesWithCovers(userId);
 
-  // Shuffle to surface variety on each render, then cap to a small grid.
+  const contentWidth = width - GUTTER * 2;
+  const halfWidth = (contentWidth - GAP) / 2;
+  const fullHeight = Math.round(contentWidth * 0.55);
+  const halfHeight = Math.round(halfWidth * 0.95);
+
+  // useMemo must be called unconditionally — before any early returns.
   const shuffled = useMemo(() => {
     const copy = memories.filter((m) => m.coverImage !== null);
     for (let i = copy.length - 1; i > 0; i--) {
@@ -76,12 +83,37 @@ export function PastCapturesSection({ userId }: Props) {
     return copy.slice(0, MAX_CARDS);
   }, [userId, memories.length]);
 
-  if (memories.length === 0) return null;
+  if (isLoading) {
+    return (
+      <View className="mt-lg mb-xl">
+        <View className="mx-gutter mb-sm">
+          <Text variant="headline-md">Past Captures</Text>
+        </View>
+        <View style={{ marginHorizontal: GUTTER, gap: GAP }}>
+          <FeedCardSkeleton
+            variant="image"
+            style={{ width: contentWidth, height: fullHeight, borderRadius: 12 }}
+          />
+          <View style={{ flexDirection: 'row', gap: GAP }}>
+            <FeedCardSkeleton
+              variant="image"
+              style={{ width: halfWidth, height: halfHeight, borderRadius: 12 }}
+            />
+            <FeedCardSkeleton
+              variant="image"
+              style={{ width: halfWidth, height: halfHeight, borderRadius: 12 }}
+            />
+          </View>
+          <FeedCardSkeleton
+            variant="image"
+            style={{ width: contentWidth, height: fullHeight, borderRadius: 12 }}
+          />
+        </View>
+      </View>
+    );
+  }
 
-  const contentWidth = width - GUTTER * 2;
-  const halfWidth = (contentWidth - GAP) / 2;
-  const fullHeight = Math.round(contentWidth * 0.55);
-  const halfHeight = Math.round(halfWidth * 0.95);
+  if (memories.length === 0) return null;
 
   const [a, b, c, d] = shuffled;
 

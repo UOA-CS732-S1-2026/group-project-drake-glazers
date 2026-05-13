@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Modal,
   View,
-  Image,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -18,6 +17,7 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { useApiClient, uploadFile } from '@/lib/api';
 import { LocationPicker } from '@/components/location-picker';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 type SelectedLocation = { lat: number; lng: number; name: string };
 

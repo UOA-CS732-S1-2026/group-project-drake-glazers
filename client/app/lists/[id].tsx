@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Image, FlatList, Pressable, StatusBar, ActivityIndicator } from 'react-native';
+import { View, FlatList, Pressable, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -19,6 +19,7 @@ import { DeleteConfirmModal } from '@/components/lists/delete-confirm-modal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

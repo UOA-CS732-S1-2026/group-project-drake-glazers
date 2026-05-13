@@ -5,7 +5,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Dimensions,
   Modal,
@@ -22,6 +21,7 @@ import {
   useDeleteCollection,
   useUnsaveMemory,
 } from '@/hooks/use-saved';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { ExploreMemory } from '@/lib/types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
