@@ -1,8 +1,10 @@
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text } from '@/components/ui/text';
 import { useUserMemoriesWithCovers } from '@/hooks/use-user-memories-with-covers';
+import { LoadableImage as Image } from '@/components/loadable-image';
+import { FeedCardSkeleton } from '@/components/feed-card-skeleton';
 import { MemoryWithCover } from '@/lib/types';
 
 const GUTTER = 16;
@@ -11,8 +13,9 @@ const GAP = 8;
 // Convert a date string into a short, relative label (e.g., "2 WEEKS AGO").
 function timeAgoLabel(createdAt: string): string {
   const days = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
+  if (days < 1) return 'TODAY';
   if (days < 7) {
-    const d = Math.max(1, Math.round(days));
+    const d = Math.round(days);
     return `${d} ${d === 1 ? 'DAY' : 'DAYS'} AGO`;
   }
   if (days < 30) {
@@ -70,8 +73,31 @@ type Props = { userId: string };
 
 export function FlashbacksSection({ userId }: Props) {
   const { width } = useWindowDimensions();
-  const { data: memories = [] } = useUserMemoriesWithCovers(userId);
+  const { data: memories = [], isLoading } = useUserMemoriesWithCovers(userId);
   const [expanded, setExpanded] = useState(false);
+
+  const numColumns = Math.max(2, Math.floor((width - GUTTER * 2 + GAP) / (150 + GAP)));
+  const cardWidth = (width - GUTTER * 2 - GAP * (numColumns - 1)) / numColumns;
+  const cardHeight = Math.round(cardWidth * 1.3);
+
+  if (isLoading) {
+    return (
+      <View className="mt-lg">
+        <View className="mx-gutter mb-sm">
+          <Text variant="headline-md">Flashbacks</Text>
+        </View>
+        <View style={{ marginHorizontal: GUTTER, flexDirection: 'row', gap: GAP }}>
+          {Array.from({ length: numColumns }).map((_, i) => (
+            <FeedCardSkeleton
+              key={i}
+              variant="image"
+              style={{ width: cardWidth, height: cardHeight, borderRadius: 12 }}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   if (memories.length === 0) return null;
 
@@ -79,9 +105,6 @@ export function FlashbacksSection({ userId }: Props) {
   const sorted = [...memories].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-
-  const numColumns = Math.max(2, Math.floor((width - GUTTER * 2 + GAP) / (150 + GAP)));
-  const cardWidth = (width - GUTTER * 2 - GAP * (numColumns - 1)) / numColumns;
 
   const displayed = expanded ? sorted : sorted.slice(0, numColumns);
   const hasMore = sorted.length > numColumns;

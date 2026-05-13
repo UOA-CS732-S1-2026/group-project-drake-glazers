@@ -21,8 +21,14 @@ export function useVideoThumbnail(videoUri: string | null | undefined): string |
 
     (async () => {
       try {
-        const { getThumbnailAsync } = await import('expo-video-thumbnails');
-        const { uri } = await getThumbnailAsync(videoUri, { time: 0, quality: 0.7 });
+        let mod: typeof import('expo-video-thumbnails');
+        try {
+          mod = await import('expo-video-thumbnails');
+        } catch {
+          // Native module unavailable (e.g. Expo Go) — skip silently
+          return;
+        }
+        const { uri } = await mod.getThumbnailAsync(videoUri, { time: 0, quality: 0.7 });
         if (!cancelled) {
           cache.set(videoUri, uri);
           setThumbnailUri(uri);

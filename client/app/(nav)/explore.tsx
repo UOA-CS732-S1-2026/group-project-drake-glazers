@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { ScrollView, RefreshControl, View, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
 import { FeedCard } from '@/components/feed-card';
+import { FeedCardSkeleton } from '@/components/feed-card-skeleton';
 import { SaveToCollectionSheet } from '@/components/save-to-collection-sheet';
 import { useApiClient } from '@/lib/api';
 import { useSavedPairs } from '@/hooks/use-saved';
@@ -45,7 +46,7 @@ export default function ExploreScreen() {
   const feedMemories = memories ?? [];
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fcf9f8' }} edges={['top']}>
       <ScrollView
         style={{ flex: 1, backgroundColor: '#fcf9f8' }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
@@ -56,22 +57,27 @@ export default function ExploreScreen() {
             onRefresh={onRefresh}
             tintColor="#b71422"
             colors={['#b71422']}
-            progressViewOffset={insets.top - 8}
           />
         }
       >
         {/* Page header */}
-        <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 16, paddingBottom: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text variant="headline-lg" style={{ color: '#1c1b1b' }}>
-              Explore memories
-            </Text>
-            {isLoading && <ActivityIndicator size="small" color="#b71422" />}
-          </View>
+        <View style={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: 12 }}>
+          <Text variant="headline-lg" style={{ color: '#1c1b1b' }}>
+            Explore memories
+          </Text>
           <Text variant="body-md" style={{ color: '#5b403e', marginTop: 2 }}>
             Discover what&apos;s happening around you.
           </Text>
         </View>
+
+        {/* Skeleton placeholders while loading */}
+        {isLoading && (
+          <View style={{ gap: 16 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <FeedCardSkeleton key={i} />
+            ))}
+          </View>
+        )}
 
         {/* Error state */}
         {isError && (
@@ -84,16 +90,17 @@ export default function ExploreScreen() {
         )}
 
         {/* Feed */}
-        {feedMemories.map((m) => (
-          <View key={m.id} style={{ marginBottom: 16 }}>
-            <FeedCard
-              memory={m}
-              isSaved={savedMemoryIds.has(m.id)}
-              onPress={() => router.push(`/memory/${m.id}/public`)}
-              onBookmarkPress={() => setActiveMemory(m)}
-            />
-          </View>
-        ))}
+        {!isLoading &&
+          feedMemories.map((m) => (
+            <View key={m.id} style={{ marginBottom: 16 }}>
+              <FeedCard
+                memory={m}
+                isSaved={savedMemoryIds.has(m.id)}
+                onPress={() => router.push(`/memory/${m.id}/public`)}
+                onBookmarkPress={() => setActiveMemory(m)}
+              />
+            </View>
+          ))}
 
         {/* Empty state */}
         {!isLoading && !isError && memories?.length === 0 && (
@@ -117,6 +124,6 @@ export default function ExploreScreen() {
         savedPairs={savedPairs}
         onClose={() => setActiveMemory(null)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
