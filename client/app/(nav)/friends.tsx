@@ -1,4 +1,12 @@
-import { View, ScrollView, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+  ActivityIndicator,
+  Image,
+  Platform,
+} from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -365,7 +373,10 @@ export default function FriendsScreen() {
     <View style={{ flex: 1, backgroundColor: '#fcf9f8' }}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{
+          paddingTop: insets.top + 16,
+          paddingBottom: insets.bottom + Platform.select({ web: 80, default: 24 }),
+        }}
         contentContainerClassName="px-gutter gap-xl"
         keyboardShouldPersistTaps="handled"
       >
