@@ -11,8 +11,9 @@ const GAP = 8;
 // Convert a date string into a short, relative label (e.g., "2 WEEKS AGO").
 function timeAgoLabel(createdAt: string): string {
   const days = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
+  if (days < 1) return 'TODAY';
   if (days < 7) {
-    const d = Math.max(1, Math.round(days));
+    const d = Math.round(days);
     return `${d} ${d === 1 ? 'DAY' : 'DAYS'} AGO`;
   }
   if (days < 30) {
