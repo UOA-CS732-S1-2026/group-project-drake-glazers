@@ -463,7 +463,7 @@ const styles = {
     width: '100%',
     marginTop: 8,
     padding: '14px 0',
-    backgroundColor: '#1a3c5e',
+    backgroundColor: '#c0392b',
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 600,
