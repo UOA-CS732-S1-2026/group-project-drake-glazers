@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -11,6 +10,7 @@ import {
 import { useRef, useCallback } from 'react';
 import { router } from 'expo-router';
 import { useMemoryMedia } from '@/hooks/use-memory-media';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { Memory } from '@/lib/types';
 
 const PEEK_HEIGHT = 136;

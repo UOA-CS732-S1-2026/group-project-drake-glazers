@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
 import MapboxGL from '@rnmapbox/maps';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 const PIN_BADGE_ICONS = {
   heart: 'favorite',
@@ -65,8 +65,7 @@ export function MapPin({
               <Image
                 source={{ uri: thumbnailUrl }}
                 style={StyleSheet.absoluteFillObject}
-                contentFit="cover"
-                cachePolicy="memory-disk"
+                resizeMode="cover"
               />
             ) : thumbnailMediaType === 'video' ? (
               <View style={[StyleSheet.absoluteFillObject, styles.videoPlaceholder]}>

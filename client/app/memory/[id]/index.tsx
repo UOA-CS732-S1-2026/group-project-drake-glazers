@@ -1,7 +1,6 @@
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Platform,
   ScrollView,
@@ -26,6 +25,7 @@ import { MediaPicker, type PendingMedia } from '@/components/media-picker';
 import { useApiClient, uploadFile } from '@/lib/api';
 import { useMemoryMedia } from '@/hooks/use-memory-media';
 import { useMemoryDetails } from '@/hooks/use-memories';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { Media, MediaType, Visibility } from '@/lib/types';
 
 const visibilityLabel: Record<Visibility, string> = {
@@ -502,7 +502,11 @@ function EmbeddedVideoPlayer({ item }: { item: Media }) {
         activeOpacity={0.8}
       >
         {thumbnail && (
-          <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+          <Image
+            source={{ uri: thumbnail }}
+            style={StyleSheet.absoluteFillObject}
+            resizeMode="cover"
+          />
         )}
         <View style={videoStyles.playOverlay}>
           <MaterialIcons name="play-circle-filled" size={56} color="rgba(255,255,255,0.9)" />

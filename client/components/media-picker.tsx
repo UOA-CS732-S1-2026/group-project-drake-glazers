@@ -1,9 +1,10 @@
-import { View, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 export type PendingMedia = {
   uri: string;

@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
   Pressable,
   StyleSheet,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useUpsertUserProfile } from '@/hooks/use-user-profile';
 import { useUploadAvatar } from '@/hooks/use-upload-avatar';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { UserProfile } from '@/lib/types';
 
 const styles = StyleSheet.create({

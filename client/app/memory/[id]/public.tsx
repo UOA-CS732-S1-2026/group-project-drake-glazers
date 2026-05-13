@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Image,
   Linking,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,7 @@ import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useMemoryMedia } from '@/hooks/use-memory-media';
 import { useMemoryDetails } from '@/hooks/use-memories';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { Media, MediaType } from '@/lib/types';
 
 const mediaIcon: Record<MediaType, keyof typeof MaterialIcons.glyphMap> = {
@@ -191,7 +191,11 @@ function EmbeddedVideoPlayer({ item }: { item: Media }) {
         activeOpacity={0.8}
       >
         {thumbnail && (
-          <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+          <Image
+            source={{ uri: thumbnail }}
+            style={StyleSheet.absoluteFillObject}
+            resizeMode="cover"
+          />
         )}
         <View style={videoStyles.playOverlay}>
           <MaterialIcons name="play-circle-filled" size={56} color="rgba(255,255,255,0.9)" />

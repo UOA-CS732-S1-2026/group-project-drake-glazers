@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'expo-router';
 import ReactMapGL, { Marker } from 'react-map-gl';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { FeedCardSkeleton } from '@/components/feed-card-skeleton';
 import { useMemories } from '@/hooks/use-memories';
 import { useMemoryMedia } from '@/hooks/use-memory-media';
 import { Memory } from '@/lib/types';
@@ -104,7 +105,7 @@ function WebMapPin({
       <div style={styles.pinBubble}>
         <div style={styles.pinImageClip}>
           {memory.thumbnailUrl && memory.thumbnailMediaType !== 'video' ? (
-            <img
+            <WebLoadableImage
               src={memory.thumbnailUrl}
               alt=""
               aria-hidden="true"
@@ -114,7 +115,10 @@ function WebMapPin({
           ) : memory.thumbnailMediaType === 'video' ? (
             <div style={styles.pinVideoPlaceholder}>
               <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" fill="#ffffff" />
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                  fill="#ffffff"
+                />
               </svg>
             </div>
           ) : (
@@ -150,7 +154,11 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
   return (
     <aside style={styles.sidePanel} aria-label={`${memory.title} preview`}>
       {firstImage?.signedUrl ? (
-        <img src={firstImage.signedUrl} alt={`${memory.title} preview`} style={styles.panelImage} />
+        <WebLoadableImage
+          src={firstImage.signedUrl}
+          alt={`${memory.title} preview`}
+          style={styles.panelImage}
+        />
       ) : null}
 
       <div style={styles.panelContent}>
@@ -195,6 +203,50 @@ function WebPreviewCard({ memory, onClose }: { memory: Memory; onClose: () => vo
         </button>
       </div>
     </aside>
+  );
+}
+
+function WebLoadableImage({
+  src,
+  style,
+  onLoad,
+  onError,
+  ...props
+}: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const [loaded, setLoaded] = useState(false);
+  const objectFit = style?.objectFit ?? 'cover';
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <div style={{ ...style, position: 'relative', overflow: 'hidden' }}>
+      {!loaded && (
+        <FeedCardSkeleton
+          variant="image"
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 } as any}
+        />
+      )}
+      <img
+        {...props}
+        src={src}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit,
+          display: 'block',
+          opacity: loaded ? 1 : 0,
+        }}
+        onLoad={(event) => {
+          setLoaded(true);
+          onLoad?.(event);
+        }}
+        onError={onError}
+      />
+    </div>
   );
 }
 

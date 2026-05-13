@@ -5,6 +5,7 @@ import {
   Pressable,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
