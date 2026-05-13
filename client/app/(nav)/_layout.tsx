@@ -34,6 +34,7 @@ function CustomTabBar({ state, navigation }: any) {
   const inactiveColor = isMap ? TOKEN.inactiveDark : TOKEN.inactiveLight;
   const blurTint = isMap ? 'dark' : 'light';
   const borderColor = isMap ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)';
+  const barBackground = isMap ? 'transparent' : 'rgba(252,249,248,0.70)';
 
   const tabItems = state.routes.map((route: any, index: number) => {
     const tab = TABS.find((t) => t.name === route.name);
@@ -74,7 +75,14 @@ function CustomTabBar({ state, navigation }: any) {
       <BlurView
         intensity={Platform.OS === 'ios' ? 70 : 100}
         tint={blurTint}
-        style={[styles.bar, { paddingBottom: insets.bottom || 12, borderTopColor: borderColor }]}
+        style={[
+          styles.bar,
+          {
+            paddingBottom: insets.bottom || 12,
+            borderTopColor: borderColor,
+            backgroundColor: barBackground,
+          },
+        ]}
       >
         <View style={styles.row}>{tabItems}</View>
       </BlurView>
