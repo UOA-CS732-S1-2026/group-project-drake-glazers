@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +9,6 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import { LoadableImage as Image } from '@/components/loadable-image';
 
 const BG = '#FFFFFF';
 const CRIMSON = '#8B1A1A';
