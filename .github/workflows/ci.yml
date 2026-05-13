@@ -47,6 +47,16 @@ jobs:
           DIRECT_URL: postgresql://postgres:test@localhost:5433/postgres
       - run: npm test
 
+  test-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --prefix client
+      - run: npm test --prefix client
+
   build-server:
     runs-on: ubuntu-latest
     steps:
