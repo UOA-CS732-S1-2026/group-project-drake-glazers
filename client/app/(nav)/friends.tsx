@@ -14,7 +14,6 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { LoadableImage as Image } from '@/components/loadable-image';
 import {
   useFriends,
   useFriendRequests,
@@ -370,21 +369,16 @@ function FriendsSection() {
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ flex: 1, backgroundColor: '#fcf9f8' }}>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          paddingTop: insets.top + 16,
-          paddingBottom: insets.bottom + Platform.select({ web: 80, default: 24 }),
-        }}
-        contentContainerClassName="px-gutter gap-xl"
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text variant="headline-lg">Friends</Text>
-        <SearchSection />
-        <RequestsSection />
-        <FriendsSection />
-      </ScrollView>
-    </View>
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}
+      contentContainerClassName="px-gutter gap-xl"
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text variant="headline-lg">Friends</Text>
+      <SearchSection />
+      <RequestsSection />
+      <FriendsSection />
+    </ScrollView>
   );
 }
