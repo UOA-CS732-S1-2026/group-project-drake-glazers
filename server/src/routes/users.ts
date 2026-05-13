@@ -234,6 +234,7 @@ usersRouter.get('/users/:userId/relationship', async (req: Request, res: Respons
     return errorResponse(res, 404, 'USER_NOT_FOUND', 'User not found');
   }
 
+  // Friendship key is stored as sorted user ids for uniqueness.
   const [userAId, userBId] = [authUserId, userId].sort() as [string, string];
 
   const [blockedByMe, blockedByThem, friendship, pendingRequest] = await Promise.all([

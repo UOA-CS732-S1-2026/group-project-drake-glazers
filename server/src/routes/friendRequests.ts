@@ -175,6 +175,7 @@ friendRequestsRouter.put('/friend-requests/:id/accept', async (req: Request, res
 
   try {
     const [userA, userB] = [authUserId, friendRequest.fromUserId].sort() as [string, string];
+    // Accepting a request creates a friendship in the same transaction.
     const [updated] = await prisma.$transaction([
       prisma.friendRequest.update({
         where: { id },

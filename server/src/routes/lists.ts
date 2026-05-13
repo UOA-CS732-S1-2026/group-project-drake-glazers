@@ -46,6 +46,7 @@ const getPrismaErrorCode = (error: unknown): string | null => {
   return null;
 };
 
+// Convert stored image paths to signed URLs in a single batch call.
 async function signItemImagePaths<T extends { imagePath: string | null }>(
   items: T[]
 ): Promise<(Omit<T, 'imagePath'> & { imageUrl: string | null })[]> {
