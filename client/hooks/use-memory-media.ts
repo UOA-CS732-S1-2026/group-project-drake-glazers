@@ -11,6 +11,7 @@ export function useMemoryMedia(memoryId?: string) {
     queryKey: ['memories', memoryId, 'media'],
     queryFn: () => api.get(`/api/memories/${memoryId}/media`),
     enabled: !!userId && !!memoryId,
+    // Media may be absent; avoid noisy retry loops for missing media.
     retry: false,
   });
 }

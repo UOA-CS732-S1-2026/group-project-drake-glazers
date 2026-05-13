@@ -20,6 +20,7 @@ import type { SavedCollection } from '@/lib/types';
 
 type ListItem = SavedCollection | { _skeleton: true; id: string };
 
+// Saved collections screen renders a grid with skeletons and a create modal.
 export default function SavedScreen() {
   const router = useRouter();
   const { data: collections = [], isLoading, isFetching, refetch } = useSavedCollections();

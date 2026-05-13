@@ -28,6 +28,7 @@ const TOKEN = {
 function CustomTabBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
+  // Map screen uses higher-contrast tab styling for readability over imagery.
   const isMap = pathname === '/';
 
   const inactiveColor = isMap ? TOKEN.inactiveDark : TOKEN.inactiveLight;

@@ -10,6 +10,7 @@ export function useMemories() {
   return useQuery<Memory[]>({
     queryKey: ['memories'],
     queryFn: () => api.get('/api/memories'),
+    // Avoid firing until auth is available to prevent 401s and wasted calls.
     enabled: !!userId,
   });
 }
@@ -21,6 +22,7 @@ export function useMemoryDetails(memoryId?: string) {
   return useQuery<Memory>({
     queryKey: ['memories', memoryId],
     queryFn: () => api.get(`/api/memories/${memoryId}`),
+    // Gate fetch on both auth and a valid id.
     enabled: !!userId && !!memoryId,
   });
 }

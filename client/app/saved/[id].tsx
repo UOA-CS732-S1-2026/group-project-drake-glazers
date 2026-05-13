@@ -55,6 +55,7 @@ export default function CollectionDetailScreen() {
     setRefreshing(false);
   }, [refetch]);
 
+  // Measure the menu button to anchor the dropdown reliably.
   function handleMenuBtnPress() {
     menuBtnRef.current?.measure((_fx, _fy, w, h, px, py) => {
       setDropdownPos({ top: py + h + 4, right: SCREEN_WIDTH - px - w });
@@ -75,6 +76,7 @@ export default function CollectionDetailScreen() {
     setSelectedIds(new Set());
   }
 
+  // Sequentially remove selected memories to keep API calls simple and ordered.
   async function handleRemoveSelected() {
     if (selectedIds.size === 0 || isRemoving) return;
     setIsRemoving(true);
@@ -99,6 +101,7 @@ export default function CollectionDetailScreen() {
     }
   }
 
+  // extraData ensures the FlatList re-renders when selection state changes.
   const extraData = useMemo(
     () => ({ selectMode, count: selectedIds.size }),
     [selectMode, selectedIds]
@@ -332,7 +335,11 @@ function GridCell({
       {isVideo ? (
         <View style={[styles.cellImage, styles.cellVideoPlaceholder]}>
           {videoThumbnail && (
-            <Image source={{ uri: videoThumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <Image
+              source={{ uri: videoThumbnail }}
+              style={StyleSheet.absoluteFillObject}
+              resizeMode="cover"
+            />
           )}
         </View>
       ) : item.imageUrl ? (

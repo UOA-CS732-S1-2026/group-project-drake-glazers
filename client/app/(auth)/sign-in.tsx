@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useApiClient } from '@/lib/api';
 
+// Local sign-in step flow (credentials -> optional MFA).
 type Step = 'credentials' | 'mfa';
 
 export default function SignInScreen() {
@@ -30,6 +31,7 @@ export default function SignInScreen() {
   const clerkLoading = fetchStatus === 'fetching';
   const loading = clerkLoading;
 
+  // Ensure a backend user record exists after auth.
   const syncUser = async () => {
     try {
       await api.post('/api/users', { email });

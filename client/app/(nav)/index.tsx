@@ -35,12 +35,14 @@ export default function HomeScreen() {
     [memories]
   );
 
+  // Swap projections based on zoom for better globe-to-map transitions.
   const onRegionIsChanging = useCallback((feature: GeoJSON.Feature) => {
     const zoom = (feature.properties as { zoomLevel?: number })?.zoomLevel ?? 0;
     setProjection(zoom >= GLOBE_TO_MAP_ZOOM ? 'mercator' : 'globe');
   }, []);
 
   useEffect(() => {
+    // One-shot recenter requested by other screens (e.g., after saving a memory).
     if (!pendingCenter) return;
     cameraRef.current?.setCamera({
       centerCoordinate: pendingCenter,

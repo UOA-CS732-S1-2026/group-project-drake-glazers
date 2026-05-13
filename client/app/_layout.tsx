@@ -98,6 +98,7 @@ function InitialLayout() {
   useEffect(() => {
     const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
       const { title, body, data } = notification.request.content;
+      // Expect memoryId in push payload to support deep-linking.
       const memoryId = typeof (data as any)?.memoryId === 'string' ? (data as any).memoryId : null;
       setIncomingNotification({ title: title ?? 'Memoriez', body: body ?? '', memoryId });
     });

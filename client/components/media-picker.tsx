@@ -19,6 +19,7 @@ type Props = {
   onDateDetected?: (date: Date) => void;
 };
 
+// Normalize EXIF date strings into a JS Date (handles YYYY:MM:DD format).
 function extractDate(exif: Record<string, unknown> | null | undefined): Date | null {
   if (!exif) return null;
   const raw = (exif.DateTimeOriginal ?? exif.DateTime) as string | undefined;
@@ -30,6 +31,7 @@ function extractDate(exif: Record<string, unknown> | null | undefined): Date | n
   return date;
 }
 
+// Convert EXIF GPS fields to signed lat/lng (iOS uses unsigned + ref fields).
 function extractGPS(
   exif: Record<string, unknown> | null | undefined
 ): { lat: number; lng: number } | null {

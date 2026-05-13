@@ -5,6 +5,7 @@ import { ProfileHeader } from '@/components/profile-header';
 import { FlashbacksSection } from '@/components/flashbacks-section';
 import { PastCapturesSection } from '@/components/past-captures-section';
 
+// Profile screen composes user header + memory sections for the signed-in user.
 export default function ProfileScreen() {
   const { userId } = useAuth();
 

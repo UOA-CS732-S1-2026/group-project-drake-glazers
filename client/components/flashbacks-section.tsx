@@ -8,6 +8,7 @@ import { MemoryWithCover } from '@/lib/types';
 const GUTTER = 16;
 const GAP = 8;
 
+// Convert a date string into a short, relative label (e.g., "2 WEEKS AGO").
 function timeAgoLabel(createdAt: string): string {
   const days = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
   if (days < 7) {
@@ -74,6 +75,7 @@ export function FlashbacksSection({ userId }: Props) {
 
   if (memories.length === 0) return null;
 
+  // Sort newest first; expand shows more cards based on layout width.
   const sorted = [...memories].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
