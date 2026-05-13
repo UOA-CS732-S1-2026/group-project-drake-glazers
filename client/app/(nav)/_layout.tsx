@@ -173,6 +173,7 @@ export default function TabLayout() {
         {TABS.map((tab) => (
           <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.label }} />
         ))}
+        <Tabs.Screen name="friends/[id]" options={{ href: null }} />
       </Tabs>
       <CreateMemoryFAB />
       <OnboardingModal visible={showOnboarding} onComplete={() => setProfileConfirmed(true)} />
