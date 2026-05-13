@@ -1,8 +1,9 @@
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Text } from '@/components/ui/text';
 import { useUserMemoriesWithCovers } from '@/hooks/use-user-memories-with-covers';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import { MemoryWithCover } from '@/lib/types';
 
 const GUTTER = 16;

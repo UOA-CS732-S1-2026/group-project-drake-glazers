@@ -1,11 +1,4 @@
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Pressable,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -13,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import {
   useFriends,
   useFriendRequests,

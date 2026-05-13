@@ -1,6 +1,7 @@
-import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '@/components/ui/text';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { SavedCollection } from '@/lib/types';
 
 type Props = {

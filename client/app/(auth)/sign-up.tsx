@@ -3,7 +3,6 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import {
 import type { Href } from 'expo-router';
 import { useApiClient } from '@/lib/api';
 import { OnboardingModal } from '@/components/onboarding-modal';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 export default function SignUpScreen() {
   const { signUp, fetchStatus } = useSignUp();

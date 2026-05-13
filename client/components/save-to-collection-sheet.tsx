@@ -1,6 +1,5 @@
 import {
   View,
-  Image,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -19,6 +18,7 @@ import {
   useUnsaveMemory,
   useCreateCollection,
 } from '@/hooks/use-saved';
+import { LoadableImage as Image } from '@/components/loadable-image';
 import type { SavedPair, ExploreMemory } from '@/lib/types';
 
 type Props = {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +9,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-function Block({ style }: { style?: object }) {
+function Block({ style }: { style?: StyleProp<ViewStyle> }) {
   const opacity = useSharedValue(1);
 
   useEffect(() => {
@@ -27,9 +27,22 @@ function Block({ style }: { style?: object }) {
   return <Animated.View style={[styles.block, style, animStyle]} />;
 }
 
-export function FeedCardSkeleton() {
+type FeedCardSkeletonProps = {
+  variant?: 'card' | 'image';
+  style?: StyleProp<ViewStyle>;
+};
+
+export function FeedCardSkeleton({ variant = 'card', style }: FeedCardSkeletonProps) {
+  if (variant === 'image') {
+    return (
+      <View style={[styles.imageShell, style]}>
+        <Block style={StyleSheet.absoluteFillObject} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, style]}>
       {/* Header: avatar circle + two text lines */}
       <View style={styles.header}>
         <Block style={styles.avatar} />
@@ -68,6 +81,10 @@ const styles = StyleSheet.create({
   },
   block: {
     backgroundColor: '#ede8e8',
+  },
+  imageShell: {
+    overflow: 'hidden',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',

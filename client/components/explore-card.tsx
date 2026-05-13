@@ -1,5 +1,6 @@
-import { TouchableOpacity, View, Image } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 type Props = {
   title: string;

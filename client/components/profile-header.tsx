@@ -1,4 +1,4 @@
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { useState } from 'react';
 import { useAuth } from '@clerk/expo';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { useFriends } from '@/hooks/use-friends';
 import { useUserMemories } from '@/hooks/use-user-memories';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { OnboardingModal } from '@/components/onboarding-modal';
+import { LoadableImage as Image } from '@/components/loadable-image';
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
