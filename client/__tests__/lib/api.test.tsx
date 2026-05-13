@@ -152,4 +152,23 @@ describe('useApiClient', () => {
       })
     );
   });
+
+  it('sends PUT requests with a JSON-serialised body', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockResolvedValue({ id: '1', displayName: 'Alice' }),
+    });
+
+    const { result } = renderHook(() => useApiClient());
+    await result.current.put('/api/users/me/profile', { displayName: 'Alice' });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ displayName: 'Alice' }),
+      })
+    );
+  });
 });
