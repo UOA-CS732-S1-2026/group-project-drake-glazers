@@ -15,7 +15,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: insets.bottom + 48 }}>
         <ProfileHeader userId={userId} />
         <FlashbacksSection userId={userId} />
         <PastCapturesSection userId={userId} />
