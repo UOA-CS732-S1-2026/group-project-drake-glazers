@@ -219,25 +219,18 @@ export function SaveToCollectionSheet({ memory, savedPairs, onClose }: Props) {
                   onPress={() => handleToggle(col.id)}
                   activeOpacity={0.7}
                 >
-                  {/* Thumbnail strip (up to 3) */}
-                  <View style={styles.thumbStrip}>
-                    {col.coverImages.length > 0 ? (
-                      col.coverImages
-                        .slice(0, 3)
-                        .map((uri, idx) => (
-                          <Image
-                            key={idx}
-                            source={{ uri }}
-                            style={styles.thumb}
-                            resizeMode="cover"
-                          />
-                        ))
-                    ) : (
-                      <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                        <MaterialIcons name="photo-library" size={18} color="#c8c3c2" />
-                      </View>
-                    )}
-                  </View>
+                  {/* Single cover thumbnail */}
+                  {col.coverImages.length > 0 ? (
+                    <Image
+                      source={{ uri: col.coverImages[0] }}
+                      style={styles.thumb}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.thumb, styles.thumbPlaceholder]}>
+                      <MaterialIcons name="photo-library" size={18} color="#c8c3c2" />
+                    </View>
+                  )}
 
                   {/* Info */}
                   <View style={{ flex: 1, marginLeft: 12 }}>
@@ -360,10 +353,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ede8e8',
-  },
-  thumbStrip: {
-    flexDirection: 'row',
-    gap: 2,
   },
   thumb: {
     width: 48,

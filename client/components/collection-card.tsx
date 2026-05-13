@@ -9,9 +9,32 @@ type Props = {
   onLongPress?: () => void;
 };
 
-export function CollectionCard({ collection, onPress, onLongPress }: Props) {
-  const cover = collection.coverImages[0];
+function CoverArt({ images }: { images: string[] }) {
+  if (images.length === 0) {
+    return (
+      <View style={styles.coverPlaceholder}>
+        <MaterialIcons name="photo-library" size={32} color="#c8c3c2" />
+      </View>
+    );
+  }
+  if (images.length < 4) {
+    return <Image source={{ uri: images[0] }} style={styles.cover} resizeMode="cover" />;
+  }
+  return (
+    <View style={styles.collage}>
+      <View style={styles.collageRow}>
+        <Image source={{ uri: images[0] }} style={{ flex: 1 }} resizeMode="cover" />
+        <Image source={{ uri: images[1] }} style={{ flex: 1 }} resizeMode="cover" />
+      </View>
+      <View style={styles.collageRow}>
+        <Image source={{ uri: images[2] }} style={{ flex: 1 }} resizeMode="cover" />
+        <Image source={{ uri: images[3] }} style={{ flex: 1 }} resizeMode="cover" />
+      </View>
+    </View>
+  );
+}
 
+export function CollectionCard({ collection, onPress, onLongPress }: Props) {
   return (
     <TouchableOpacity
       style={styles.card}
@@ -20,14 +43,7 @@ export function CollectionCard({ collection, onPress, onLongPress }: Props) {
       activeOpacity={0.88}
     >
       <View style={styles.coverContainer}>
-        {cover ? (
-          <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
-        ) : (
-          <View style={styles.coverPlaceholder}>
-            <MaterialIcons name="photo-library" size={32} color="#c8c3c2" />
-          </View>
-        )}
-        {/* Default collection gets a badge for quick recognition. */}
+        <CoverArt images={collection.coverImages} />
         {collection.isDefault && (
           <View style={styles.defaultBadge}>
             <MaterialIcons name="bookmark" size={12} color="#fff" />
@@ -64,6 +80,17 @@ const styles = StyleSheet.create({
   cover: {
     width: '100%',
     aspectRatio: 1,
+  },
+  collage: {
+    width: '100%',
+    aspectRatio: 1,
+    gap: 1.5,
+    overflow: 'hidden',
+  },
+  collageRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 1.5,
   },
   coverPlaceholder: {
     width: '100%',

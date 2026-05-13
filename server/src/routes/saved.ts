@@ -60,7 +60,7 @@ savedRouter.get('/saved/collections', async (req: Request, res: Response) => {
       createdAt: true,
       _count: { select: { items: true } },
       items: {
-        take: 3,
+        take: 4,
         orderBy: { savedAt: 'desc' },
         select: {
           memory: {
