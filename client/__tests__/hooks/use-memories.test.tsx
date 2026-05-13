@@ -46,6 +46,17 @@ describe('useMemories', () => {
     expect(result.current.data).toEqual(memories);
     expect(mockGet).toHaveBeenCalledWith('/api/memories');
   });
+
+  it('exposes the error when the API call fails', async () => {
+    const mockGet = jest.fn().mockRejectedValue(new Error('API request failed: 500 Server Error'));
+    (useApiClient as jest.Mock).mockReturnValue({ get: mockGet });
+
+    const { result } = renderHook(() => useMemories(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toEqual(new Error('API request failed: 500 Server Error'));
+    expect(result.current.data).toBeUndefined();
+  });
 });
 
 describe('useMemoryDetails', () => {
